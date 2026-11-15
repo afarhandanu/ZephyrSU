@@ -18,8 +18,6 @@ mod boot_patch;
 #[cfg(target_os = "android")]
 pub mod builtin_zygisk;
 #[cfg(target_os = "android")]
-mod sui;
-#[cfg(target_os = "android")]
 mod cli;
 #[cfg(not(target_os = "android"))]
 mod cli_non_android;
@@ -68,6 +66,8 @@ mod sepolicy;
 mod soft_reboot;
 #[cfg(target_os = "android")]
 mod su;
+#[cfg(target_os = "android")]
+mod sui;
 #[cfg(target_os = "android")]
 mod sulog;
 #[cfg(target_arch = "aarch64")]

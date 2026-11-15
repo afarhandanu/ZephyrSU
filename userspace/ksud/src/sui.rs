@@ -25,7 +25,10 @@ const DAEMON_LOG: &str = "/data/adb/ksu/sui/daemon.log";
 const WATCHDOG_LOCK: &str = "/data/adb/ksu/sui/watchdog.lock";
 const MANAGER_IDENTITY: &str = "/data/adb/ksu/sui/manager.json";
 /// Known ZephyrSU manager package names; spoofed builds can pass --package when invoking register-manager.
-const MANAGER_PACKAGES: [&str; 2] = ["com.kucingbalap1644.zephyrsu", "com.kucingbalap1644.zephyrsu.pr"];
+const MANAGER_PACKAGES: [&str; 2] = [
+    "com.kucingbalap1644.zephyrsu",
+    "com.kucingbalap1644.zephyrsu.pr",
+];
 const DAEMON_READY_TIMEOUT: Duration = Duration::from_secs(120);
 /// The zygote may only map and execute libraries labelled this way, and the injected processes
 /// have to read the dex and metadata below the module directory.
@@ -353,7 +356,6 @@ fn conflicts() -> Vec<String> {
     found
 }
 
-
 mod zygisk_bridge {
     use anyhow::Result;
 
@@ -519,8 +521,7 @@ fn process_running(stat: &str) -> bool {
 }
 
 fn boot_marker_matches() -> bool {
-    fs::read_to_string(BOOT_MARKER)
-        .is_ok_and(|stored| stored.trim() == current_boot_id())
+    fs::read_to_string(BOOT_MARKER).is_ok_and(|stored| stored.trim() == current_boot_id())
 }
 
 fn write_boot_marker() -> Result<()> {

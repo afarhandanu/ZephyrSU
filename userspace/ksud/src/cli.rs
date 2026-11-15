@@ -1304,7 +1304,7 @@ pub fn run() -> Result<()> {
             Extension::Save => crate::extension::save_config(),
         },
 
-        Commands::Sui { command } => crate::sui::run(&command)?,
+        Commands::Sui { command } => crate::sui::run(&command),
         Commands::Zygisk { command } => match command {
             ZygiskCommand::On => {
                 // The flag alone would only count from the next boot; turning it on also
