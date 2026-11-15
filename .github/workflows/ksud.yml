@@ -58,6 +58,30 @@ jobs:
           cp -r builtzygisk-riscv64/* ./userspace/ksud/bin/riscv64/
         fi
         
+    - name: Stage the Sui payload
+      if: ${{ inputs.target != 'riscv64-linux-android' }}
+      run: |
+        case "${{ inputs.target }}" in
+          aarch64-linux-android) bindir=aarch64; pkg_target=aarch64 ;;
+          armv7-linux-androideabi) bindir=arm; pkg_target=armv7 ;;
+          x86_64-linux-android) bindir=x86_64; pkg_target=x86_64 ;;
+          *) echo "unexpected target: ${{ inputs.target }}" >&2; exit 1 ;;
+        esac
+
+        zip=$(ls -t sui-payload/*.zip | head -1)
+        version=$(sed -n 's/^version=//p' userspace/sui/payload-version.txt)
+        version_code=$(sed -n 's/^version_code=//p' userspace/sui/payload-version.txt)
+
+        python3 userspace/sui/package.py \
+          --zip "$zip" \
+          --target "$pkg_target" \
+          --assets "userspace/ksud/bin/$bindir" \
+          --version "$version" \
+          --version-code "$version_code" \
+          --force
+
+        test -f "userspace/ksud/bin/$bindir/sui/payload.json"
+
     - name: Setup rustup
       run: |
         if [ "${{ inputs.target }}" = riscv64-linux-android ]; then

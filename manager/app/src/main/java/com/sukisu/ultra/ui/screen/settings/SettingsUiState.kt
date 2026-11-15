@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.saveable.listSaver
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
+import com.sukisu.ultra.data.model.SuiStatus
 import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.util.BuiltinAppIcons
 import com.sukisu.ultra.ui.util.CustomTextGroup
@@ -89,6 +90,13 @@ data class SettingsUiState(
     val builtinZygisk: Boolean = false,
     // null, or why the switch still needs a soft restart: `pending`.
     val builtinZygiskProblem: String? = null,
+
+    // Sui
+    val suiStatus: SuiStatus? = null,
+    val suiReadError: Boolean = false,
+    val isSuiLoading: Boolean = true,
+    val isSuiWriting: Boolean = false,
+    val suiManagementAvailable: Boolean? = null,
 
     // Soft Reboot
     val useSoftReboot: Boolean = false,
@@ -259,4 +267,7 @@ data class SettingsScreenActions(
     val onOpenSusfsConfig: () -> Unit,
     val onOpenExtensions: () -> Unit,
     val onOpenBuiltinZygisk: () -> Unit,
+    val onSetSuiEnabled: (Boolean) -> Unit = {},
+    val onRepairSui: () -> Unit = {},
+    val onManageSuiPermissions: () -> Unit = {},
 )

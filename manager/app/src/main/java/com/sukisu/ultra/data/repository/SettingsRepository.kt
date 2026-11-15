@@ -2,6 +2,9 @@
 
 package com.sukisu.ultra.data.repository
 
+import com.sukisu.ultra.data.model.SuiApp
+import com.sukisu.ultra.data.model.SuiStatus
+
 import com.sukisu.ultra.ui.util.HomeCardSticker
 
 interface SettingsRepository {
@@ -170,4 +173,17 @@ interface SettingsRepository {
     fun isLkmMode(): Boolean
 
     fun execKsudFeatureSave()
+
+    suspend fun getSuiStatus(): Result<SuiStatus>
+    suspend fun setSuiEnabled(enabled: Boolean): Result<Unit>
+    suspend fun repairSui(): Result<Unit>
+    suspend fun suiProbeManagement(): Result<String>
+    suspend fun suiAppPermissions(): Result<List<SuiApp>>
+    suspend fun suiLaunchableAppCount(): Result<Int>
+    suspend fun suiDefaultMode(): Result<Int>
+    suspend fun setSuiDefaultMode(mode: Int): Result<Unit>
+    suspend fun suiSettingsFlags(): Result<Int>
+    suspend fun setSuiSettingsFlags(flags: Int): Result<Unit>
+    suspend fun suiHiddenUids(): Result<List<Int>>
+    suspend fun setSuiAppMode(uid: Int, mode: Int): Result<Unit>
 }

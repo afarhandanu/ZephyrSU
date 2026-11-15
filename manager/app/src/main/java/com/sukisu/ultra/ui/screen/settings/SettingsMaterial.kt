@@ -527,6 +527,12 @@ fun SettingPagerMaterial(
                         }) else emptyArray())
                     )
                 )
+
+                SegmentedColumn(
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
+                ) {
+                    suiStatusItems(uiState, actions)
+                }
                 }
             }
 

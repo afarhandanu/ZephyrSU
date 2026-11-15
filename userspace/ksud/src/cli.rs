@@ -43,6 +43,12 @@ enum Commands {
         command: ZygiskCommand,
     },
 
+    /// Manage the built-in Sui extension
+    Sui {
+        #[command(subcommand)]
+        command: crate::sui::Command,
+    },
+
     /// Trigger `post-fs-data` event
     PostFsData,
 
@@ -1298,6 +1304,7 @@ pub fn run() -> Result<()> {
             Extension::Save => crate::extension::save_config(),
         },
 
+        Commands::Sui { command } => crate::sui::run(&command)?,
         Commands::Zygisk { command } => match command {
             ZygiskCommand::On => {
                 // The flag alone would only count from the next boot; turning it on also

@@ -5,6 +5,7 @@ package com.sukisu.ultra.ui.viewmodel
 import android.content.Context
 import android.net.Uri
 import android.system.OsConstants
+import android.util.Log
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
@@ -13,6 +14,7 @@ import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.sukisu.ultra.Natives
 import com.sukisu.ultra.R
+import com.sukisu.ultra.data.model.SuiStatus
 import com.sukisu.ultra.data.repository.SettingsRepository
 import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.ksuApp
@@ -52,6 +54,7 @@ import com.sukisu.ultra.ui.util.findActivity
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -139,6 +142,7 @@ class SettingsViewModel(
 
     
     private var wallpaperGeneration = 0
+    private var suiGeneration = 0
 
     init {
         refresh()
@@ -146,6 +150,8 @@ class SettingsViewModel(
 
     fun refresh() {
         viewModelScope.launch {
+            val suiGen = suiGeneration
+            val suiJob = async { repo.getSuiStatus() }
             val appIconId = repo.appIconId
             val appIconDynamicColor = repo.appIconDynamicColor
             val themeMode = repo.themeMode
@@ -222,6 +228,12 @@ class SettingsViewModel(
             val isLateLoadMode = Natives.isLateLoadMode
             val systemWallpaperPath = ImageStorage.systemWallpaperFile(ksuApp)
                 .takeIf { it.isFile }?.absolutePath.orEmpty()
+            val suiResult = suiJob.await()
+            val suiManagement = if (suiResult.getOrNull()?.state == SuiStatus.STATE_ENABLED) {
+                refreshSuiManagement()
+            } else {
+                null
+            }
 
             _uiState.update {
                 it.copy(
@@ -307,6 +319,10 @@ homePillScale = HomeStatusStyle.coercePillScale(repo.homePillScale),
                     autoJailbreak = autoJailbreak,
                     builtinZygisk = builtinZygisk,
                     useSoftReboot = useSoftReboot,
+                    suiStatus = if (suiGen == suiGeneration) suiResult.getOrNull() else it.suiStatus,
+                    suiReadError = if (suiGen == suiGeneration) suiResult.isFailure else it.suiReadError,
+                    isSuiLoading = if (suiGen == suiGeneration) false else it.isSuiLoading,
+                    suiManagementAvailable = if (suiGen == suiGeneration) suiManagement else it.suiManagementAvailable,
                     isLateLoadMode = isLateLoadMode,
                     customBackgroundUri = repo.customBackgroundUri,
                     customBackgroundUpdatedAt = repo.customBackgroundUpdatedAt,
@@ -2980,7 +2996,93 @@ homePillScale = repo.homePillScale,
         viewModelScope.launch(Dispatchers.IO) {
             repo.builtinZygisk = enabled
             val applied = repo.builtinZygisk
-            _uiState.update { it.copy(builtinZygisk = applied) }
+            val suiGen = suiGeneration
+            val suiResult = repo.getSuiStatus()
+            val suiManagement = if (suiResult.getOrNull()?.state == SuiStatus.STATE_ENABLED) {
+                refreshSuiManagement()
+            } else {
+                null
+            }
+            _uiState.update {
+                it.copy(
+                    builtinZygisk = applied,
+                    suiStatus = if (suiGen == suiGeneration) suiResult.getOrNull() else it.suiStatus,
+                    suiReadError = if (suiGen == suiGeneration) suiResult.isFailure else it.suiReadError,
+                    isSuiLoading = if (suiGen == suiGeneration) false else it.isSuiLoading,
+                    suiManagementAvailable = if (suiGen == suiGeneration) suiManagement else it.suiManagementAvailable,
+                )
+            }
+        }
+    }
+
+    fun setSuiEnabled(enabled: Boolean) {
+        if (_uiState.value.isSuiWriting || _uiState.value.isSuiLoading) return
+        ++suiGeneration
+        _uiState.update { it.copy(isSuiWriting = true) }
+        viewModelScope.launch {
+            val result = repo.setSuiEnabled(enabled)
+            val status = repo.getSuiStatus()
+            val management = if (status.getOrNull()?.state == SuiStatus.STATE_ENABLED) {
+                refreshSuiManagement()
+            } else {
+                null
+            }
+            _uiState.update {
+                it.copy(
+                    isSuiWriting = false,
+                    suiStatus = status.getOrNull(),
+                    suiReadError = status.isFailure,
+                    suiManagementAvailable = management,
+                )
+            }
+            val message = when {
+                result.isFailure -> R.string.sui_write_failed
+                enabled -> R.string.sui_reboot_required
+                else -> R.string.sui_disable_done
+            }
+            Toast.makeText(ksuApp, message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun probeSuiManagement() {
+        viewModelScope.launch {
+            val message = repo.suiProbeManagement().getOrElse { it.message ?: "probe failed" }
+            Log.i("SuiManagement", message)
+            Toast.makeText(ksuApp, message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private suspend fun refreshSuiManagement(): Boolean {
+        val result = repo.suiProbeManagement()
+        Log.i("SuiManagement", result.getOrElse { "unavailable: ${it.message}" })
+        return result.isSuccess
+    }
+
+    fun repairSui() {
+        if (_uiState.value.isSuiWriting) return
+        ++suiGeneration
+        _uiState.update { it.copy(isSuiWriting = true) }
+        viewModelScope.launch {
+            val result = repo.repairSui()
+            val status = repo.getSuiStatus()
+            val management = if (status.getOrNull()?.state == SuiStatus.STATE_ENABLED) {
+                refreshSuiManagement()
+            } else {
+                null
+            }
+            _uiState.update {
+                it.copy(
+                    isSuiWriting = false,
+                    suiStatus = status.getOrNull(),
+                    suiReadError = status.isFailure,
+                    suiManagementAvailable = management,
+                )
+            }
+            Toast.makeText(
+                ksuApp,
+                if (result.isSuccess) R.string.sui_repair_done else R.string.sui_repair_failed,
+                Toast.LENGTH_LONG,
+            ).show()
         }
     }
 

@@ -90,6 +90,9 @@ fun SettingPager(
         onOpenSusfsConfig = { navigator.push(Route.SuSFS()) },
         onOpenExtensions = { navigator.push(Route.Extensions) },
         onOpenBuiltinZygisk = { navigator.push(Route.BuiltinZygisk) },
+        onSetSuiEnabled = viewModel::setSuiEnabled,
+        onRepairSui = viewModel::repairSui,
+        onManageSuiPermissions = { navigator.push(Route.SuiPermissions) },
     )
 
     when (LocalUiMode.current) {

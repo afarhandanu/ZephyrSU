@@ -79,6 +79,7 @@ class KernelSUApplication : Application(), ViewModelStoreOwner {
     override fun onCreate() {
         super.onCreate()
         ksuApp = this
+        com.sukisu.ultra.data.sui.SuiPermissionHost.attach(this)
         if (AiFeatureBridge.isAvailable) AiFeatureBridge.install(ManagerAiHost(this))
 
         if (!isUserUnlocked()) {

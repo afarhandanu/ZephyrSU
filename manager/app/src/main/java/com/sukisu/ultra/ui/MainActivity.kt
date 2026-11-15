@@ -130,7 +130,10 @@ import com.sukisu.ultra.ui.screen.susfs.SuSFSScreen
 import com.sukisu.ultra.ui.screen.template.AppProfileTemplateScreen
 import com.sukisu.ultra.ui.screen.templateeditor.TemplateEditorScreen
 import com.sukisu.ultra.ui.screen.umountmanager.UmountManagerScreen
+import com.sukisu.ultra.data.sui.SuiPermissionHost
 import com.sukisu.ultra.ui.screen.builtinzygisk.BuiltinZygiskScreen
+import com.sukisu.ultra.ui.screen.sui.SuiPermissionRequestDialog
+import com.sukisu.ultra.ui.screen.sui.SuiPermissionsScreen
 import com.sukisu.ultra.ui.theme.AiAssistantMaterialTheme
 import com.sukisu.ultra.ui.theme.KernelSUTheme
 import com.sukisu.ultra.ui.theme.LocalColorMode
@@ -284,6 +287,12 @@ class MainActivity : ComponentActivity() {
             ) {
                 KernelSUTheme(appSettings = themedAppSettings, uiMode = uiMode) {
                     IntentDispatcher(intentChannel = intentChannel)
+                    LaunchedEffect(Unit) {
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            SuiPermissionHost.register(this@MainActivity)
+                        }
+                    }
+                    SuiPermissionRequestDialog()
                     val swipeDismiss = if (uiState.enableSwipeDismiss) {
                         if (LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl) {
                             NavSwipeDirection.RightToLeft
@@ -422,6 +431,7 @@ class MainActivity : ComponentActivity() {
                                 entry<Route.CpuSpoof>(swipeDismiss = swipeDismiss) { CpuSpoofScreen() }
                                 entry<Route.VersionSpoof>(swipeDismiss = swipeDismiss) { VersionSpoofScreen() }
                                 entry<Route.BuiltinZygisk>(swipeDismiss = swipeDismiss) { BuiltinZygiskScreen() }
+                                entry<Route.SuiPermissions>(swipeDismiss = swipeDismiss) { SuiPermissionsScreen() }
                                 entry<Route.AiAssistant>(swipeDismiss = swipeDismiss) {
                                     if (!AiFeatureBridge.isAvailable) {
                                         LaunchedEffect(Unit) { navigator.pop() }

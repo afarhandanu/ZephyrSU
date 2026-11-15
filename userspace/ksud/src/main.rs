@@ -18,6 +18,8 @@ mod boot_patch;
 #[cfg(target_os = "android")]
 pub mod builtin_zygisk;
 #[cfg(target_os = "android")]
+mod sui;
+#[cfg(target_os = "android")]
 mod cli;
 #[cfg(not(target_os = "android"))]
 mod cli_non_android;

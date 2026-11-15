@@ -119,6 +119,17 @@ fun execKsud(args: String, newShell: Boolean = false, globalMnt: Boolean = false
     }
 }
 
+fun execKsudResult(args: String, newShell: Boolean = true, globalMnt: Boolean = false): Shell.Result {
+    val cmd = "${getKsuDaemonPath()} $args"
+    return if (newShell) {
+        withNewRootShell(globalMnt = globalMnt) {
+            newJob().add(cmd).to(ArrayList<String>(), null).exec()
+        }
+    } else {
+        getRootShell(globalMnt).newJob().add(cmd).to(ArrayList<String>(), null).exec()
+    }
+}
+
 suspend fun getFeatureStatus(feature: String): String = withContext(Dispatchers.IO) {
     val shell = getRootShell()
     val out = shell.newJob()

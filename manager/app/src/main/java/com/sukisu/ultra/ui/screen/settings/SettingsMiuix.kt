@@ -676,6 +676,11 @@ fun SettingPagerMiuix(
                                 )
                             }
                         }
+
+                        SuiStatusSectionMiuix(
+                            state = uiState,
+                            actions = actions,
+                        )
                     }
 
                     if (uiState.isLkmMode) {

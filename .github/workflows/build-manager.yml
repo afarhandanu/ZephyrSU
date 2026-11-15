@@ -12,6 +12,7 @@ on:
       - '.github/workflows/ksud-extra.yml'
       - '.github/workflows/ksuinit.yml'
       - '.github/workflows/builtzygisk.yml'
+      - '.github/workflows/sui.yml'
       - '.github/scripts/setup-rust-build.sh'
       - '.github/riscv64-cargo.toml'
       - 'scripts/upload-telegram.sh'
@@ -34,6 +35,7 @@ on:
       - '.github/workflows/ksud-extra.yml'
       - '.github/workflows/ksuinit.yml'
       - '.github/workflows/builtzygisk.yml'
+      - '.github/workflows/sui.yml'
       - '.github/scripts/setup-rust-build.sh'
       - '.github/riscv64-cargo.toml'
       - 'scripts/upload-telegram.sh'
@@ -157,8 +159,11 @@ jobs:
   build-builtzygisk:
     uses: ./.github/workflows/builtzygisk.yml
 
+  build-sui:
+    uses: ./.github/workflows/sui.yml
+
   build-ksud:
-    needs: [build-lkm, build-ksuinit, build-builtzygisk]
+    needs: [build-lkm, build-ksuinit, build-builtzygisk, build-sui]
 
     strategy:
       fail-fast: false

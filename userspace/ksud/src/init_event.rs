@@ -135,6 +135,10 @@ pub fn on_post_fs_data() -> Result<()> {
     // bootstrap built-in zygisk before module post-fs-data
     builtin_zygisk_step("bootstrap", crate::builtin_zygisk::bootstrap);
 
+    if let Err(e) = crate::sui::post_fs_data(safe_mode) {
+        warn!("Sui startup skipped/failed: {e:#}");
+    }
+
     // execute metamodule post-fs-data script first (priority)
     if let Err(e) = metamodule::exec_stage_script("post-fs-data", wait) {
         warn!("exec metamodule post-fs-data script failed: {e}");
@@ -232,6 +236,10 @@ pub fn on_services() {
     // being started right now, and a `ctl rearm` would race the fork injection it is
     // already performing. The late attach belongs to boot completed.
     builtin_zygisk_step("monitor", crate::builtin_zygisk::ensure_monitor);
+
+    if let Err(e) = crate::sui::services() {
+        warn!("Sui health check failed: {e:#}");
+    }
     run_stage("service", ScriptWait::NoWait);
 }
 

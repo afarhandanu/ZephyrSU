@@ -20,7 +20,14 @@ import com.sukisu.ultra.ui.util.ImageStorage
 import com.sukisu.ultra.ui.util.HomeCardSticker
 import com.sukisu.ultra.ui.util.HomeStatusStyle
 import com.sukisu.ultra.ui.util.BuiltinAppIcons
+import com.sukisu.ultra.data.model.SuiApp
+import com.sukisu.ultra.data.model.SuiStatus
+import com.sukisu.ultra.data.sui.SuiBridge
 import com.sukisu.ultra.ui.util.execKsud
+import com.sukisu.ultra.ui.util.execKsudResult
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import com.sukisu.ultra.ui.util.getFeaturePersistValue
 import com.sukisu.ultra.ui.util.getFeatureValue
 import com.sukisu.ultra.ui.util.getFeatureStatus
@@ -626,4 +633,129 @@ class SettingsRepositoryImpl : SettingsRepository {
     override fun execKsudFeatureSave() {
         execKsud("feature save", true)
     }
+
+    private fun registerSuiManager() {
+        val pkg = "'${ksuApp.packageName.replace("'", "'\\''")}'"
+        execKsudResult("sui register-manager --package $pkg")
+    }
+
+    override suspend fun getSuiStatus(): Result<SuiStatus> = withContext(Dispatchers.IO) {
+        runCatching {
+            val result = execKsudResult("sui status --json")
+            check(result.isSuccess) { "ksud sui status failed (exit ${result.code})" }
+            val payload = result.out.filter { it.isNotBlank() }
+            check(payload.size == 1) { "Invalid ksud sui status output" }
+            SuiStatus.fromJson(JSONObject(payload.single()))
+        }
+    }
+
+    override suspend fun setSuiEnabled(enabled: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            if (enabled) {
+                registerSuiManager()
+            }
+            val command = if (enabled) "sui enable" else "sui disable"
+            check(execKsudResult(command).isSuccess) { "ksud $command failed" }
+        }
+    }
+
+    override suspend fun repairSui(): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            registerSuiManager()
+            check(execKsudResult("sui repair").isSuccess) { "ksud sui repair failed" }
+        }
+    }
+
+    override suspend fun suiProbeManagement(): Result<String> = withContext(Dispatchers.IO) {
+        runCatching {
+            val service = SuiBridge.service() ?: error("Sui bridge returned no binder")
+            val uid = android.os.Process.myUid()
+            val flags = service.getFlagsForUid(uid, SuiBridge.MASK_PERMISSION)
+            service.updateFlagsForUid(uid, SuiBridge.MASK_PERMISSION, flags)
+            "binder=ok uid=$uid flags=$flags"
+        }
+    }
+
+    override suspend fun suiAppPermissions(): Result<List<SuiApp>> = withContext(Dispatchers.IO) {
+        runCatching {
+            val service = SuiBridge.service() ?: error("Sui bridge returned no binder")
+            val pm = ksuApp.packageManager
+            val entries = LinkedHashMap<Int, SuiApp>()
+            val launcher = android.content.Intent(android.content.Intent.ACTION_MAIN)
+                .addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+            for (resolved in pm.queryIntentActivities(launcher, 0)) {
+                val info = resolved.activityInfo?.applicationInfo ?: continue
+                val uid = info.uid
+                if (uid < 10000 || entries.containsKey(uid)) {
+                    continue
+                }
+                entries[uid] = SuiApp(
+                    uid = uid,
+                    packageName = info.packageName,
+                    label = pm.getApplicationLabel(info).toString(),
+                    mode = service.getFlagsForUid(uid, SuiApp.MODE_MASK),
+                    applicationInfo = info,
+                    requestsShizuku = requestsShizuku(pm, info.packageName),
+                )
+            }
+            entries.values.sortedBy { it.label.lowercase() }
+        }
+    }
+
+    override suspend fun setSuiAppMode(uid: Int, mode: Int): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            val service = SuiBridge.service() ?: error("Sui bridge returned no binder")
+            service.updateFlagsForUid(uid, SuiApp.MODE_MASK, mode)
+        }
+    }
+
+    override suspend fun suiLaunchableAppCount(): Result<Int> = withContext(Dispatchers.IO) {
+        runCatching {
+            val launcher = android.content.Intent(android.content.Intent.ACTION_MAIN)
+                .addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+            ksuApp.packageManager.queryIntentActivities(launcher, 0)
+                .mapNotNull { it.activityInfo?.applicationInfo?.uid }
+                .filter { it >= 10000 }
+                .distinct()
+                .size
+        }
+    }
+
+    override suspend fun suiDefaultMode(): Result<Int> = withContext(Dispatchers.IO) {
+        runCatching {
+            SuiBridge.defaultMode() ?: error("Sui did not report the default permission")
+        }
+    }
+
+    override suspend fun setSuiDefaultMode(mode: Int): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            check(SuiBridge.setDefaultMode(mode and SuiApp.MODE_MASK)) {
+                "Sui rejected the default permission"
+            }
+        }
+    }
+
+    override suspend fun suiSettingsFlags(): Result<Int> = withContext(Dispatchers.IO) {
+        runCatching {
+            SuiBridge.globalSettings() ?: error("Sui did not report global settings")
+        }
+    }
+
+    override suspend fun setSuiSettingsFlags(flags: Int): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            check(SuiBridge.setGlobalSettings(flags)) { "Sui rejected the setting" }
+        }
+    }
+
+    override suspend fun suiHiddenUids(): Result<List<Int>> = withContext(Dispatchers.IO) {
+        runCatching {
+            SuiBridge.hiddenUids()?.toList() ?: error("Sui did not report hidden apps")
+        }
+    }
+
+    private fun requestsShizuku(pm: PackageManager, packageName: String): Boolean = runCatching {
+        pm.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS)
+            .requestedPermissions
+            ?.contains(SuiApp.PERMISSION_API_V23) == true
+    }.getOrDefault(false)
 }

@@ -19,6 +19,7 @@ mod android {
                 || file.ends_with(".ko")
                 || file.starts_with("zygisk")
                 || file.starts_with("libzygisk")
+                || file.starts_with("sui/")
             {
                 // don't extract internal executables, kernel modules, and built-in zygisk assets
                 continue;
@@ -39,6 +40,23 @@ mod android {
         std::os::unix::fs::symlink("/data/adb/ksud", resetprop_link)?;
 
         Ok(())
+    }
+
+    pub fn sui_payload() -> anyhow::Result<Vec<(String, Vec<u8>)>> {
+        let mut files = Vec::new();
+        for entry in Asset::iter() {
+            let Some(relative) = entry.strip_prefix("sui/") else {
+                continue;
+            };
+            let asset = Asset::get(&entry)
+                .ok_or_else(|| anyhow::anyhow!("Sui payload asset missing: {entry}"))?;
+            files.push((relative.to_owned(), asset.data.into_owned()));
+        }
+        anyhow::ensure!(
+            !files.is_empty(),
+            "No Sui payload assets embedded for this target"
+        );
+        Ok(files)
     }
 }
 
@@ -91,4 +109,10 @@ pub fn list_supported_kmi() -> std::vec::Vec<std::string::String> {
         }
     }
     list
+}
+
+#[cfg(not(target_os = "android"))]
+#[allow(dead_code)]
+pub fn sui_payload() -> Result<Vec<(String, Vec<u8>)>> {
+    anyhow::bail!("Sui payload is only embedded on Android targets")
 }
