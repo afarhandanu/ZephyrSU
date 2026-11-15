@@ -357,7 +357,6 @@ fn conflicts() -> Vec<String> {
 }
 
 mod zygisk_bridge {
-    use anyhow::Result;
 
     #[allow(dead_code)]
     pub struct ProviderStatus {
@@ -377,7 +376,7 @@ mod zygisk_bridge {
     }
 
     #[cfg(target_os = "android")]
-    pub fn provider_status() -> Result<ProviderStatus> {
+    pub fn provider_status() -> ProviderStatus {
         let builtin_enabled = crate::builtin_zygisk::is_enabled();
         let external_providers = if builtin_enabled {
             Vec::new()
@@ -402,7 +401,7 @@ mod zygisk_bridge {
             "unverified"
         };
 
-        Ok(ProviderStatus {
+        ProviderStatus {
             schema_version: 1,
             enabled: builtin_enabled,
             engine_available: builtin_enabled,
@@ -416,12 +415,12 @@ mod zygisk_bridge {
             startup_failure_code: None,
             startup_failure_detail: None,
             startup_generation: 0,
-        })
+        }
     }
 
     #[cfg(not(target_os = "android"))]
-    pub fn provider_status() -> Result<ProviderStatus> {
-        Ok(ProviderStatus {
+    pub fn provider_status() -> ProviderStatus {
+        ProviderStatus {
             schema_version: 1,
             enabled: false,
             engine_available: false,
@@ -435,20 +434,17 @@ mod zygisk_bridge {
             startup_failure_code: None,
             startup_failure_detail: None,
             startup_generation: 0,
-        })
+        }
     }
 
     #[cfg(target_os = "android")]
-    pub fn detach_from_service_cgroup() -> std::io::Result<()> {
+    pub fn detach_from_service_cgroup() {
         crate::utils::switch_cgroups();
-        Ok(())
     }
 
     #[cfg(not(target_os = "android"))]
     #[allow(dead_code)]
-    pub fn detach_from_service_cgroup() -> std::io::Result<()> {
-        Ok(())
-    }
+    pub fn detach_from_service_cgroup() {}
 }
 
 #[derive(Debug, PartialEq)]
@@ -557,14 +553,12 @@ fn apply_sepolicy_rule() -> Result<()> {
 }
 
 #[cfg(target_os = "android")]
-fn leave_service_cgroup() -> std::io::Result<()> {
-    zygisk_bridge::detach_from_service_cgroup()
+fn leave_service_cgroup() {
+    zygisk_bridge::detach_from_service_cgroup();
 }
 
 #[cfg(not(target_os = "android"))]
-fn leave_service_cgroup() -> std::io::Result<()> {
-    Ok(())
-}
+fn leave_service_cgroup() {}
 
 fn start_daemon() -> Result<Child> {
     let module = Path::new(MODULE_DIR);
@@ -591,7 +585,7 @@ fn start_daemon() -> Result<Child> {
     unsafe {
         command.pre_exec(|| {
             // init SIGKILLs the whole post-fs-data cgroup when that service exits.
-            leave_service_cgroup()?;
+            leave_service_cgroup();
             libc::setsid();
             Ok(())
         });
@@ -680,7 +674,7 @@ fn manager_diagnostics(uid: Option<u32>) -> serde_json::Value {
 }
 
 fn collect() -> Result<Status> {
-    let provider = zygisk_bridge::provider_status()?;
+    let provider = zygisk_bridge::provider_status();
     let state = State::load()?;
     let payload = Payload::embedded().ok();
     let installed = payload.as_ref().is_some_and(Payload::verify_installed);
@@ -763,7 +757,7 @@ fn collect() -> Result<Status> {
 fn enable() -> Result<()> {
     let payload = Payload::embedded()
         .context("The embedded Sui payload is unavailable for this architecture")?;
-    let provider = zygisk_bridge::provider_status()?;
+    let provider = zygisk_bridge::provider_status();
     let conflicts = conflicts();
     if let Gate::Blocked(code, detail) = gate(&provider, &conflicts) {
         let suffix = if detail.is_empty() {
@@ -880,9 +874,7 @@ fn pm(args: &[&str]) -> Result<String> {
 }
 
 fn current_boot_id() -> String {
-    fs::read_to_string("/proc/sys/kernel/random/boot_id")
-        .map(|s| s.trim().to_owned())
-        .unwrap_or_default()
+    fs::read_to_string("/proc/sys/kernel/random/boot_id").map_or_default(|s| s.trim().to_owned())
 }
 
 fn manager_package(preferred: Option<&str>) -> Result<String> {
@@ -1097,7 +1089,7 @@ fn spawn_watchdog() -> Result<()> {
         .stderr(Stdio::null());
     unsafe {
         command.pre_exec(|| {
-            leave_service_cgroup()?;
+            leave_service_cgroup();
             libc::setsid();
             Ok(())
         });
