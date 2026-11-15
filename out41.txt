@@ -1,0 +1,34 @@
+WROTE manager/app/src/main/java/com/sukisu/ultra/data/model/SuiStatus.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/data/model/SuiApp.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/data/sui/SuiBridge.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/data/sui/SuiPermissionHost.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/SuiPermissionsViewModel.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/ui/screen/sui/SuiPermissionsScreen.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/ui/screen/sui/SuiPermissionsMaterial.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/ui/screen/sui/SuiPermissionRequestDialog.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SuiStatusItem.kt
+PATCHED manager/app/src/main/AndroidManifest.xml [queries launcher intent]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/KernelSUApplication.kt [SuiPermissionHost.attach]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/navigation3/Routes.kt [Route.SuiPermissions]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt [execKsudResult]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/data/repository/SettingsRepository.kt [SettingsRepository imports]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/data/repository/SettingsRepository.kt [SettingsRepository Sui methods]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/data/repository/SettingsRepositoryImpl.kt [SettingsRepositoryImpl imports]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/data/repository/SettingsRepositoryImpl.kt [SettingsRepositoryImpl Sui methods]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsUiState.kt [SettingsUiState SuiStatus import]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsUiState.kt [SettingsUiState Sui fields]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsUiState.kt [SettingsScreenActions Sui callbacks]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/SettingsViewModel.kt [SettingsViewModel Log import]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/SettingsViewModel.kt [SettingsViewModel SuiStatus import]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/SettingsViewModel.kt [SettingsViewModel async import]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/SettingsViewModel.kt [SettingsViewModel refresh suiJob]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/SettingsViewModel.kt [SettingsViewModel refresh await suiJob]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/SettingsViewModel.kt [SettingsViewModel refresh update sui]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/SettingsViewModel.kt [SettingsViewModel Sui actions]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsScreen.kt [SettingsScreen Sui actions]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt [SettingsMaterial suiStatusItems]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt [SettingsMiuix SuiStatusSectionMiuix]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/MainActivity.kt [MainActivity Sui imports]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/MainActivity.kt [MainActivity SuiPermissionHost & Dialog]
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/MainActivity.kt [MainActivity Route.SuiPermissions]
+ALL_STEP3_4_DONE
