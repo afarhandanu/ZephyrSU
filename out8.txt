@@ -1,0 +1,616 @@
+=== finasu sui.rs 861-1075 ===
+   861	            } else {
+   862	                println!("{}", serde_json::to_string_pretty(&status)?);
+   863	            }
+   864	            Ok(())
+   865	        }
+   866	        Command::Enable => {
+   867	            let _lock = lock()?;
+   868	            enable()
+   869	        }
+   870	        Command::Disable => {
+   871	            let _lock = lock()?;
+   872	            disable()
+   873	        }
+   874	        Command::Repair => {
+   875	            let _lock = lock()?;
+   876	            repair()
+   877	        }
+   878	        Command::RegisterManager => {
+   879	            let _lock = lock()?;
+   880	            register_manager()
+   881	        }
+   882	        Command::Watchdog => watchdog(),
+   883	        Command::Uninstall { purge } => {
+   884	            let _lock = lock()?;
+   885	            uninstall(*purge)
+   886	        }
+   887	    }
+   888	}
+   889	
+   890	pub fn post_fs_data(safe_mode: bool) -> Result<()> {
+   891	    if safe_mode || !active()? {
+   892	        return Ok(());
+   893	    }
+   894	    spawn_watchdog()
+   895	}
+   896	
+   897	pub fn services() -> Result<()> {
+   898	    if !active()? {
+   899	        return Ok(());
+   900	    }
+   901	    spawn_watchdog()
+   902	}
+   903	
+   904	fn daemon_healthy() -> bool {
+   905	    process_ids(DAEMON).len() == 1 && process_ids(SHELL_DAEMON).len() == 1
+   906	}
+   907	
+   908	/// One supervisor per device: it restarts the daemon pair while Sui stays enabled and exits
+   909	/// as soon as Sui is disabled, so it never outlives the extension it watches.
+   910	fn watchdog() -> Result<()> {
+   911	    let lock = OpenOptions::new()
+   912	        .read(true)
+   913	        .write(true)
+   914	        .create(true)
+   915	        .truncate(false)
+   916	        .mode(0o600)
+   917	        .custom_flags(libc::O_NOFOLLOW)
+   918	        .open(WATCHDOG_LOCK)?;
+   919	    ensure!(
+   920	        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+   921	        "Another Sui watchdog is already running"
+   922	    );
+   923	    let mut child: Option<Child> = None;
+   924	    let mut started = Instant::now();
+   925	    let mut refreshed: Option<Instant> = None;
+   926	    loop {
+   927	        if !active()? {
+   928	            if let Some(mut child) = child {
+   929	                let _ = child.kill();
+   930	                let _ = child.wait();
+   931	            }
+   932	            return Ok(());
+   933	        }
+   934	        if boot_completed()
+   935	            && refreshed.is_none_or(|time| time.elapsed() >= Duration::from_secs(30))
+   936	        {
+   937	            if let Err(error) = register_manager() {
+   938	                log::warn!("Sui manager refresh failed: {error:#}");
+   939	            }
+   940	            refreshed = Some(Instant::now());
+   941	        }
+   942	        if let Some(process) = child.as_mut()
+   943	            && process.try_wait()?.is_some()
+   944	        {
+   945	            child = None;
+   946	        }
+   947	        if daemon_healthy() {
+   948	            if !boot_marker_matches() {
+   949	                write_boot_marker()?;
+   950	            }
+   951	        } else if (child.is_none()
+   952	            || (boot_completed() && started.elapsed() >= DAEMON_READY_TIMEOUT))
+   953	            && let Ok(_operation) = self::lock()
+   954	            && active()?
+   955	        {
+   956	            stop_daemon();
+   957	            if let Some(mut previous) = child.take() {
+   958	                let _ = previous.kill();
+   959	                let _ = previous.wait();
+   960	            }
+   961	            match start_daemon() {
+   962	                Ok(process) => {
+   963	                    child = Some(process);
+   964	                    started = Instant::now();
+   965	                }
+   966	                Err(error) => log::warn!("Sui watchdog restart failed: {error:#}"),
+   967	            }
+   968	        }
+   969	        std::thread::sleep(Duration::from_secs(1));
+   970	    }
+   971	}
+   972	
+   973	fn spawn_watchdog() -> Result<()> {
+   974	    let mut command = Process::new("/data/adb/ksud");
+   975	    command
+   976	        .args(["sui", "watchdog"])
+   977	        .stdin(Stdio::null())
+   978	        .stdout(Stdio::null())
+   979	        .stderr(Stdio::null());
+   980	    unsafe {
+   981	        command.pre_exec(|| {
+   982	            leave_service_cgroup()?;
+   983	            libc::setsid();
+   984	            Ok(())
+   985	        });
+   986	    }
+   987	    let mut child = command.spawn().context("Start the Sui watchdog")?;
+   988	    std::thread::spawn(move || {
+   989	        let _ = child.wait();
+   990	    });
+   991	    Ok(())
+   992	}
+   993	
+   994	fn active() -> Result<bool> {
+   995	    if !State::load()?.enabled {
+   996	        return Ok(false);
+   997	    }
+   998	    let module = Path::new(MODULE_DIR);
+   999	    Ok(module.join("sui.dex").is_file() && !module.join(DISABLE_MARKER).exists())
+  1000	}
+  1001	
+  1002	#[cfg(test)]
+  1003	mod tests {
+  1004	    use super::*;
+  1005	    use crate::zygisk::ProviderStatus;
+  1006	
+  1007	    #[test]
+  1008	    fn process_state_rejects_zombies_and_malformed_records() {
+  1009	        assert!(process_running("123 (sui) S 1 2 3"));
+  1010	        assert!(process_running("123 (name with ) parentheses) R 1 2 3"));
+  1011	        assert!(!process_running("123 (sui) Z 1 2 3"));
+  1012	        assert!(!process_running("123 (sui) X 1 2 3"));
+  1013	        assert!(!process_running("123 (sui) x 1 2 3"));
+  1014	        assert!(!process_running("123 (sui) "));
+  1015	        assert!(!process_running("invalid"));
+  1016	    }
+  1017	
+  1018	    fn provider(enabled: bool, engine: bool, injection: &'static str) -> ProviderStatus {
+  1019	        ProviderStatus {
+  1020	            schema_version: 1,
+  1021	            enabled,
+  1022	            engine_available: engine,
+  1023	            enable_blockers: Vec::new(),
+  1024	            external_providers: Vec::new(),
+  1025	            injection_state: injection,
+  1026	            reboot_required: None,
+  1027	            runtime: None,
+  1028	            startup_failures: 0,
+  1029	            startup_blocked: false,
+  1030	            startup_failure_code: None,
+  1031	            startup_failure_detail: None,
+  1032	            startup_generation: 1,
+  1033	        }
+  1034	    }
+  1035	
+  1036	    #[test]
+  1037	    fn gate_requires_an_injected_provider() {
+  1038	        assert_eq!(
+  1039	            gate(&provider(false, true, "unverified"), &[]),
+  1040	            Gate::Blocked("zygisk_disabled", String::new())
+  1041	        );
+  1042	        assert_eq!(
+  1043	            gate(&provider(true, false, "unverified"), &[]),
+  1044	            Gate::Blocked("zygisk_engine_missing", String::new())
+  1045	        );
+  1046	        assert_eq!(gate(&provider(true, true, "injected"), &[]), Gate::Ready);
+  1047	        assert_eq!(
+  1048	            gate(&provider(true, true, "failed"), &[]),
+  1049	            Gate::Blocked("zygisk_injection_failed", "failed".to_owned())
+  1050	        );
+  1051	    }
+  1052	
+  1053	    #[test]
+  1054	    fn gate_accepts_pending_reboot_and_external_providers() {
+  1055	        assert_eq!(
+  1056	            gate(&provider(true, true, "unverified"), &[]),
+  1057	            Gate::PendingReboot
+  1058	        );
+  1059	        let mut external = provider(false, false, "unverified");
+  1060	        external.external_providers = vec!["zygisknext".to_owned()];
+  1061	        assert_eq!(gate(&external, &[]), Gate::ExternalUnverified);
+  1062	    }
+  1063	
+  1064	    #[test]
+  1065	    fn gate_refuses_a_conflicting_install() {
+  1066	        let conflicts = vec!["/data/adb/modules/zygisk-sui".to_owned()];
+  1067	        assert_eq!(
+  1068	            gate(&provider(true, true, "injected"), &conflicts),
+  1069	            Gate::Blocked(
+  1070	                "conflict_existing_sui",
+  1071	                "/data/adb/modules/zygisk-sui".to_owned()
+  1072	            )
+  1073	        );
+  1074	    }
+  1075	}
+=== HEAD builtin_zygisk.rs 1-105 ===
+     1	#![allow(clippy::missing_errors_doc, clippy::must_use_candidate)]
+     2	
+     3	//! Built-in Zygisk, backed by NyaZygisk (the `external/BuiltZygisk` submodule).
+     4	//!
+     5	//! This mirrors what the standalone module's `post-fs-data.sh`, `zygisk-init.sh`
+     6	//! and `post-mount.sh` do, with ksud as the owner instead of a module:
+     7	//!
+     8	//! * `BUILTIN_ZYGISK_DIR` plays the role of `$MODDIR`: binaries, staged libraries
+     9	//!   and the `module.prop` the monitor reads when it starts.
+    10	//! * `BUILTIN_ZYGISK_WORK_DIR` is the runtime directory shared with the injected
+    11	//!   processes, it has to stay in sync with BuiltZygisk's `workDirectory`. The
+    12	//!   monitor keeps its live status in the `module.prop` here.
+    13	//!
+    14	//! Nothing here is ever installed under `/data/adb/modules`: the built-in stays
+    15	//! embedded in ksud and lives only in the two directories above, so it cannot be
+    16	//! disabled, updated or removed like a module. If a standalone provider module is
+    17	//! installed, its own directory is left untouched and only its boot scripts are
+    18	//! skipped.
+    19	
+    20	use crate::defs::{
+    21	    BUILTIN_ZYGISK_DIR, BUILTIN_ZYGISK_FLAG, BUILTIN_ZYGISK_WORK_DIR, DISABLE_FILE_NAME,
+    22	    MODULE_DIR, REMOVE_FILE_NAME,
+    23	};
+    24	use crate::restorecon::setsyscon;
+    25	use crate::utils::{ensure_dir_exists, ensure_file_exists};
+    26	use anyhow::{Context, Result, bail};
+    27	use log::{error, info, warn};
+    28	use std::collections::HashMap;
+    29	use std::fs::{self, File, Permissions};
+    30	use std::io::Write;
+    31	use std::os::unix::fs::{PermissionsExt, lchown};
+    32	use std::path::{Path, PathBuf};
+    33	use std::process::{Command, Stdio};
+    34	use std::time::Duration;
+    35	
+    36	/// Shipped next to the binaries by CI, extracted from BuiltZygisk's
+    37	/// `module/src/sepolicy.rule` so the rules never drift from the loader.
+    38	const ASSET_SEPOLICY: &str = "zygisk-sepolicy.rule";
+    39	/// The resolved `module.prop` of the BuiltZygisk release zip.
+    40	const ASSET_MODULE_PROP: &str = "zygisk-module.prop";
+    41	/// The loader the zygote is injected with; a live handover needs both sides identical.
+    42	const ASSET_ZYGISK_LIB: &str = "libzygisk.so";
+    43	/// The 32-bit loader, for devices with a 32-bit zygote.
+    44	const ASSET_ZYGISK32_LIB: &str = "libzygisk32.so";
+    45	
+    46	/// How long `shutdown` waits for the monitor to die, same budget as emulated-soft-reboot.sh.
+    47	const SHUTDOWN_WAIT_SECS: u32 = 10;
+    48	/// How long a switch waits for the monitor, the daemon or the old processes.
+    49	const SWITCH_WAIT_SECS: u32 = 5;
+    50	
+    51	/// Staging directory used by earlier ksud builds. Removed on disable so an upgrade
+    52	/// does not leave a second copy of the binaries behind.
+    53	const LEGACY_BUILTIN_ZYGISK_DIR: &str = "/data/adb/nyazygisk";
+    54	
+    55	pub fn is_enabled() -> bool {
+    56	    Path::new(BUILTIN_ZYGISK_FLAG).exists()
+    57	}
+    58	
+    59	pub fn enable() -> Result<()> {
+    60	    ensure_file_exists(BUILTIN_ZYGISK_FLAG)?;
+    61	    info!("Built-in Zygisk has been enabled");
+    62	    Ok(())
+    63	}
+    64	
+    65	fn remove_leftover(dir: &str) {
+    66	    let path = Path::new(dir);
+    67	    if path.exists()
+    68	        && let Err(e) = fs::remove_dir_all(path)
+    69	    {
+    70	        warn!("Failed to remove {}: {e}", path.display());
+    71	    }
+    72	}
+    73	
+    74	pub fn disable() -> Result<()> {
+    75	    // Only the flag goes; the monitor and its daemons keep running so the current
+    76	    // session is not disturbed. The module system behaves the same way: a disable file
+    77	    // takes effect on the next boot, it does not kill a running Zygisk. They are
+    78	    // stopped by a soft reboot and die with the system on a real one, at which point
+    79	    // `cleanup_disabled` drops the files.
+    80	    let flag = Path::new(BUILTIN_ZYGISK_FLAG);
+    81	    if flag.exists() {
+    82	        fs::remove_file(flag).with_context(|| "Failed to remove builtin zygisk flag")?;
+    83	    }
+    84	    info!("Built-in Zygisk disabled, its processes stop at the next reboot");
+    85	    Ok(())
+    86	}
+    87	
+    88	/// Remove what a disabled built-in left behind.
+    89	///
+    90	/// Only safe with no live monitor: a boot without the flag reaches this after the reboot
+    91	/// killed the previous session's processes, and a soft reboot calls it after `shutdown`.
+    92	/// The work dir is shared with a standalone NyaZygisk module, which keeps its options and
+    93	/// reported status there; it is only dropped when something of ours was staged next to it
+    94	/// and no standalone NyaZygisk stands in for the built-in.
+    95	pub fn cleanup_disabled() -> Result<()> {
+    96	    if is_enabled() {
+    97	        return Ok(());
+    98	    }
+    99	    // A monitor that outlived `shutdown` still runs from the staged dir. Deleting it
+   100	    // would leave init traced by a process whose binaries are gone and would keep every
+   101	    // provider from seizing init, so the files wait for the next boot.
+   102	    if monitor_process().is_some() {
+   103	        warn!("Built-in Zygisk cleanup skipped, its monitor is still running");
+   104	        return Ok(());
+   105	    }
+=== finasu sui module/build.gradle.kts ===
+     1	/*
+     2	 * This file is part of Sui.
+     3	 *
+     4	 * Sui is free software: you can redistribute it and/or modify
+     5	 * it under the terms of the GNU General Public License as published by
+     6	 * the Free Software Foundation, either version 3 of the License, or
+     7	 * (at your option) any later version.
+     8	 *
+     9	 * Sui is distributed in the hope that it will be useful,
+    10	 * but WITHOUT ANY WARRANTY; without even the implied warranty of
+    11	 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    12	 * GNU General Public License for more details.
+    13	 *
+    14	 * You should have received a copy of the GNU General Public License
+    15	 * along with Sui.  If not, see <https://www.gnu.org/licenses/>.
+    16	 *
+    17	 * Copyright (c) 2026 Sui Contributors
+    18	 */
+    19	
+    20	import com.android.build.api.artifact.SingleArtifact
+    21	import org.apache.tools.ant.filters.FixCrLfFilter
+    22	import java.io.File
+    23	import java.security.MessageDigest
+    24	import rikka.sui.gradle.AdbModuleTask
+    25	import rikka.sui.gradle.ModuleInstallerMode
+    26	
+    27	plugins {
+    28	    alias(libs.plugins.android.application)
+    29	    alias(libs.plugins.refine)
+    30	}
+    31	
+    32	apply(from = "$rootDir/module.gradle.kts")
+    33	
+    34	val gitCommitCount = extra["gitCommitCount"] as Int
+    35	val moduleVersion = extra["moduleVersion"] as String
+    36	val moduleId = extra["moduleId"] as String
+    37	val moduleVersionCode = extra["moduleVersionCode"] as Int
+    38	val gitCommitId = extra["gitCommitId"] as String
+    39	val moduleName = extra["moduleName"] as String
+    40	val moduleAuthor = extra["moduleAuthor"] as String
+    41	val moduleDescription = extra["moduleDescription"] as String
+    42	val uiProject = project(":ui")
+    43	val outDir = rootProject.file("out")
+    44	val magiskTemplateDir = rootProject.file("template/magisk_module")
+    45	val modulePropValues = mapOf(
+    46	    "id" to moduleId,
+    47	    "name" to moduleName,
+    48	    "author" to moduleAuthor,
+    49	    "description" to moduleDescription,
+    50	)
+    51	
+    52	fun String.capitalized(): String = replaceFirstChar { char ->
+    53	    if (char.isLowerCase()) char.titlecase() else char.toString()
+    54	}
+    55	
+    56	fun sha256(file: File): String {
+    57	    val digest = MessageDigest.getInstance("SHA-256")
+    58	    file.inputStream().use { input ->
+    59	        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+    60	        while (true) {
+    61	            val bytesRead = input.read(buffer)
+    62	            if (bytesRead < 0) break
+    63	            digest.update(buffer, 0, bytesRead)
+    64	        }
+    65	    }
+    66	    return digest.digest().joinToString("") { "%02x".format(it) }
+    67	}
+    68	
+    69	android {
+    70	    namespace = "rikka.sui"
+    71	    defaultConfig {
+    72	        minSdk = 23
+    73	        versionCode = gitCommitCount
+    74	        versionName = moduleVersion.substring(1)
+    75	        externalNativeBuild {
+    76	            cmake {
+    77	                arguments += listOf("-DZYGISK_MODULE_ID:STRING=\"$moduleId\"", "-DANDROID_STL=none")
+    78	            }
+    79	        }
+    80	    }
+    81	    buildFeatures {
+    82	        viewBinding = true
+    83	        prefab = true
+    84	    }
+    85	    externalNativeBuild {
+    86	        cmake {
+    87	            path = file("src/main/cpp/CMakeLists.txt")
+    88	            version = "4.1.0+"
+    89	        }
+    90	    }
+    91	    buildTypes {
+    92	        getByName("release") {
+    93	            isMinifyEnabled = true
+    94	            isShrinkResources = true
+    95	            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+    96	            ndk {
+    97	                debugSymbolLevel = "SYMBOL_TABLE"
+    98	            }
+    99	        }
+   100	    }
+   101	    lint {
+   102	        checkReleaseBuilds = false
+   103	    }
+   104	    dependenciesInfo {
+   105	        includeInApk = false
+   106	    }
+   107	}
+   108	
+   109	dependencies {
+   110	    implementation(libs.refine.runtime)
+   111	
+   112	    implementation(libs.libcxx)
+   113	    implementation(libs.nativehelper)
+   114	    implementation(libs.parcelablelist)
+   115	
+   116	    implementation(libs.androidx.annotation)
+   117	    implementation(libs.androidx.core)
+   118	
+   119	    implementation(project(":aidl"))
+   120	    implementation(project(":shared"))
+   121	    implementation(project(":api"))
+   122	    implementation(project(":rish"))
+   123	    implementation(project(":server-shared"))
+   124	
+   125	    implementation(libs.hidden.compat)
+   126	    compileOnly(libs.hidden.stub)
+   127	}
+   128	
+   129	androidComponents {
+   130	    onVariants(selector().all()) { variant ->
+   131	        val variantCapped = variant.name.capitalized()
+   132	        val variantLowered = variant.name.lowercase()
+   133	        val buildType = requireNotNull(variant.buildType) { "Variant ${variant.name} is missing buildType" }
+   134	        val buildTypeCapped = buildType.capitalized()
+   135	        val buildTypeLowered = buildType.lowercase()
+   136	
+   137	        val buildMetadata = "${moduleVersionCode}-${gitCommitId}-${buildTypeLowered}"
+   138	        val zipName = "Sui-${moduleVersion}_${buildMetadata}.zip"
+   139	        val magiskDir = file("$outDir/${buildTypeLowered}")
+   140	        val moduleApkDir = variant.artifacts.get(SingleArtifact.APK)
+   141	        val mergedDexDir = layout.buildDirectory.dir("intermediates/sui_dex/$variantLowered")
+   142	        val mergeSuiDexTask = if (buildTypeLowered == "release") {
+   143	            null
+   144	        } else {
+   145	            tasks.register<Exec>("mergeSuiDex${variantCapped}") {
+   146	                inputs.dir(moduleApkDir)
+   147	                outputs.file(mergedDexDir.map { it.file("classes.dex") })
+   148	
+   149	                doFirst {
+   150	                    val apkFiles = moduleApkDir.get().asFile.walkTopDown()
+   151	                        .filter { it.isFile && it.extension == "apk" }
+   152	                        .toList()
+   153	                    require(apkFiles.size == 1) {
+   154	                        "Expected one ${variant.name} APK, found: ${apkFiles.joinToString()}"
+   155	                    }
+   156	
+   157	                    val outputDir = mergedDexDir.get().asFile
+   158	                    delete(outputDir)
+   159	                    check(outputDir.mkdirs()) { "Cannot create $outputDir" }
+   160	
+   161	                    val executableName = if (System.getProperty("os.name").startsWith("Windows")) {
+   162	                        "d8.bat"
+   163	                    } else {
+   164	                        "d8"
+   165	                    }
+   166	                    val d8 = androidComponents.sdkComponents.sdkDirectory.get().asFile.resolve(
+   167	                        "build-tools/${android.buildToolsVersion}/$executableName"
+   168	                    )
+   169	                    check(d8.isFile) { "D8 does not exist: $d8" }
+   170	
+   171	                    val arguments = mutableListOf(
+   172	                        d8.absolutePath,
+   173	                        "--debug",
+   174	                        "--min-api", variant.minSdk.apiLevel.toString()
+   175	                    )
+   176	                    androidComponents.sdkComponents.bootClasspath.get().forEach { library ->
+   177	                        arguments += listOf("--lib", library.asFile.absolutePath)
+   178	                    }
+   179	                    arguments += listOf("--output", outputDir.absolutePath, apkFiles.single().absolutePath)
+   180	                    commandLine(arguments)
+   181	                }
+   182	            }
+   183	        }
+   184	        val dexDir = if (buildTypeLowered == "release") {
+   185	            layout.buildDirectory.dir("intermediates/dex/${variantLowered}/minify${variantCapped}WithR8")
+   186	        } else {
+   187	            mergedDexDir
+   188	        }
+   189	        val strippedLibsDir = layout.buildDirectory.dir(
+   190	            "intermediates/stripped_native_libs/${variantLowered}/strip${variantCapped}DebugSymbols/out/lib"
+   191	        )
+   192	        val uiApkDir = uiProject.layout.buildDirectory.dir("outputs/apk/$buildTypeLowered")
+   193	
+   194	        tasks.register<Sync>("prepareMagiskFiles${variantCapped}") {
+   195	            mergeSuiDexTask?.let { dependsOn(it) }
+   196	            into(magiskDir)
+   197	            from(magiskTemplateDir) {
+   198	                exclude("module.prop", "action.sh")
+   199	            }
+   200	            from(magiskTemplateDir) {
+   201	                include("module.prop")
+   202	                expand(
+   203	                    modulePropValues + mapOf(
+   204	                        "version" to "${moduleVersion} (${buildMetadata})",
+   205	                        "versionCode" to moduleVersionCode.toString()
+   206	                    )
+   207	                )
+   208	                filter<FixCrLfFilter>("eol" to FixCrLfFilter.CrLf.newInstance("lf"))
+   209	            }
+   210	            from(magiskTemplateDir) {
+   211	                include("action.sh")
+   212	                filter<FixCrLfFilter>("eol" to FixCrLfFilter.CrLf.newInstance("lf"))
+   213	            }
+   214	            from(dexDir) {
+   215	                include("classes.dex")
+   216	                rename { "sui.dex" }
+   217	            }
+   218	            from(strippedLibsDir) {
+   219	                into("lib")
+   220	            }
+   221	            from(uiApkDir) {
+   222	                include("*.apk")
+   223	                rename { "sui.apk" }
+   224	            }
+   225	            doLast {
+   226	                val suiDex = file("$magiskDir/sui.dex")
+   227	                check(suiDex.isFile && suiDex.length() > 0) {
+   228	                    "sui.dex was not produced for ${variant.name}"
+   229	                }
+   230	                fileTree(magiskDir)
+   231	                    .files
+   232	                    .asSequence()
+   233	                    .filterNot { it.name == ".gitattributes" }
+   234	                    .forEach { file ->
+   235	                        file("${file.path}.sha256").writeText(sha256(file))
+   236	                    }
+   237	            }
+   238	        }
+   239	
+   240	        val zipTask = tasks.register<Zip>("zip${variantCapped}") {
+   241	            dependsOn("prepareMagiskFiles${variantCapped}")
+   242	            from(magiskDir)
+   243	            archiveFileName.set(zipName)
+   244	            destinationDirectory.set(outDir)
+   245	        }
+   246	
+   247	        fun registerAdbTask(
+   248	            name: String,
+   249	            installerMode: ModuleInstallerMode? = null,
+   250	            shouldReboot: Boolean = false
+   251	        ) {
+   252	            tasks.register<AdbModuleTask>(name) {
+   253	                dependsOn(zipTask)
+   254	                moduleZip.set(zipTask.flatMap { it.archiveFile })
+   255	                installerMode?.let { installer.set(it) }
+   256	                reboot.set(shouldReboot)
+   257	                device.convention(providers.gradleProperty("device"))
+   258	            }
+   259	        }
+   260	
+   261	        registerAdbTask("push${variantCapped}")
+   262	        registerAdbTask("flash${variantCapped}", ModuleInstallerMode.AUTO)
+   263	        registerAdbTask("flashWithMagisk${variantCapped}", ModuleInstallerMode.MAGISK)
+   264	        registerAdbTask("flashWithKsud${variantCapped}", ModuleInstallerMode.KERNEL_SU)
+   265	        registerAdbTask("flashAndReboot${variantCapped}", ModuleInstallerMode.AUTO, shouldReboot = true)
+   266	        registerAdbTask(
+   267	            "flashWithMagiskAndReboot${variantCapped}",
+   268	            ModuleInstallerMode.MAGISK,
+   269	            shouldReboot = true
+   270	        )
+   271	        registerAdbTask(
+   272	            "flashWithKsudAndReboot${variantCapped}",
+   273	            ModuleInstallerMode.KERNEL_SU,
+   274	            shouldReboot = true
+   275	        )
+   276	    }
+   277	}
+   278	
+   279	afterEvaluate {
+   280	    listOf("Debug", "Release").forEach { buildType ->
+   281	        tasks.named("pre${buildType}Build").configure {
+   282	            dependsOn(":ui:assemble${buildType}")
+   283	        }
+   284	
+   285	        tasks.named("prepareMagiskFiles${buildType}").configure {
+   286	            dependsOn("assemble${buildType}")
+   287	        }
+   288	
+   289	        tasks.named("assemble${buildType}").configure {
+   290	            finalizedBy("zip${buildType}")
+   291	        }
+   292	    }
+   293	}
