@@ -1,0 +1,221 @@
+=== HEAD builtin_zygisk pub fns ===
+55:pub fn is_enabled() -> bool {
+59:pub fn enable() -> Result<()> {
+74:pub fn disable() -> Result<()> {
+95:pub fn cleanup_disabled() -> Result<()> {
+170:pub fn monitor_process() -> Option<(i32, String)> {
+180:pub fn daemon_processes() -> Vec<(i32, String)> {
+202:pub fn is_monitor_running() -> bool {
+206:pub fn is_daemon_running() -> bool {
+211:pub struct ImplementationProcesses {
+217:pub fn processes(target: &str) -> Result<ImplementationProcesses> {
+245:pub struct InjectedModule {
+455:pub fn injected_modules() -> Vec<InjectedModule> {
+676:pub fn is_monitor_active() -> bool {
+681:pub fn is_daemon_active() -> bool {
+689:pub fn is_zygote_injected() -> bool {
+695:pub fn is_fully_active() -> bool {
+703:pub fn zygote_states() -> Vec<(String, String)> {
+726:pub fn provider_ids() -> Vec<String> {
+745:pub fn suppresses_module_dir(path: &Path) -> bool {
+762:pub fn short_version(version: &str) -> String {
+773:pub struct ImplementationInfo {
+782:pub fn implementation_info() -> ImplementationInfo {
+862:pub const BUILTIN_TARGET: &str = "builtin";
+865:pub fn is_provider_id(module_id: &str) -> bool {
+875:pub fn is_provider_module(dir_id: &str, prop_id: &str) -> bool {
+1013:pub fn is_provider_running(module_id: &str) -> bool {
+1066:pub fn switch_to(target: &str) -> Result<()> {
+1402:pub fn version() -> Option<(String, String)> {
+1416:pub fn apply_sepolicy() -> Result<()> {
+1556:pub fn bootstrap() -> Result<()> {
+1645:pub fn ensure_monitor() -> Result<()> {
+1658:pub fn rearm() -> Result<()> {
+1684:pub fn ensure_armed() -> Result<()> {
+1708:pub fn shutdown() -> Result<()> {
+1761:pub fn config_get_all() -> Vec<(&'static str, String)> {
+1778:pub fn config_set(key: &str, value: &str) -> Result<()> {
+=== HEAD builtin_zygisk status/zygotes/provider ===
+=== finasu SuiStatusItem.kt ===
+     1	package me.weishu.kernelsu.ui.screen.settings
+     2	
+     3	import androidx.annotation.StringRes
+     4	import androidx.compose.material.icons.Icons
+     5	import androidx.compose.material.icons.automirrored.filled.OpenInNew
+     6	import androidx.compose.material.icons.filled.WaterDrop
+     7	import androidx.compose.material3.Icon
+     8	import androidx.compose.material3.Text
+     9	import androidx.compose.runtime.Composable
+    10	import androidx.compose.ui.res.stringResource
+    11	import me.weishu.kernelsu.R
+    12	import me.weishu.kernelsu.data.model.SuiStatus
+    13	import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
+    14	import me.weishu.kernelsu.ui.component.material.SegmentedListItem
+    15	import me.weishu.kernelsu.ui.component.material.SegmentedSwitchItem
+    16	
+    17	/**
+    18	 * Sui is a Zygisk module, so its switch stays disabled until ksud reports a usable provider.
+    19	 * The permission UI itself stays Sui's own; this row only owns install, enable and diagnosis.
+    20	 */
+    21	@Composable
+    22	internal fun SuiStatusItem(state: SettingsUiState, actions: SettingsScreenActions) {
+    23	    val status = state.suiStatus
+    24	    val confirm = rememberConfirmDialog(onConfirm = { actions.onSetSuiEnabled(true) })
+    25	    val notInstalled = stringResource(R.string.sui_not_installed)
+    26	    val stateText = status?.let { stringResource(suiStateRes(it)) }
+    27	    val reasonText = status?.let { suiReasonRes(it)?.let { res -> stringResource(res, it.detail) } }
+    28	    val zygiskText = status?.let { stringResource(zygiskStateRes(it)) }.orEmpty()
+    29	    val confirmTitle = stringResource(R.string.sui_confirm_title)
+    30	    val confirmAccept = stringResource(R.string.sui_confirm_confirm)
+    31	    val confirmCancel = stringResource(R.string.sui_confirm_cancel)
+    32	    val confirmBody = status?.let {
+    33	        stringResource(
+    34	            R.string.sui_confirm_body,
+    35	            zygiskText,
+    36	            it.payloadVersion.ifBlank { notInstalled },
+    37	        )
+    38	    }
+    39	    val summary = when {
+    40	        state.isSuiLoading -> stringResource(R.string.sui_loading)
+    41	        state.suiReadError || status == null -> stringResource(R.string.sui_read_error)
+    42	        else -> listOfNotNull(
+    43	            stateText,
+    44	            reasonText,
+    45	            stringResource(R.string.sui_dependency, zygiskText),
+    46	        ).joinToString("\n")
+    47	    }
+    48	    val actionable = status != null && !state.suiReadError && !state.isSuiLoading && !state.isSuiWriting
+    49	
+    50	    SegmentedSwitchItem(
+    51	        icon = Icons.Filled.WaterDrop,
+    52	        title = stringResource(R.string.sui_title),
+    53	        summary = summary,
+    54	        checked = status?.selected == true,
+    55	        enabled = actionable && status.conflicts.isEmpty(),
+    56	        onCheckedChange = { wanted ->
+    57	            if (!wanted) {
+    58	                actions.onSetSuiEnabled(false)
+    59	            } else {
+    60	                confirm.showConfirm(
+    61	                    title = confirmTitle,
+    62	                    content = confirmBody,
+    63	                    confirm = confirmAccept,
+    64	                    dismiss = confirmCancel,
+    65	                )
+    66	            }
+    67	        },
+    68	    )
+    69	
+    70	    if (status != null && status.installed) {
+    71	        SegmentedListItem(
+    72	            headlineContent = { Text(stringResource(R.string.sui_manage)) },
+    73	            supportingContent = { Text(stringResource(R.string.sui_manage_summary)) },
+    74	            leadingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, null) },
+    75	            enabled = !state.isSuiWriting,
+    76	            onClick = actions.onManageSuiPermissions,
+    77	        )
+    78	    }
+    79	
+    80	    if (status != null && status.needsDiagnostics) {
+    81	        SuiDiagnostics(
+    82	            status = status,
+    83	            onRepair = actions.onRepairSui,
+    84	            busy = state.isSuiWriting,
+    85	            managementAvailable = state.suiManagementAvailable,
+    86	        )
+    87	    }
+    88	}
+    89	
+    90	@Composable
+    91	private fun SuiDiagnostics(
+    92	    status: SuiStatus,
+    93	    onRepair: () -> Unit,
+    94	    busy: Boolean,
+    95	    managementAvailable: Boolean?,
+    96	) {
+    97	    val payload = when {
+    98	        !status.installed -> stringResource(R.string.sui_diag_payload_absent)
+    99	        status.payloadCurrent -> stringResource(R.string.sui_diag_payload_ok)
+   100	        else -> stringResource(R.string.sui_diag_payload_stale)
+   101	    }
+   102	    SegmentedListItem(
+   103	        headlineContent = { Text(stringResource(R.string.sui_diag_injection)) },
+   104	        supportingContent = { Text(stringResource(zygiskStateRes(status))) },
+   105	    )
+   106	    SegmentedListItem(
+   107	        headlineContent = { Text(stringResource(R.string.sui_diag_payload)) },
+   108	        supportingContent = { Text("$payload · ${status.payloadVersion.ifBlank { DEFAULT_VERSION }}") },
+   109	    )
+   110	    SegmentedListItem(
+   111	        headlineContent = { Text(stringResource(R.string.sui_diag_daemons)) },
+   112	        supportingContent = {
+   113	            Text(
+   114	                stringResource(
+   115	                    if (status.daemonHealthy) R.string.sui_diag_daemons_ok
+   116	                    else R.string.sui_diag_daemons_stopped,
+   117	                ),
+   118	            )
+   119	        },
+   120	    )
+   121	    if (status.conflicts.isNotEmpty()) {
+   122	        SegmentedListItem(
+   123	            headlineContent = { Text(stringResource(R.string.sui_diag_conflicts)) },
+   124	            supportingContent = { Text(status.conflicts.joinToString()) },
+   125	        )
+   126	    }
+   127	    managementAvailable?.let { available ->
+   128	        SegmentedListItem(
+   129	            headlineContent = { Text(stringResource(R.string.sui_diag_management)) },
+   130	            supportingContent = {
+   131	                Text(
+   132	                    stringResource(
+   133	                        if (available) R.string.sui_management_ok
+   134	                        else R.string.sui_management_unavailable,
+   135	                    ),
+   136	                )
+   137	            },
+   138	        )
+   139	    }
+   140	    if (!status.installed || !status.payloadCurrent) {
+   141	        SegmentedListItem(
+   142	            headlineContent = { Text(stringResource(R.string.sui_repair)) },
+   143	            supportingContent = { Text(stringResource(R.string.sui_repair_summary)) },
+   144	            enabled = !busy,
+   145	            onClick = onRepair,
+   146	        )
+   147	    }
+   148	}
+   149	
+   150	private const val DEFAULT_VERSION = "-"
+   151	
+   152	@StringRes
+   153	private fun suiStateRes(status: SuiStatus): Int = when (status.state) {
+   154	    SuiStatus.STATE_ENABLED -> R.string.sui_state_enabled
+   155	    SuiStatus.STATE_PENDING_REBOOT -> R.string.sui_state_pending
+   156	    SuiStatus.STATE_EXTERNAL_UNVERIFIED -> R.string.sui_state_external
+   157	    SuiStatus.STATE_UNAVAILABLE -> R.string.sui_state_unavailable
+   158	    SuiStatus.STATE_ERROR -> R.string.sui_state_error
+   159	    else -> R.string.sui_state_disabled
+   160	}
+   161	
+   162	@StringRes
+   163	private fun suiReasonRes(status: SuiStatus): Int? = when (status.reason) {
+   164	    "zygisk_disabled" -> R.string.sui_reason_zygisk_disabled
+   165	    "zygisk_engine_missing" -> R.string.sui_reason_zygisk_engine_missing
+   166	    "zygisk_startup_protection" -> R.string.sui_reason_zygisk_startup
+   167	    "zygisk_injection_failed" -> R.string.sui_reason_injection_failed
+   168	    "conflict_existing_sui" -> R.string.sui_reason_conflict
+   169	    "payload_missing" -> R.string.sui_reason_payload_missing
+   170	    "module_disabled" -> R.string.sui_reason_module_disabled
+   171	    "enabled_externally" -> R.string.sui_reason_enabled_externally
+   172	    "not_installed" -> null
+   173	    else -> R.string.sui_reason_unknown.takeIf { status.state == SuiStatus.STATE_ERROR }
+   174	}
+   175	
+   176	@StringRes
+   177	private fun zygiskStateRes(status: SuiStatus): Int = when {
+   178	    status.externalProviders.isNotEmpty() -> R.string.sui_zygisk_external
+   179	    !status.zygiskEnabled || !status.engineAvailable -> R.string.sui_zygisk_disabled
+   180	    status.injectionState == "injected" -> R.string.sui_zygisk_injected
+   181	    else -> R.string.sui_zygisk_pending
+   182	}
