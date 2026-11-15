@@ -1,0 +1,328 @@
+=== HEAD SettingsRepositoryImpl builtinZygisk/ksud ===
+13-import com.sukisu.ultra.Natives
+14-import com.sukisu.ultra.ksuApp
+15-import com.sukisu.ultra.magica.BootCompletedReceiver
+16-import com.sukisu.ultra.ui.UiMode
+17-import com.sukisu.ultra.ui.screen.module.ModuleNameSort
+18-import com.sukisu.ultra.ui.screen.modulerepo.RepoSort
+19-import com.sukisu.ultra.ui.util.ImageStorage
+20-import com.sukisu.ultra.ui.util.HomeCardSticker
+21-import com.sukisu.ultra.ui.util.HomeStatusStyle
+22-import com.sukisu.ultra.ui.util.BuiltinAppIcons
+23:import com.sukisu.ultra.ui.util.execKsud
+24-import com.sukisu.ultra.ui.util.getFeaturePersistValue
+25-import com.sukisu.ultra.ui.util.getFeatureValue
+26-import com.sukisu.ultra.ui.util.getFeatureStatus
+27-import com.sukisu.ultra.ui.util.LocaleHelper
+28-import java.security.SecureRandom
+29-import kotlinx.serialization.json.Json
+30-
+31-private const val SETTINGS_PREFS = "settings"
+32-private const val KEY_USE_SOFT_REBOOT = "soft_reboot"
+33-private const val KEY_AUTO_DELETE_MODULE_ZIP = "auto_delete_module_zip"
+--
+525-                    PackageManager.DONT_KILL_APP
+526-                )
+527-            }.onFailure {
+528-                Log.e("Settings", "failed to change boot receiver state to $value", it)
+529-            }
+530-            prefs.edit {
+531-                putBoolean("auto_jailbreak", value)
+532-            }
+533-        }
+534-
+535:    override var builtinZygisk: Boolean
+536-        get() = com.sukisu.ultra.ui.util.getBuiltinZygiskStatus().enabled
+537-        set(value) {
+538-            com.sukisu.ultra.ui.util.setBuiltinZygiskEnabled(value)
+539-        }
+540-
+541-    override var useSoftReboot: Boolean
+542-        get() = prefs.getBoolean(KEY_USE_SOFT_REBOOT, false)
+543-        set(value) = prefs.edit { putBoolean(KEY_USE_SOFT_REBOOT, value) }
+544-
+545-    override val intentToken: String
+--
+585-    override fun isMountHideEnabled(): Boolean = Natives.isMountHideEnabled()
+586-
+587-    override fun setMountHideEnabled(enabled: Boolean): Int = Natives.setMountHideEnabled(enabled)
+588-
+589-    override suspend fun getSulogStatus(): String = getFeatureStatus("sulog")
+590-
+591-    override suspend fun getSulogPersistValue(): Long? = getFeaturePersistValue("sulog")
+592-
+593-    override suspend fun getSulogValue(): Long? = getFeatureValue("sulog")
+594-
+595:    override fun setSulogEnabled(enabled: Boolean): Boolean = execKsud("feature set sulog ${if (enabled) 1 else 0}", true)
+596-
+597-    override suspend fun getAdbRootStatus(): String = getFeatureStatus("adb_root")
+598-
+599-    override suspend fun getAdbRootPersistValue(): Long? = getFeaturePersistValue("adb_root")
+600-
+601-    override suspend fun getAdbRootValue(): Long? = getFeatureValue("adb_root")
+602-
+603-    override fun setAdbRootEnabled(enabled: Boolean): Boolean =
+604:        if (execKsud("feature set adb_root ${if (enabled) 1 else 0}", true)) {
+605-            ShellUtils.fastCmd("setprop ctl.restart adbd")
+606-            true
+607-        } else {
+608-            false
+609-        }
+610-
+611-    override suspend fun getShellSuAdbOnlyStatus(): String = getFeatureStatus("shell_su_adb_only")
+612-
+613-    override suspend fun getShellSuAdbOnlyValue(): Long? = getFeatureValue("shell_su_adb_only")
+614-
+615-    override suspend fun getShellSuAdbOnlyPersistValue(): Long? = getFeaturePersistValue("shell_su_adb_only")
+616-
+617-    override fun setShellSuAdbOnlyEnabled(enabled: Boolean): Boolean =
+618:        execKsud("feature set shell_su_adb_only ${if (enabled) 1 else 0}", true)
+619-
+620-    override fun isDefaultUmountModules(): Boolean = Natives.isDefaultUmountModules()
+621-
+622-    override fun setDefaultUmountModules(enabled: Boolean): Boolean = Natives.setDefaultUmountModules(enabled)
+623-
+624-    override fun isLkmMode(): Boolean = Natives.isLkmMode
+625-
+626:    override fun execKsudFeatureSave() {
+627:        execKsud("feature save", true)
+628-    }
+629-}
+=== HEAD KsuCli.kt exec helper ===
+37-import java.util.zip.ZipFile
+38-
+39-/**
+40- * @author weishu
+41- * @date 2023/1/1.
+42- */
+43-private const val TAG = "KsuCli"
+44-
+45:fun getKsuDaemonPath(): String {
+46-    return ksuApp.applicationInfo.nativeLibraryDir + File.separator + "libksud.so"
+47-}
+48-
+49-// Single-quote a value for safe interpolation
+50-fun String.shellQuote(): String = "'" + replace("'", "'\\''") + "'"
+51-
+52-data class FlashResult(val code: Int, val err: String, val showReboot: Boolean, val outputFile: File? = null) {
+53-    constructor(result: Shell.Result, showReboot: Boolean) : this(result.code, result.err.joinToString("\n"), showReboot)
+--
+114-        withNewRootShell(globalMnt = globalMnt) {
+115-            ShellUtils.fastCmdResult(this, "${getKsuDaemonPath()} $args")
+116-        }
+117-    } else {
+118-        ShellUtils.fastCmdResult(getRootShell(globalMnt), "${getKsuDaemonPath()} $args")
+119-    }
+120-}
+121-
+122:suspend fun getFeatureStatus(feature: String): String = withContext(Dispatchers.IO) {
+123-    val shell = getRootShell()
+124-    val out = shell.newJob()
+125-        .add("${getKsuDaemonPath()} feature check $feature").to(ArrayList<String>(), null).exec().out
+126-    out.firstOrNull()?.trim().orEmpty()
+127-}
+128-
+129-suspend fun getFeaturePersistValue(feature: String): Long? = readFeatureValue("--config $feature")
+130-
+--
+916-// subcommand is `extension <get|set|check|list|...>`.
+917-//
+918-// All probe helpers go through withNewRootShell() rather than the
+919-// shared KsuCli.SHELL, so callers can fan out concurrently without
+920-// racing on a single shell's command queue (each shell accepts
+921-// exactly one command at a time, and libsu's job output is a
+922-// per-shell buffer).
+923-
+924:suspend fun getExtensionStatus(extension: String): String = withContext(Dispatchers.IO) {
+925-    val out = withNewRootShell {
+926-        newJob()
+927-            .add("${getKsuDaemonPath()} extension check $extension")
+928-            .to(ArrayList<String>(), null)
+929-            .exec()
+930-            .out
+931-    }
+932-    out.firstOrNull()?.trim().orEmpty()
+--
+1210-
+1211-fun getKpmVersion(): String {
+1212-    val shell = getRootShell()
+1213-    val cmd = "${getKsuDaemonPath()} kpm version"
+1214-    val result = ShellUtils.fastCmd(shell, cmd)
+1215-    return result.trim()
+=== finasu SettingsViewModel sui ===
+9-import kotlinx.coroutines.async
+10-import kotlinx.coroutines.flow.MutableStateFlow
+11-import kotlinx.coroutines.flow.StateFlow
+12-import kotlinx.coroutines.flow.asStateFlow
+13-import kotlinx.coroutines.flow.update
+14-import kotlinx.coroutines.launch
+15-import kotlinx.coroutines.withContext
+16-import me.weishu.kernelsu.Natives
+17:import me.weishu.kernelsu.data.model.SuiStatus
+18-import me.weishu.kernelsu.R
+19-import me.weishu.kernelsu.data.model.FolkMountMode
+20-import me.weishu.kernelsu.data.model.HomeLayoutStyle
+21-import me.weishu.kernelsu.data.model.LayoutVariant
+22-import me.weishu.kernelsu.data.model.SupportLinksStyle
+23-import me.weishu.kernelsu.data.repository.SettingsRepository
+24-import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
+25-import me.weishu.kernelsu.data.susfs.SusfsRepository
+26-import me.weishu.kernelsu.ksuApp
+27:import me.weishu.kernelsu.ui.screen.settings.SettingsUiState
+28-import me.weishu.kernelsu.ui.theme.ColorMode
+29-
+30-class SettingsViewModel(
+31-    private val repo: SettingsRepository = SettingsRepositoryImpl(),
+32-) : ViewModel() {
+33-
+34:    private val _uiState = MutableStateFlow(SettingsUiState())
+35:    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+36-    private var refreshGeneration = 0
+37-    private var initialized = false
+38-
+39-    fun ensureLoaded() {
+40-        if (initialized) return
+41-        initialized = true
+42-        refresh()
+43-    }
+--
+67-            val layoutVariant = repo.layoutVariant
+68-            val colorStyle = repo.colorStyle
+69-            val colorSpec = repo.colorSpec
+70-            val isLkmMode = repo.isLkmMode()
+71-
+72-            val folkMountJob = async { repo.getFolkMountStatus() }
+73-            val nomountJob = async { repo.getNomountStatus() }
+74-            val folkZygiskJob = async { repo.getFolkZygiskStatus() }
+75:            val suiJob = async { repo.getSuiStatus() }
+76-
+77-            // Async loading for natives/features
+78-            val suCompatStatus = repo.getSuCompatStatus()
+79-            val suCompatPersistValue = repo.getSuCompatPersistValue()
+80-            val isSuEnabled = repo.isSuEnabled()
+81-
+82-            val suCompatMode = when {
+83-                suCompatStatus == "forced" -> if (isSuEnabled) 0 else 2
+--
+117-            val isDynamicManagerAvailable = Natives.isDynamicManagerEnabled()
+118-            val isLateLoadMode = Natives.isLateLoadMode
+119-            val kernelFullVersionAvailable = Natives.isManager && !Natives.getFullVersion().isNullOrBlank()
+120-            val hookTypeAvailable = Natives.isManager
+121-
+122-            val folkMountResult = folkMountJob.await()
+123-            val nomountResult = nomountJob.await()
+124-            val folkZygiskResult = folkZygiskJob.await()
+125:            val suiResult = suiJob.await()
+126-
+127-            // The home card's SUSFS row switch only makes sense when the kernel reports SUSFS.
+128-            val susfsDetected = try {
+129-                SusfsRepository().status().detected
+130-            } catch (e: kotlinx.coroutines.CancellationException) {
+131-                throw e
+132-            } catch (e: Exception) {
+133-                false
+134-            }
+135-
+136-            if (generation != refreshGeneration) return@launch
+137:            val suiManagement = if (suiResult.getOrNull()?.state == SuiStatus.STATE_ENABLED) {
+138:                refreshSuiManagement()
+139-            } else {
+140-                null
+141-            }
+142-            _uiState.update {
+143-                it.copy(
+144-                    checkUpdate = checkUpdate,
+145-                    checkModuleUpdate = checkModuleUpdate,
+146-                    themeMode = themeMode,
+--
+202-                    folkMountReadError = folkMountResult.isFailure,
+203-                    isFolkMountLoading = false,
+204-                    nomountStatus = nomountResult.getOrNull(),
+205-                    nomountReadError = nomountResult.isFailure,
+206-                    isNomountLoading = false,
+207-                    folkZygiskStatus = folkZygiskResult.getOrNull(),
+208-                    folkZygiskReadError = folkZygiskResult.isFailure,
+209-                    isFolkZygiskLoading = false,
+210:                    suiStatus = suiResult.getOrNull(),
+211:                    suiReadError = suiResult.isFailure,
+212:                    isSuiLoading = false,
+213:                    suiManagementAvailable = suiManagement,
+214-                )
+215-            }
+216-        }
+217-    }
+218-
+219-    fun setFolkZygiskEnabled(enabled: Boolean) {
+220-        if (_uiState.value.isFolkZygiskWriting || _uiState.value.isFolkZygiskLoading) return
+221-        ++refreshGeneration
+--
+260-                result.exceptionOrNull()?.message
+261-                    ?.takeIf { it.isNotBlank() }
+262-                    ?: ksuApp.getString(R.string.folkzygisk_write_failed)
+263-            }
+264-            Toast.makeText(ksuApp, message, Toast.LENGTH_LONG).show()
+265-        }
+266-    }
+267-
+268:    fun setSuiEnabled(enabled: Boolean) {
+269:        if (_uiState.value.isSuiWriting || _uiState.value.isSuiLoading) return
+270-        ++refreshGeneration
+271:        _uiState.update { it.copy(isSuiWriting = true) }
+272-        viewModelScope.launch {
+273:            val result = repo.setSuiEnabled(enabled)
+274:            val status = repo.getSuiStatus()
+275-            _uiState.update {
+276-                it.copy(
+277:                    isSuiWriting = false,
+278:                    suiStatus = status.getOrNull(),
+279:                    suiReadError = status.isFailure,
+280-                )
+281-            }
+282-            val message = when {
+283:                result.isFailure -> R.string.sui_write_failed
+284:                enabled -> R.string.sui_reboot_required
+285:                else -> R.string.sui_disable_done
+286-            }
+287-            Toast.makeText(ksuApp, message, Toast.LENGTH_LONG).show()
+288-        }
+289-    }
+290-
+291:    fun probeSuiManagement() {
+292-        viewModelScope.launch {
+293:            val message = repo.suiProbeManagement().getOrElse { it.message ?: "probe failed" }
+294:            Log.i("SuiManagement", message)
+295-            Toast.makeText(ksuApp, message, Toast.LENGTH_LONG).show()
+296-        }
+297-    }
+298-
+299:    private suspend fun refreshSuiManagement(): Boolean {
+300:        val result = repo.suiProbeManagement()
+301:        Log.i("SuiManagement", result.getOrElse { "unavailable: ${it.message}" })
+302-        return result.isSuccess
+303-    }
+304-
+305:    fun repairSui() {
+306:        if (_uiState.value.isSuiWriting) return
+307-        ++refreshGeneration
+308:        _uiState.update { it.copy(isSuiWriting = true) }
+309-        viewModelScope.launch {
+310:            val result = repo.repairSui()
+311:            val status = repo.getSuiStatus()
+312-            _uiState.update {
+313-                it.copy(
+314:                    isSuiWriting = false,
+315:                    suiStatus = status.getOrNull(),
+316:                    suiReadError = status.isFailure,
+317-                )
+318-            }
+319-            Toast.makeText(
+320-                ksuApp,
+321:                if (result.isSuccess) R.string.sui_repair_done else R.string.sui_repair_failed,
+322-                Toast.LENGTH_LONG,
+323-            ).show()
+324-        }
+325-    }
+326-
+327-    fun setCheckUpdate(enabled: Boolean) {
+328-        repo.checkUpdate = enabled
+329-        _uiState.update { it.copy(checkUpdate = enabled) }
