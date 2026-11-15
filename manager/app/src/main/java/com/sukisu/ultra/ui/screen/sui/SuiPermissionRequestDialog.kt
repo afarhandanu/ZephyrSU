@@ -17,7 +17,7 @@ import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.outlined.Terminal
-import androidx.compose.material.icons.outlined.Timelapse
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -134,7 +134,7 @@ fun SuiPermissionRequestDialog(
                     onClick = { onDecide(SuiPermissionDecision.ALLOW_SHELL) },
                 )
                 PermissionOption(
-                    icon = Icons.Outlined.Timelapse,
+                    icon = Icons.Outlined.Timer,
                     title = stringResource(R.string.sui_request_once),
                     subtitle = stringResource(R.string.sui_request_once_summary),
                     container = MaterialTheme.colorScheme.surfaceContainer,
