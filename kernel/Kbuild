@@ -176,8 +176,8 @@ obj-$(CONFIG_KSU) += kernelsu.o
 
 MDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-REPO_OWNER  := SukiSU-Ultra
-REPO_NAME   := SukiSU-Ultra
+REPO_OWNER  := afarhandanu
+REPO_NAME   := ZephyrSU
 REPO_BRANCH := main
 
 VERSION_BASE    := 40000
@@ -210,12 +210,12 @@ ccflags-y += -DKSU_VERSION_FULL=\"$(KSU_VERSION_FULL)\"
 
 KSU_IS_PR_BUILD ?= 0
 ifeq ($(KSU_IS_PR_BUILD),0)
-KSU_PACKAGE_NAME ?= com.sukisu.ultra
+KSU_PACKAGE_NAME ?= com.kucingbalap1644.zephyrsu
 else
-KSU_PACKAGE_NAME ?= com.sukisu.ultra.pr
+KSU_PACKAGE_NAME ?= com.kucingbalap1644.zephyrsu.pr
 endif
-KSU_EXPECTED_SIZE ?= 0x35c
-KSU_EXPECTED_HASH ?= 947ae944f3de4ed4c21a7e4f7953ecf351bfa2b36239da37a34111ad29993eef
+KSU_EXPECTED_SIZE ?= 0x02f5
+KSU_EXPECTED_HASH ?= 7136496b8696964b8ddd8e581bca8b7be3591a19da7a53934bc9263bc4616933
 
 $(info -- KernelSU Manager package name: $(KSU_PACKAGE_NAME))
 $(info -- KernelSU Manager signature size: $(KSU_EXPECTED_SIZE))

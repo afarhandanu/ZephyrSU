@@ -260,6 +260,7 @@ jobs:
           # Replace package references inside files.
           find . -type f -exec sed -i \
             -e "s/com\.sukisu\.ultra/$word1.$word2.$word3/g" \
+          -e "s/com\.kucingbalap1644\.zephyrsu/$word1.$word2.$word3/g" \
             -e "s/io\.sukisu\.ultra/$word4.$word2.$word3/g" \
             -e "s/com\.sukisu\.zako/$word1.$word2.zako/g" \
             -e "s/com\/sukisu\/ultra/$word1\/$word2\/$word3/g" \
@@ -785,7 +786,7 @@ jobs:
             -S "$PROD_KEY_PASSWORD"
       - name: Publish rolling CI prerelease
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
           GH_REPO: ${{ github.repository }}
         shell: bash
         run: |
