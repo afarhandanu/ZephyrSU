@@ -1,0 +1,250 @@
+=== finasu sui.rs lines 1-125 ===
+     1	//! Built-in Sui extension: payload staging, dependency gating and lifecycle.
+     2	//!
+     3	//! Sui is a Zygisk module, so its payload stays in a module directory that any provider
+     4	//! discovers. ksud owns install/enable/disable/uninstall, the SELinux rule and daemon
+     5	//! supervision instead of Sui's own Magisk-style scripts.
+     6	
+     7	use anyhow::{Context, Result, bail, ensure};
+     8	use serde::{Deserialize, Serialize};
+     9	use std::fs::{self, File, OpenOptions};
+    10	use std::io::Write;
+    11	use std::os::fd::AsRawFd;
+    12	use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+    13	use std::os::unix::process::CommandExt;
+    14	use std::path::{Path, PathBuf};
+    15	use std::process::{Child, Command as Process, Stdio};
+    16	use std::time::{Duration, Instant};
+    17	
+    18	pub const MODULE_ID: &str = "finasu-sui";
+    19	const MODULES: &str = "/data/adb/modules";
+    20	const MODULE_DIR: &str = "/data/adb/modules/finasu-sui";
+    21	const STATE_DIR: &str = "/data/adb/ksu/sui";
+    22	const STATE: &str = "/data/adb/ksu/sui/state.json";
+    23	const BOOT_MARKER: &str = "/data/adb/ksu/sui/boot";
+    24	const DAEMON_LOG: &str = "/data/adb/ksu/sui/daemon.log";
+    25	const WATCHDOG_LOCK: &str = "/data/adb/ksu/sui/watchdog.lock";
+    26	const MANAGER_IDENTITY: &str = "/data/adb/ksu/sui/manager.json";
+    27	/// Only the FinaSU manager may manage Sui; the signed package is the one the kernel trusts.
+    28	const MANAGER_PACKAGES: [&str; 2] = ["me.yuki.fina", "me.yuki.fina.pr"];
+    29	const DAEMON_READY_TIMEOUT: Duration = Duration::from_secs(120);
+    30	/// The zygote may only map and execute libraries labelled this way, and the injected processes
+    31	/// have to read the dex and metadata below the module directory.
+    32	const LIB_CON: &str = "u:object_r:system_lib_file:s0";
+    33	const SYSTEM_CON: &str = "u:object_r:system_file:s0";
+    34	const LOCK: &str = "/data/adb/ksu/sui.lock";
+    35	const CONFLICTING_MODULE: &str = "zygisk-sui";
+    36	const DAEMON: &str = "sui";
+    37	const SHELL_DAEMON: &str = "sui_shell";
+    38	const DISABLE_MARKER: &str = "disable";
+    39	/// Placeholders in the installed rule are resolved, so its bytes differ from the asset.
+    40	const MUTATED_FILES: [&str; 1] = ["sepolicy.rule"];
+    41	
+    42	#[derive(clap::Subcommand, Debug)]
+    43	pub enum Command {
+    44	    /// Report the Sui extension state and its dependencies
+    45	    Status {
+    46	        #[arg(long)]
+    47	        json: bool,
+    48	    },
+    49	    /// Install the payload and select Sui for the next boot
+    50	    Enable,
+    51	    /// Stop Sui and keep it out of the next boot
+    52	    Disable,
+    53	    /// Reinstall the payload from the embedded assets
+    54	    Repair,
+    55	    /// Record the FinaSU manager identity that Sui may trust for management
+    56	    RegisterManager,
+    57	    /// Keep the Sui daemons alive while Sui stays enabled
+    58	    Watchdog,
+    59	    /// Remove Sui; --purge also deletes its permission database
+    60	    Uninstall {
+    61	        #[arg(long)]
+    62	        purge: bool,
+    63	    },
+    64	}
+    65	
+    66	#[derive(Deserialize, Serialize)]
+    67	#[serde(deny_unknown_fields)]
+    68	struct State {
+    69	    schema_version: u32,
+    70	    enabled: bool,
+    71	    payload_version: String,
+    72	    payload_hash: String,
+    73	}
+    74	
+    75	impl Default for State {
+    76	    fn default() -> Self {
+    77	        Self {
+    78	            schema_version: 1,
+    79	            enabled: false,
+    80	            payload_version: String::new(),
+    81	            payload_hash: String::new(),
+    82	        }
+    83	    }
+    84	}
+    85	
+    86	impl State {
+    87	    fn load() -> Result<Self> {
+    88	        match fs::read(STATE) {
+    89	            Ok(bytes) => serde_json::from_slice(&bytes).context("Invalid Sui state"),
+    90	            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(Self::default()),
+    91	            Err(error) => Err(error).context("Read Sui state"),
+    92	        }
+    93	    }
+    94	
+    95	    fn save(&self) -> Result<()> {
+    96	        fs::create_dir_all(STATE_DIR)?;
+    97	        let mut file = tempfile::NamedTempFile::new_in(STATE_DIR)?;
+    98	        serde_json::to_writer(&mut file, self).context("Serialize Sui state")?;
+    99	        file.write_all(b"\n")?;
+   100	        file.persist(STATE).context("Persist Sui state")?;
+   101	        Ok(())
+   102	    }
+   103	}
+   104	
+   105	fn lock() -> Result<File> {
+   106	    fs::create_dir_all(STATE_DIR)?;
+   107	    let lock = OpenOptions::new()
+   108	        .read(true)
+   109	        .write(true)
+   110	        .create(true)
+   111	        .truncate(false)
+   112	        .mode(0o600)
+   113	        .custom_flags(libc::O_NOFOLLOW)
+   114	        .open(LOCK)?;
+   115	    ensure!(
+   116	        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+   117	        "Another Sui operation is already running"
+   118	    );
+   119	    Ok(lock)
+   120	}
+   121	
+   122	#[derive(Deserialize)]
+   123	struct Manifest {
+   124	    version: String,
+   125	    version_code: u32,
+=== finasu SettingsRepository.kt sui ===
+6-import me.weishu.kernelsu.data.model.FeatureChange
+7-import me.weishu.kernelsu.data.model.NomountStatus
+8:import me.weishu.kernelsu.data.model.SuiStatus
+9:import me.weishu.kernelsu.data.model.SuiApp
+10-import me.weishu.kernelsu.data.model.ModuleSortGroup
+11-import me.weishu.kernelsu.data.model.ModuleNameOrder
+--
+113-    suspend fun setFolkZygiskEnabled(enabled: Boolean): Result<Unit>
+114-    suspend fun recoverFolkZygisk(): Result<Unit>
+115:    suspend fun getSuiStatus(): Result<SuiStatus>
+116:    suspend fun setSuiEnabled(enabled: Boolean): Result<Unit>
+117:    suspend fun repairSui(): Result<Unit>
+118:    suspend fun suiProbeManagement(): Result<String>
+119:    suspend fun suiAppPermissions(): Result<List<SuiApp>>
+120:    suspend fun suiLaunchableAppCount(): Result<Int>
+121:    suspend fun suiDefaultMode(): Result<Int>
+122:    suspend fun setSuiDefaultMode(mode: Int): Result<Unit>
+123:    suspend fun suiSettingsFlags(): Result<Int>
+124:    suspend fun setSuiSettingsFlags(flags: Int): Result<Unit>
+125:    suspend fun suiHiddenUids(): Result<List<Int>>
+126:    suspend fun setSuiAppMode(uid: Int, mode: Int): Result<Unit>
+127-    suspend fun setFolkMountMode(mode: FolkMountMode): Result<Unit>
+128-    suspend fun getNomountStatus(): Result<NomountStatus>
+=== finasu AndroidManifest queries ===
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".KernelSUApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:directBootAware="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:hasFragileUserData="true"
+        android:icon="@mipmap/ic_launcher_default"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.KernelSU"
+        android:zygotePreloadName="me.weishu.kernelsu.magica.AppZygotePreload">
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.KernelSU.Starting"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+=== HEAD AndroidManifest queries ===
+        tools:node="replace" />
+    <permission
+        android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        android:protectionLevel="signature" />
+
+    <uses-sdk tools:overrideLibrary="top.yukonga.miuix.kmp.blur,com.sukisu.ultra.ai" />
+
+    <!-- Android 11 package visibility: needed to resolve the vendor gallery's crop screen. -->
+    <queries>
+        <intent>
+            <action android:name="com.android.camera.action.CROP" />
+            <data android:mimeType="image/*" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".KernelSUApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:directBootAware="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:hasFragileUserData="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.KernelSU"
+        android:zygotePreloadName="com.sukisu.ultra.magica.AppZygotePreload"
+        tools:targetApi="R">
+        <activity
+            android:name=".ui.MainActivity"
+=== HEAD SettingsRepository.kt bottom lines ===
+    fun setKernelUmountEnabled(enabled: Boolean): Boolean
+
+    suspend fun getSelinuxHideStatus(): String
+    fun isSelinuxHideEnabled(): Boolean
+    fun setSelinuxHideEnabled(enabled: Boolean): Int
+
+    suspend fun getAvcSpoofStatus(): String
+    fun isAvcSpoofEnabled(): Boolean
+    fun setAvcSpoofEnabled(enabled: Boolean): Boolean
+
+    suspend fun getMountHideStatus(): String
+    fun isMountHideEnabled(): Boolean
+    fun setMountHideEnabled(enabled: Boolean): Int
+
+    suspend fun getSulogStatus(): String
+    suspend fun getSulogPersistValue(): Long?
+    suspend fun getSulogValue(): Long?
+    fun setSulogEnabled(enabled: Boolean): Boolean
+
+    suspend fun getAdbRootStatus(): String
+    suspend fun getAdbRootPersistValue(): Long?
+    suspend fun getAdbRootValue(): Long?
+    fun setAdbRootEnabled(enabled: Boolean): Boolean
+    suspend fun getShellSuAdbOnlyStatus(): String
+    suspend fun getShellSuAdbOnlyValue(): Long?
+    suspend fun getShellSuAdbOnlyPersistValue(): Long?
+    fun setShellSuAdbOnlyEnabled(enabled: Boolean): Boolean
+
+    fun isDefaultUmountModules(): Boolean
+    fun setDefaultUmountModules(enabled: Boolean): Boolean
+
+    fun isLkmMode(): Boolean
+
+    fun execKsudFeatureSave()
+}
