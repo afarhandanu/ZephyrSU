@@ -1,0 +1,476 @@
+=== HEAD builtin_zygisk.rs lines 220-end ===
+   220	            monitors: monitor_process().into_iter().collect(),
+   221	            daemons: daemon_processes(),
+   222	        });
+   223	    }
+   224	
+   225	    let dir =
+   226	        provider_dir(target).with_context(|| format!("Zygisk provider {target} is missing"))?;
+   227	    let mut monitors = Vec::new();
+   228	    let mut daemons = Vec::new();
+   229	    for pid in provider_pids(std::slice::from_ref(&dir)) {
+   230	        let Some(name) = process_name(pid) else {
+   231	            continue;
+   232	        };
+   233	        if is_monitor_name(&name) {
+   234	            monitors.push((pid, name));
+   235	        } else {
+   236	            daemons.push((pid, name));
+   237	        }
+   238	    }
+   239	    monitors.sort();
+   240	    daemons.sort();
+   241	    Ok(ImplementationProcesses { monitors, daemons })
+   242	}
+   243	
+   244	/// One Zygisk module the built-in is serving, as both ABI daemons and the monitor see it.
+   245	pub struct InjectedModule {
+   246	    pub id: String,
+   247	    pub name: String,
+   248	    pub version: String,
+   249	    /// `zygisk` for the Magisk API, `next` for the Zygisk Next API.
+   250	    pub kind: String,
+   251	    /// ABIs whose daemon loaded the module, `32` and/or `64`.
+   252	    pub abi: Vec<String>,
+   253	    /// Injection targets declared by a Zygisk Next module, as plain names or paths.
+   254	    pub targets: Vec<String>,
+   255	    pub companion: bool,
+   256	    /// `injected`, `loaded`, `failed` or `unknown`.
+   257	    pub state: String,
+   258	    /// `(name, pid, kind)` with kind `companion` or `target`.
+   259	    pub processes: Vec<(String, i32, String)>,
+   260	}
+   261	
+   262	/// One entry of a daemon's `modules_list`.
+   263	struct DaemonModule {
+   264	    id: String,
+   265	    kind: String,
+   266	    target: String,
+   267	    companion: bool,
+   268	}
+   269	
+   270	/// The live state the monitor wrote into the runtime `module.prop`.
+   271	fn runtime_prop_content() -> Option<String> {
+   272	    let runtime = Path::new(BUILTIN_ZYGISK_WORK_DIR).join("module.prop");
+   273	    let content = fs::read_to_string(runtime).ok()?;
+   274	    // The monitor truncates the file before writing, so an empty one belongs to a
+   275	    // monitor that died mid-startup and must not hide the build's identity.
+   276	    (!content.trim().is_empty()).then_some(content)
+   277	}
+   278	
+   279	/// Every `modules_list` a daemon reported, tagged with the ABI that reported it.
+   280	///
+   281	/// The monitor appends each daemon's info blob right after its `daemon_<abi>_status`
+   282	/// line, so the ABI of a list is the last status line before it.
+   283	fn daemon_reported_modules(content: &str) -> Vec<(String, DaemonModule)> {
+   284	    let mut abi: Option<String> = None;
+   285	    let mut found = Vec::new();
+   286	    for line in content.lines() {
+   287	        let Some((key, value)) = line.split_once('=') else {
+   288	            continue;
+   289	        };
+   290	        let key = key.trim();
+   291	        if let Some(name) = key
+   292	            .strip_prefix("daemon_")
+   293	            .and_then(|key| key.strip_suffix("_status"))
+   294	        {
+   295	            abi = (value.trim() == "running").then_some(name.to_owned());
+   296	            continue;
+   297	        }
+   298	        if key != "modules_list" {
+   299	            continue;
+   300	        }
+   301	        let Some(current) = abi.as_deref() else {
+   302	            continue;
+   303	        };
+   304	        let Ok(entries) = serde_json::from_str::<Vec<serde_json::Value>>(value.trim()) else {
+   305	            continue;
+   306	        };
+   307	        for entry in entries {
+   308	            let Some(id) = entry.get("name").and_then(serde_json::Value::as_str) else {
+   309	                continue;
+   310	            };
+   311	            found.push((
+   312	                current.to_owned(),
+   313	                DaemonModule {
+   314	                    id: id.to_owned(),
+   315	                    kind: entry
+   316	                        .get("type")
+   317	                        .and_then(serde_json::Value::as_str)
+   318	                        .unwrap_or("zygisk")
+   319	                        .to_owned(),
+   320	                    target: entry
+   321	                        .get("target")
+   322	                        .and_then(serde_json::Value::as_str)
+   323	                        .unwrap_or("")
+   324	                        .to_owned(),
+   325	                    companion: entry
+   326	                        .get("companion")
+   327	                        .and_then(serde_json::Value::as_bool)
+   328	                        .unwrap_or(false),
+   329	                },
+   330	            ));
+   331	        }
+   332	    }
+   333	    found
+   334	}
+   335	
+   336	/// Display name and version of an installed module, falling back to its directory id.
+   337	fn module_identity(id: &str) -> (String, String) {
+   338	    let prop = fs::read_to_string(Path::new(MODULE_DIR).join(id).join("module.prop"))
+   339	        .map_or_else(|_| HashMap::new(), |content| parse_module_prop(&content));
+   340	    let name = prop.get("name").cloned().unwrap_or_else(|| id.to_owned());
+   341	    let version = prop
+   342	        .get("version")
+   343	        .map_or_else(String::new, |v| short_version(v));
+   344	    (name, version)
+   345	}
+   346	
+   347	/// What `zygiskd` last reported for a Zygisk Next module: every injected or failed load
+   348	/// is appended to `zn_modules_state`, keyed by the module library path.
+   349	fn zn_module_state(id: &str) -> String {
+   350	    let state_file = Path::new(BUILTIN_ZYGISK_WORK_DIR).join("zn_modules_state");
+   351	    let Ok(content) = fs::read_to_string(state_file) else {
+   352	        return "unknown".to_owned();
+   353	    };
+   354	    let prefix = format!("/data/adb/modules/{id}/");
+   355	    let mut failed = false;
+   356	    for line in content.lines() {
+   357	        let Some((state, lib)) = line.split_once(' ') else {
+   358	            continue;
+   359	        };
+   360	        if !lib.starts_with(&prefix) {
+   361	            continue;
+   362	        }
+   363	        match state {
+   364	            "injected" => return "injected".to_owned(),
+   365	            "failed" => failed = true,
+   366	            _ => (),
+   367	        }
+   368	    }
+   369	    if failed {
+   370	        "failed".to_owned()
+   371	    } else {
+   372	        "unknown".to_owned()
+   373	    }
+   374	}
+   375	
+   376	/// One `/proc` entry, read once and matched against every module.
+   377	struct ProcessEntry {
+   378	    pid: i32,
+   379	    /// `argv[0]`, which is what companions and targets are identified by.
+   380	    argv0: String,
+   381	    argv: Vec<String>,
+   382	    exe: Option<PathBuf>,
+   383	}
+   384	
+   385	fn read_process(pid: i32) -> Option<ProcessEntry> {
+   386	    let raw = fs::read(format!("/proc/{pid}/cmdline")).ok()?;
+   387	    if raw.is_empty() {
+   388	        return None;
+   389	    }
+   390	    let mut argv: Vec<String> = raw
+   391	        .split(|byte| *byte == 0)
+   392	        .filter(|part| !part.is_empty())
+   393	        .map(|part| String::from_utf8_lossy(part).into_owned())
+   394	        .collect();
+   395	    if argv.is_empty() {
+   396	        return None;
+   397	    }
+   398	    let argv0 = argv.remove(0);
+   399	    Some(ProcessEntry {
+   400	        pid,
+   401	        argv0,
+   402	        argv,
+   403	        exe: fs::read_link(format!("/proc/{pid}/exe")).ok(),
+   404	    })
+   405	}
+   406	
+   407	fn scan_processes() -> Vec<ProcessEntry> {
+   408	    let Ok(entries) = fs::read_dir("/proc") else {
+   409	        return Vec::new();
+   410	    };
+   411	    let mut processes: Vec<ProcessEntry> = entries
+   412	        .flatten()
+   413	        .filter_map(|entry| entry.file_name().to_str()?.parse::<i32>().ok())
+   414	        .filter_map(read_process)
+   415	        .collect();
+   416	    processes.sort_by_key(|process| process.pid);
+   417	    processes
+   418	}
+   419	
+   420	/// Whether `process` is this module's companion.
+   421	fn is_companion(process: &ProcessEntry, id: &str) -> bool {
+   422	    let Some(name) = companion_name(&process.argv0) else {
+   423	        return false;
+   424	    };
+   425	    if name == "zn-companion" {
+   426	        // `zygiskd-zn-companion zn-companion <lib> <fd>`: the library names the module.
+   427	        return process
+   428	            .argv
+   429	            .get(1)
+   430	            .is_some_and(|lib| lib.starts_with(&format!("/data/adb/modules/{id}/")));
+   431	    }
+   432	    name == id
+   433	}
+   434	
+   435	/// Whether `process` is one of the injection targets the module declared.
+   436	///
+   437	/// Targets are stored without their `name=` / `path=` prefix: an absolute path matches
+   438	/// the executable, anything else the process name.
+   439	fn matches_target(process: &ProcessEntry, target: &str) -> bool {
+   440	    if target.starts_with('/') {
+   441	        return process
+   442	            .exe
+   443	            .as_deref()
+   444	            .is_some_and(|exe| exe == Path::new(target));
+   445	    }
+   446	    let argv0 = process.argv0.rsplit('/').next().unwrap_or("");
+   447	    argv0 == target
+   448	}
+   449	
+   450	/// The Zygisk modules the built-in is serving, with the processes each one reaches.
+=== HEAD manager zygisk/ksud invocation ===
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-75-import com.sukisu.ultra.ui.component.material.SegmentedDropdownItem
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-76-import com.sukisu.ultra.ui.component.material.SegmentedListItem
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-77-import com.sukisu.ultra.ui.component.material.SegmentedSwitchItem
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-78-import com.sukisu.ultra.ui.component.material.SendLogBottomSheet
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-79-import com.sukisu.ultra.ui.component.material.SnackBarHost
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-80-import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-81-import com.sukisu.ultra.ui.component.rebootlistpopup.rememberRebootAction
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-82-import com.sukisu.ultra.ui.component.rebootlistpopup.rememberRebootChoices
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt:83:import com.sukisu.ultra.ui.screen.builtinzygisk.problemMessage
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt:84:import com.sukisu.ultra.ui.screen.builtinzygisk.problemTitle
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-85-import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-86-import com.sukisu.ultra.ui.util.LocaleHelper
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-87-import android.content.Intent
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-88-import androidx.compose.material.icons.filled.Extension
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-89-import androidx.compose.material.icons.filled.Settings
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-90-import com.sukisu.ultra.ui.component.uninstalldialog.UninstallDialog
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-91-import com.sukisu.ultra.ui.viewmodel.MainPageRequest
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-92-import kotlinx.coroutines.delay
+--
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-505-                                checked = uiState.autoJailbreak,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-506-                                onCheckedChange = actions.onSetAutoJailbreak
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-507-                            )
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-508-                        },
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-509-                        {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-510-                            SegmentedSwitchItem(
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-511-                                icon = Icons.Filled.Extension,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-512-                                title = customText(CustomTextKey.ZYGISK_SETTINGS_TITLE),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt:513:                                summary = stringResource(id = R.string.settings_builtin_zygisk_summary),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-514-                                checked = uiState.builtinZygisk,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-515-                                onCheckedChange = {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-516-                                    actions.onSetBuiltinZygisk(it)
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-517-                                }
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-518-                            )
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-519-                        },
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-520-                        *(if (uiState.builtinZygisk) arrayOf<@Composable () -> Unit>({
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-521-                            SegmentedListItem(
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-522-                                onClick = actions.onOpenBuiltinZygisk,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-523-                                headlineContent = { Text(customText(CustomTextKey.ZYGISK_DASHBOARD_TITLE)) },
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt:524:                                supportingContent = { Text(stringResource(id = R.string.settings_builtin_zygisk_dashboard_summary)) },
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt:525:                                leadingContent = { IconTile(Icons.Filled.Settings, stringResource(id = R.string.settings_builtin_zygisk_dashboard)) }
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-526-                            )
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-527-                        }) else emptyArray())
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-528-                    )
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-529-                )
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-530-                }
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-531-            }
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-532-
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt-533-            if (uiState.isLkmMode) {
+--
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-58-import com.sukisu.ultra.ui.component.dialog.rememberLoadingDialog
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-59-import com.sukisu.ultra.ui.component.miuix.AppCard
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-60-import com.sukisu.ultra.ui.component.miuix.AppScaffold
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-61-import com.sukisu.ultra.ui.component.miuix.SendLogDialog
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-62-import com.sukisu.ultra.ui.component.profile.TemporaryRootPreferences
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-63-import com.sukisu.ultra.ui.component.rebootlistpopup.rememberRebootAction
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-64-import com.sukisu.ultra.ui.component.rebootlistpopup.rememberRebootChoices
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-65-import com.sukisu.ultra.ui.component.uninstalldialog.UninstallDialog
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt:66:import com.sukisu.ultra.ui.screen.builtinzygisk.problemMessage
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt:67:import com.sukisu.ultra.ui.screen.builtinzygisk.problemTitle
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-68-import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-69-import com.sukisu.ultra.ui.theme.LocalEnableBlur
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-70-import com.sukisu.ultra.ui.theme.backgroundAwareCardColors
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-71-import com.sukisu.ultra.ui.util.BlurredBar
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-72-import com.sukisu.ultra.ui.util.CustomTextKey
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-73-import com.sukisu.ultra.ui.util.LocaleHelper
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-74-import com.sukisu.ultra.ui.util.customText
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-75-import com.sukisu.ultra.ui.util.rememberBlurBackdrop
+--
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-641-                                    )
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-642-                                },
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-643-                                enabled = uiState.isLateLoadMode,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-644-                                checked = uiState.autoJailbreak,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-645-                                onCheckedChange = actions.onSetAutoJailbreak
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-646-                            )
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-647-                            SwitchPreference(
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-648-                                title = customText(CustomTextKey.ZYGISK_SETTINGS_TITLE),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt:649:                                summary = stringResource(id = R.string.settings_builtin_zygisk_summary),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-650-                                startAction = {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-651-                                    Icon(
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-652-                                        Icons.Rounded.Extension,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-653-                                        modifier = Modifier.padding(end = 6.dp),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt:654:                                        contentDescription = stringResource(id = R.string.settings_builtin_zygisk),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-655-                                        tint = colorScheme.onBackground
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-656-                                    )
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-657-                                },
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-658-                                checked = uiState.builtinZygisk,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-659-                                onCheckedChange = {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-660-                                    actions.onSetBuiltinZygisk(it)
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-661-                                }
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-662-                            )
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-663-                            if (uiState.builtinZygisk) {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-664-                                ArrowPreference(
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-665-                                    title = customText(CustomTextKey.ZYGISK_DASHBOARD_TITLE),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt:666:                                    summary = stringResource(id = R.string.settings_builtin_zygisk_dashboard_summary),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-667-                                    startAction = {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-668-                                        Icon(
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-669-                                            Icons.Rounded.Settings,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-670-                                            modifier = Modifier.padding(end = 6.dp),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt:671:                                            contentDescription = stringResource(id = R.string.settings_builtin_zygisk_dashboard),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-672-                                            tint = colorScheme.onBackground
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-673-                                        )
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-674-                                    },
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-675-                                    onClick = actions.onOpenBuiltinZygisk
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-676-                                )
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-677-                            }
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-678-                        }
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt-679-                    }
+=== HEAD KsuCli.kt zygisk/shell helpers ===
+manager/app/src/main/java/com/sukisu/ultra/ai/host/AiFeatureCatalog.kt:366:                summary = "Installed modules: enable/disable, uninstall or undo, action scripts, WebUI, update checks and zygisk/metamodule flags.",
+manager/app/src/main/java/com/sukisu/ultra/ai/host/AiManagerData.kt:86:                        put("zygisk", module.zygisk)
+manager/app/src/main/java/com/sukisu/ultra/data/model/Module.kt:20:    val zygisk: Boolean = false,
+manager/app/src/main/java/com/sukisu/ultra/data/repository/ModuleRepositoryImpl.kt:50:                        zygisk = (obj.optInt("zygisk") != 0) || obj.optBoolean("zygisk"),
+manager/app/src/main/java/com/sukisu/ultra/data/repository/SettingsRepositoryImpl.kt:461:        get() = prefs.getBoolean("module_sort_zygisk_first", false)
+manager/app/src/main/java/com/sukisu/ultra/data/repository/SettingsRepositoryImpl.kt:462:        set(value) = prefs.edit { putBoolean("module_sort_zygisk_first", value) }
+manager/app/src/main/java/com/sukisu/ultra/ui/MainActivity.kt:133:import com.sukisu.ultra.ui.screen.builtinzygisk.BuiltinZygiskScreen
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:1:package com.sukisu.ultra.ui.screen.builtinzygisk
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:102:                                            text = stringResource(R.string.builtin_zygisk_status_title),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:119:                                    title = stringResource(R.string.builtin_zygisk_monitor_status),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:121:                                        ?: stringResource(R.string.builtin_zygisk_status_stopped),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:133:                                                    R.string.builtin_zygisk_zygote_status,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:150:                                    title = stringResource(R.string.builtin_zygisk_daemon_status),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:154:                                        ?: stringResource(R.string.builtin_zygisk_status_stopped),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:164:                                                text = stringResource(R.string.builtin_zygisk_injected_empty),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:177:                                            R.string.builtin_zygisk_injected_group,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:218:                                                                    R.string.builtin_zygisk_targets,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:236:                                                                    R.string.builtin_zygisk_process_count,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:268:                                                                text = stringResource(R.string.builtin_zygisk_no_processes),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:303:                        text = stringResource(R.string.builtin_zygisk_options_title),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:309:                        text = stringResource(R.string.builtin_zygisk_options_hint),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:320:                                    title = stringResource(R.string.builtin_zygisk_opt_anonymous_memory),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:321:                                    summary = stringResource(R.string.builtin_zygisk_opt_anonymous_memory_summary),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:328:                                    title = stringResource(R.string.builtin_zygisk_opt_custom_linker),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:329:                                    summary = stringResource(R.string.builtin_zygisk_opt_custom_linker_summary),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:336:                                    title = stringResource(R.string.builtin_zygisk_opt_lsplt),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:337:                                    summary = stringResource(R.string.builtin_zygisk_opt_lsplt_summary),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:348:                        text = stringResource(R.string.builtin_zygisk_modules_title),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:354:                        text = stringResource(R.string.builtin_zygisk_impl_hint),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:361:                if (uiState.zygiskModules.isEmpty()) {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:369:                                text = stringResource(R.string.builtin_zygisk_no_modules),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:380:                        val itemsList = uiState.zygiskModules.map { module ->
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:424:                                                    text = stringResource(R.string.builtin_zygisk_suppressed_hint),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMaterial.kt:507:                    if (ok) R.string.builtin_zygisk_status_running else R.string.builtin_zygisk_status_stopped
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:1:package com.sukisu.ultra.ui.screen.builtinzygisk
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:121:                            text = stringResource(R.string.builtin_zygisk_status_title),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:137:                        title = stringResource(R.string.builtin_zygisk_monitor_status),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:139:                            ?: stringResource(R.string.builtin_zygisk_status_stopped),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:144:                                        R.string.builtin_zygisk_status_running
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:146:                                        R.string.builtin_zygisk_status_stopped
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:158:                            title = stringResource(R.string.builtin_zygisk_zygote_status, zygote.abi),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:170:                        title = stringResource(R.string.builtin_zygisk_daemon_status),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:174:                            ?: stringResource(R.string.builtin_zygisk_status_stopped),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:179:                                        R.string.builtin_zygisk_status_running
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:181:                                        R.string.builtin_zygisk_status_stopped
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:192:                            title = stringResource(R.string.builtin_zygisk_injected_empty)
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:200:                                R.string.builtin_zygisk_injected_group,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:223:                                                    R.string.builtin_zygisk_targets,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:238:                                                    R.string.builtin_zygisk_process_count,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:263:                                            title = stringResource(R.string.builtin_zygisk_no_processes),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:287:                    text = stringResource(R.string.builtin_zygisk_options_title),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:293:                    text = stringResource(R.string.builtin_zygisk_options_hint),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:303:                        title = stringResource(R.string.builtin_zygisk_opt_anonymous_memory),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:304:                        summary = stringResource(R.string.builtin_zygisk_opt_anonymous_memory_summary),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:309:                        title = stringResource(R.string.builtin_zygisk_opt_custom_linker),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:310:                        summary = stringResource(R.string.builtin_zygisk_opt_custom_linker_summary),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:315:                        title = stringResource(R.string.builtin_zygisk_opt_lsplt),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:316:                        summary = stringResource(R.string.builtin_zygisk_opt_lsplt_summary),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:325:                    text = stringResource(R.string.builtin_zygisk_modules_title),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:331:                    text = stringResource(R.string.builtin_zygisk_impl_hint),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:338:            if (uiState.zygiskModules.isEmpty()) {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:344:                            text = stringResource(R.string.builtin_zygisk_no_modules),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:360:                        uiState.zygiskModules.forEachIndexed { index, module ->
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskMiuix.kt:368:                                    append(stringResource(R.string.builtin_zygisk_suppressed_hint))
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskScreen.kt:1:package com.sukisu.ultra.ui.screen.builtinzygisk
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskScreen.kt:60:            Toast.makeText(context, R.string.builtin_zygisk_option_failed, Toast.LENGTH_SHORT).show()
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskScreen.kt:69:                Toast.makeText(context, R.string.builtin_zygisk_switch_failed, Toast.LENGTH_SHORT).show()
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskScreen.kt:125:    val title = stringResource(R.string.builtin_zygisk_switch_reboot_title)
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskScreen.kt:126:    val message = stringResource(R.string.builtin_zygisk_switch_reboot_message, name)
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskUiState.kt:1:package com.sukisu.ultra.ui.screen.builtinzygisk
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskUiState.kt:16:    val zygiskModules: List<Module> = emptyList(),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskUiState.kt:27:    "injected" -> com.sukisu.ultra.R.string.builtin_zygisk_state_injected
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskUiState.kt:28:    "loaded" -> com.sukisu.ultra.R.string.builtin_zygisk_state_loaded
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskUiState.kt:29:    "failed" -> com.sukisu.ultra.R.string.builtin_zygisk_state_failed
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskUiState.kt:30:    else -> com.sukisu.ultra.R.string.builtin_zygisk_state_unknown
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskUiState.kt:35:    "injected" -> com.sukisu.ultra.R.string.builtin_zygisk_state_injected
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskUiState.kt:36:    else -> com.sukisu.ultra.R.string.builtin_zygisk_zygote_not_injected
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskUiState.kt:41:    "pending" -> com.sukisu.ultra.R.string.builtin_zygisk_pending_title
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskUiState.kt:42:    else -> com.sukisu.ultra.R.string.builtin_zygisk_switch_failed
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskUiState.kt:47:    "pending" -> com.sukisu.ultra.R.string.builtin_zygisk_pending_message
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskUiState.kt:48:    else -> com.sukisu.ultra.R.string.builtin_zygisk_switch_failed_message
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskViewModel.kt:1:package com.sukisu.ultra.ui.screen.builtinzygisk
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskViewModel.kt:35:            val zygiskModules = modulesResult.getOrDefault(emptyList()).filter {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskViewModel.kt:36:                it.zygisk || it.suppressedByBuiltin
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/builtinzygisk/BuiltinZygiskViewModel.kt:45:                    zygiskModules = zygiskModules,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/home/HomeMaterial.kt:714:            if (!systemInfo.zygiskImplementation.isNullOrBlank()) {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/home/HomeMaterial.kt:715:                add(customText(CustomTextKey.HOME_INFO_ZYGISK) to systemInfo.zygiskImplementation)
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/home/HomeMiuix.kt:702:            if (!systemInfo.zygiskImplementation.isNullOrBlank()) {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/home/HomeMiuix.kt:703:                add(customText(CustomTextKey.HOME_INFO_ZYGISK) to systemInfo.zygiskImplementation)
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/home/HomeUtils.kt:28:    val zygiskImplementation: String? = null,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/module/ModuleInfoRows.kt:67:        if (module.zygisk) add("Zygisk")
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/module/ModuleMaterial.kt:349:                                    text = { Text(stringResource(R.string.module_sort_zygisk_first)) },
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/module/ModuleMaterial.kt:1020:            if (module.metamodule || module.zygisk || module.suppressedByBuiltin) {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/module/ModuleMaterial.kt:1033:                    if (module.zygisk) {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/module/ModuleMiuix.kt:324:                                                text = stringResource(R.string.module_sort_zygisk_first),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/module/ModuleMiuix.kt:954:                        val tagsPlaceable = if (module.metamodule || module.zygisk || module.suppressedByBuiltin) {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/module/ModuleMiuix.kt:974:                                    if (module.zygisk) {
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/module/ModuleSort.kt:10:    val zygiskFirst: Boolean = false,
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/module/ModuleSort.kt:41:        { if (options.zygiskFirst) if (it.zygisk) 0 else 1 else 0 },
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt:83:import com.sukisu.ultra.ui.screen.builtinzygisk.problemMessage
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt:84:import com.sukisu.ultra.ui.screen.builtinzygisk.problemTitle
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt:513:                                summary = stringResource(id = R.string.settings_builtin_zygisk_summary),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt:524:                                supportingContent = { Text(stringResource(id = R.string.settings_builtin_zygisk_dashboard_summary)) },
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMaterial.kt:525:                                leadingContent = { IconTile(Icons.Filled.Settings, stringResource(id = R.string.settings_builtin_zygisk_dashboard)) }
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt:66:import com.sukisu.ultra.ui.screen.builtinzygisk.problemMessage
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt:67:import com.sukisu.ultra.ui.screen.builtinzygisk.problemTitle
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt:649:                                summary = stringResource(id = R.string.settings_builtin_zygisk_summary),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt:654:                                        contentDescription = stringResource(id = R.string.settings_builtin_zygisk),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt:666:                                    summary = stringResource(id = R.string.settings_builtin_zygisk_dashboard_summary),
+manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsMiuix.kt:671:                                            contentDescription = stringResource(id = R.string.settings_builtin_zygisk_dashboard),
+manager/app/src/main/java/com/sukisu/ultra/ui/util/CustomTextConfig.kt:51:    HOME_INFO_ZYGISK("home.info_zygisk", R.string.home_zygisk_implementation, R.string.home_zygisk_implementation, CustomTextGroup.HOME),
+manager/app/src/main/java/com/sukisu/ultra/ui/util/CustomTextConfig.kt:129:    ZYGISK_SETTINGS_TITLE("zygisk.settings_title", R.string.settings_builtin_zygisk, R.string.settings_builtin_zygisk, CustomTextGroup.SETTINGS),
+manager/app/src/main/java/com/sukisu/ultra/ui/util/CustomTextConfig.kt:130:    ZYGISK_DASHBOARD_TITLE("zygisk.dashboard_title", R.string.settings_builtin_zygisk_dashboard, R.string.settings_builtin_zygisk_dashboard, CustomTextGroup.SETTINGS);
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1447:    /** "zygiskd64 · PID 1234"; name is the executable ksud found under /proc/<pid>/exe. */
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1489:        val out = ShellUtils.fastCmd(shell, "${getKsuDaemonPath()} zygisk config get").trim()
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1502:        val out = ShellUtils.fastCmd(shell, "${getKsuDaemonPath()} zygisk config set $key $value").trim()
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1510:        val out = ShellUtils.fastCmd(shell, "${getKsuDaemonPath()} zygisk status").trim()
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1558:            "${getKsuDaemonPath()} zygisk processes ${target.ksudShellArg()}"
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1580:    /// `zygisk` for the Magisk API, `next` for the Zygisk Next API.
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1581:    val type: String = "zygisk",
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1605:        val out = ShellUtils.fastCmd(shell, "${getKsuDaemonPath()} zygisk modules").trim()
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1618:        type = optString("type", "zygisk"),
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1646:    val out = ShellUtils.fastCmd(shell, "${getKsuDaemonPath()} zygisk $action").trim()
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1650:/// The id ksud uses for the embedded implementation in `zygisk switch`.
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1660:            "${getKsuDaemonPath()} zygisk switch ${target.ksudShellArg()}"
+manager/app/src/main/java/com/sukisu/ultra/ui/util/KsuCli.kt:1683:        val out = ShellUtils.fastCmd(shell, "${getKsuDaemonPath()} zygisk info").trim()
+manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/HomeViewModel.kt:270:        val zygiskImplementation = if (isManager && isRootAvailable) {
+manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/HomeViewModel.kt:273:                notInstalledText = ksuApp.getString(R.string.home_zygisk_not_installed),
+manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/HomeViewModel.kt:274:                disabledText = ksuApp.getString(R.string.home_zygisk_disabled),
+manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/HomeViewModel.kt:275:                rebootRequiredText = ksuApp.getString(R.string.home_zygisk_reboot_required),
+manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/HomeViewModel.kt:338:                zygiskImplementation = zygiskImplementation,
+manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/ModuleViewModel.kt:372:        zygiskFirst = sortZygiskFirst,
+manager/app/src/main/java/com/sukisu/ultra/ui/webui/WebViewHelper.kt:71:        if (moduleId == "builtin_zygisk") {
+manager/app/src/main/java/com/sukisu/ultra/ui/webui/WebViewHelper.kt:72:            moduleName = activity.getString(R.string.settings_builtin_zygisk)
+manager/app/src/main/java/com/sukisu/ultra/ui/webui/WebViewHelper.kt:73:            modDir = "/data/adb/nyazygisk"
