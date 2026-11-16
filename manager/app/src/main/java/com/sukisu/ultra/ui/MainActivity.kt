@@ -133,6 +133,7 @@ import com.sukisu.ultra.ui.screen.umountmanager.UmountManagerScreen
 import com.sukisu.ultra.data.sui.SuiPermissionHost
 import com.sukisu.ultra.ui.screen.builtinzygisk.BuiltinZygiskScreen
 import com.sukisu.ultra.ui.screen.sui.SuiPermissionRequestDialog
+import com.sukisu.ultra.ui.screen.sui.SuiPermissionsScreen
 import com.sukisu.ultra.media.MusicConfig
 import com.sukisu.ultra.media.MusicManager
 import com.sukisu.ultra.media.SoundEffectConfig
