@@ -1,0 +1,262 @@
+=== 1. boot_hide string keys in finasu strings.xml ===
+    <string name="home_manager_version">Manager version</string>
+    <string name="home_fingerprint">Fingerprint</string>
+    <string name="home_selinux_status">SELinux status</string>
+    <string name="selinux_status_disabled">Disabled</string>
+    <string name="selinux_status_enforcing">Enforcing</string>
+    <string name="selinux_status_permissive">Permissive</string>
+    <string name="selinux_status_unknown">Unknown</string>
+    <string name="home_seccomp_status">Seccomp status</string>
+    <string name="seccomp_status_not_supported">Not supported</string>
+--
+    <string name="profile_capabilities">Capabilities</string>
+    <string name="profile_flags">Flags</string>
+    <string name="profile_selinux_context">SELinux context</string>
+    <string name="profile_umount_modules">Umount modules</string>
+    <string name="failed_to_update_app_profile">Failed to update App Profile for %s</string>
+--
+    <string name="settings_umount_modules_default_summary">The global default value for \"Umount modules\" in App Profile. If enabled, it will remove all module modifications to the system for apps that don\'t have a profile set.</string>
+    <string name="profile_umount_modules_summary">Enabling this option will allow KernelSU to restore any modified files by the modules for this app.</string>
+    <string name="profile_selinux_domain">Domain</string>
+    <string name="profile_selinux_rules">Rules</string>
+    <string name="recently_installed">Recently installed</string>
+    <string name="module_update">Update</string>
+--
+    <string name="force_stop_app">Force stop</string>
+    <string name="restart_app">Restart</string>
+    <string name="failed_to_update_sepolicy">Failed to update SELinux rules for %s</string>
+    <string name="su_not_allowed">Couldn\'t grant Superuser access to %s</string>
+    <string name="module_changelog">Changelog</string>
+--
+    <string name="umount_path_invalid_control">Path must not contain control characters.</string>
+    <string name="umount_path_invalid_blacklisted">This protected system mountpoint cannot be removed.</string>
+    <string name="settings_selinux_hide">Hide SELinux modification</string>
+    <string name="settings_selinux_hide_summary">Prevent applications from detecting SELinux modifications</string>
+    <string name="settings_selinux_hide_reboot_required">Reboot to take effect</string>
+    <string name="settings_selinux_hide_failed">Error: %d</string>
+
+    <string name="settings_mount_view_filter">Hide mount records</string>
+--
+    <string name="settings_mount_view_filter_failed">Failed to enable mount view filtering</string>
+    <string name="settings_mount_view_filter_save_failed">Mount view filtering changed but could not be saved for reboot</string>
+    <string name="settings_selinux_mode">SELinux mode</string>
+    <string name="settings_selinux_mode_enforcing">Enforcing</string>
+    <string name="settings_selinux_mode_permissive">Permissive</string>
+    <string name="settings_selinux_current_mode">Current: %1$s</string>
+    <string name="settings_selinux_mode_failed">Could not change the SELinux mode</string>
+    <string name="msg_selinux_permissive_warning">Switching to permissive stops SELinux from enforcing policy on the whole device until you switch back. Continue?</string>
+    <string name="msg_selinux_enforcing_confirm">Switch back to enforcing? Apps that rely on permissive mode may stop working.</string>
+    <string name="settings_sulog">SU Log</string>
+    <string name="settings_avc_spoof">AVC log spoofing</string>
+    <string name="settings_avc_spoof_summary">Mask the KSU target context in SELinux audit logs</string>
+    <string name="settings_avc_spoof_failed">Could not change AVC log spoofing. Check kernel support and SELinux policy readiness.</string>
+    <string name="settings_avc_spoof_save_failed">Applied, but could not save the setting for the next boot</string>
+    <string name="settings_sulog_summary">Record Root-related events into KernelSU sulog files</string>
+--
+    <string name="show_only_primary_user_apps">Show only primary user apps</string>
+    <string name="settings_auto_jailbreak">Auto jailbreak</string>
+    <string name="settings_auto_jailbreak_summary">Automatically use Magica to escalate privileges when Permissive SELinux is detected at boot. Requires granting autostart permission to this app.</string>
+    <string name="settings_soft_reboot">Soft restart instead of reboot</string>
+    <string name="settings_soft_reboot_summary">Use soft restart instead of a full reboot when installing, updating, or toggling modules.</string>
+=== 2. FontScreen.kt lines 80-end ===
+                TextButton(onClick = {
+                    showRestoreDialog = false
+                    FontConfig.clearFont(context)
+                    scope.launch {
+                        snackbarHost.showSnackbar(resources.getString(R.string.font_restored))
+                    }
+                }) {
+                    Text(stringResource(R.string.font_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestoreDialog = false }) {
+                    Text(stringResource(R.string.font_cancel))
+                }
+            },
+        )
+    }
+
+    ExpressiveScaffold(
+        topBar = {
+            LargeFlexibleTopAppBar(
+                title = { Text(stringResource(R.string.font_title)) },
+                navigationIcon = { TopBarBackButton(onClick = { navigator.pop() }) },
+                colors = expressiveTopAppBarColors(),
+                scrollBehavior = scrollBehavior,
+            )
+        },
+        snackbarHost = { SnackBarHost(hostState = snackbarHost) },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            SegmentedColumn(
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 13.dp),
+                content = buildList {
+                    add {
+                        SegmentedRadioItem(
+                            title = stringResource(R.string.font_mode_app),
+                            selected = FontConfig.fontMode == FontMode.APP_DEFAULT,
+                            onClick = { FontConfig.setFontMode(context, FontMode.APP_DEFAULT) },
+                        )
+                    }
+                    add {
+                        SegmentedRadioItem(
+                            title = stringResource(R.string.font_mode_system),
+                            selected = FontConfig.fontMode == FontMode.SYSTEM_DEFAULT,
+                            onClick = { FontConfig.setFontMode(context, FontMode.SYSTEM_DEFAULT) },
+                        )
+                    }
+                    add {
+                        SegmentedRadioItem(
+                            title = stringResource(R.string.font_mode_custom),
+                            selected = FontConfig.fontMode == FontMode.CUSTOM,
+                            onClick = { FontConfig.setFontMode(context, FontMode.CUSTOM) },
+                        )
+                    }
+                },
+            )
+
+            if (FontConfig.fontMode == FontMode.CUSTOM) {
+                SegmentedColumn(
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
+                    content = buildList {
+                        add {
+                            SegmentedListItem(
+                                onClick = { pickFontLauncher.launch("*/*") },
+                                headlineContent = { Text(stringResource(R.string.font_select_file)) },
+                                leadingContent = {
+                                    Icon(Icons.Filled.FontDownload, contentDescription = null)
+                                },
+                            )
+                        }
+                        if (FontConfig.customFontFilename != null) {
+                            add {
+                                SegmentedListItem(
+                                    onClick = { showRestoreDialog = true },
+                                    headlineContent = { Text(stringResource(R.string.font_restore_default)) },
+                                    leadingContent = {
+                                        Icon(Icons.Filled.Delete, contentDescription = null)
+                                    },
+                                )
+                            }
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+=== 3. HEAD ksud main.rs 1-35 & cli.rs 35-65 ===
+#![deny(clippy::all, clippy::pedantic)]
+#![warn(clippy::nursery)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_precision_loss,
+    clippy::doc_markdown,
+    clippy::too_many_lines,
+    clippy::cast_possible_wrap,
+    clippy::redundant_field_names,
+    clippy::large_enum_variant
+)]
+
+mod apk_sign;
+mod assets;
+mod boot_patch;
+#[cfg(target_os = "android")]
+pub mod builtin_zygisk;
+#[cfg(target_os = "android")]
+mod cli;
+#[cfg(not(target_os = "android"))]
+mod cli_non_android;
+#[cfg(target_os = "android")]
+mod debug;
+mod defs;
+#[cfg(target_os = "android")]
+mod dynamic_manager;
+#[cfg(target_os = "android")]
+mod extension;
+#[cfg(target_os = "android")]
+mod extension_id;
+mod feature;
+mod feature_id;
+#[cfg(target_os = "android")]
+    Module {
+        #[command(subcommand)]
+        command: Module,
+    },
+
+    /// Manage built-in Zygisk
+    Zygisk {
+        #[command(subcommand)]
+        command: ZygiskCommand,
+    },
+
+    /// Manage the built-in Sui extension
+    Sui {
+        #[command(subcommand)]
+        command: crate::sui::Command,
+    },
+
+    /// Trigger `post-fs-data` event
+    PostFsData,
+
+    /// Trigger `service` event
+    Services,
+
+    /// Run sulog reader daemon. Not for user. Use `ksud debug sulogd` to launch daemon.
+    #[command(hide = true)]
+    Sulogd,
+
+    /// Trigger `boot-complete` event
+    BootCompleted,
+
+    /// Load kernelsu.ko and execute late-load stage scripts
+=== 4. HEAD SegmentedList.kt bottom 35 ===
+                    enabled = enabled,
+                    readOnly = readOnly,
+                    textStyle = textStyle.copy(
+                        colors.supportingContentColor,
+                        fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
+                    ),
+                    keyboardOptions = keyboardOptions,
+                    keyboardActions = keyboardActions,
+                    singleLine = singleLine,
+                    maxLines = maxLines,
+                    minLines = minLines,
+                    visualTransformation = visualTransformation,
+                    onTextLayout = onTextLayout,
+                    interactionSource = interactionSource,
+                    cursorBrush = cursorBrush,
+                    decorationBox = { innerTextField ->
+                        if (value.isEmpty() && placeholder != null) {
+                            Box(contentAlignment = Alignment.CenterStart) {
+                                CompositionLocalProvider(
+                                    LocalContentColor provides colors.supportingContentColor
+                                ) {
+                                    ProvideTextStyle(value = MaterialTheme.typography.bodyMedium) {
+                                        placeholder()
+                                    }
+                                }
+                            }
+                        }
+                        innerTextField()
+                    }
+                )
+            }
+        }
+    )
+}
+=== 5. finasu libs.versions.toml biometric/fragment ===
+biometric = "1.1.0"
+fragment = "1.9.1"
+androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
+androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "fragment" }
