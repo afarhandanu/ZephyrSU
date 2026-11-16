@@ -1,0 +1,18 @@
+WROTE manager/app/src/main/java/com/sukisu/ultra/media/MediaFeedback.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/media/MediaFiles.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/media/MusicConfig.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/media/MusicManager.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/media/SoundEffectConfig.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/media/SoundEffectManager.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/media/VibrationConfig.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/media/VibrationManager.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/ui/theme/FontConfig.kt
+WROTE manager/app/src/main/java/com/sukisu/ultra/ui/theme/Type.kt
+Traceback (most recent call last):
+  File "/tmp/m1_b.py", line 101, in <module>
+    replace_exact(mt, "fun MaterialExpressivePalette(\n    content: @Composable () -> Unit,\n) {\n    val appSettings =", "fun MaterialExpressivePalette(\n    content: @Composable () -> Unit,\n) {\n    val fontFamily = FontConfig.getFontFamily(LocalContext.current)\n    val typography = remember(fontFamily) { Typography.withFontFamily(fontFamily) }\n    val appSettings =", "MaterialExpressivePalette font")
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/m1_b.py", line 18, in replace_exact
+    assert s.count(old) == 1, f"Mismatch [{label}] in {path}: {s.count(old)}"
+           ^^^^^^^^^^^^^^^^^
+AssertionError: Mismatch [MaterialExpressivePalette font] in manager/app/src/main/java/com/sukisu/ultra/ui/theme/MaterialTheme.kt: 0
