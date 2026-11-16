@@ -117,6 +117,9 @@ import com.sukisu.ultra.ui.screen.extensions.VersionSpoofScreen
 import com.sukisu.ultra.ui.screen.executemoduleaction.ExecuteModuleActionScreen
 import com.sukisu.ultra.ui.screen.flash.FlashScreen
 import com.sukisu.ultra.ui.screen.home.HomePager
+import com.sukisu.ultra.ui.screen.home.LocalSupportLinksCustom
+import com.sukisu.ultra.ui.screen.home.LocalSupportLinksStyle
+import com.sukisu.ultra.ui.screen.home.SupportLinksCustomContent
 import com.sukisu.ultra.ui.screen.install.InstallScreen
 import com.sukisu.ultra.ui.screen.kernelmodules.KernelModulesScreen
 import com.sukisu.ultra.ui.screen.kpm.KpmScreen
@@ -313,6 +316,12 @@ class MainActivity : FragmentActivity() {
                 LocalCardBackgroundAlpha provides (uiState.cardBackgroundAlphaPercent / 100f),
                 LocalUiMode provides uiMode,
                 LocalCustomTexts provides uiState.customTexts,
+                LocalSupportLinksStyle provides uiState.supportLinksStyle,
+                LocalSupportLinksCustom provides SupportLinksCustomContent(
+                    title = uiState.supportLinksCustomTitle,
+                    subtitle = uiState.supportLinksCustomSubtitle,
+                    url = uiState.supportLinksCustomUrl,
+                ),
             ) {
                 KernelSUTheme(appSettings = themedAppSettings, uiMode = uiMode) {
                     IntentDispatcher(intentChannel = intentChannel)

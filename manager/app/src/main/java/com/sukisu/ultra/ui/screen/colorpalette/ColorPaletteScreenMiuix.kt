@@ -4,6 +4,7 @@ import com.sukisu.ultra.ui.component.miuix.MiuixTextButtonAffectedByBackground
 import com.sukisu.ultra.ai.api.R as AiR
 import com.sukisu.ultra.ai.api.AiFeatureBridge
 import android.annotation.SuppressLint
+import android.widget.Toast
 import android.net.Uri
 import java.io.File
 import android.os.Build
@@ -49,8 +50,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.automirrored.rounded.MenuOpen
+import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.AspectRatio
 import androidx.compose.material.icons.rounded.BlurOn
 import androidx.compose.material.icons.rounded.CallToAction
@@ -66,6 +69,8 @@ import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.FileUpload
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material.icons.rounded.Pin
 import androidx.compose.material.icons.rounded.Palette
 import com.sukisu.ultra.ui.component.Storefront
@@ -119,7 +124,9 @@ import coil.compose.AsyncImage
 import com.sukisu.ultra.ui.component.HomeCardStickerStage
 import com.sukisu.ultra.ui.component.HomeCardStickerThumbnail
 import com.sukisu.ultra.ui.component.themeimport.ThemeExportDialog
+import com.sukisu.ultra.data.model.SupportLinksStyle
 import com.sukisu.ultra.ui.screen.appicon.BuiltinAppIconPreview
+import com.sukisu.ultra.ui.screen.home.isSupportedLinkUrl
 import com.sukisu.ultra.ui.screen.settings.ThemePackageOptions
 import com.sukisu.ultra.ui.screen.settings.ThemePackageOptionsSaver
 import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
@@ -398,6 +405,8 @@ fun ColorPaletteScreenMiuix(
         val showClearAllDialog = rememberSaveable { mutableStateOf(false) }
         var showHomeTitleDialog by rememberSaveable { mutableStateOf(false) }
         var homeTitleDraft by rememberSaveable { mutableStateOf("") }
+        var editingSupportLinkField by remember { mutableStateOf<SupportLinksCustomField?>(null) }
+        var supportLinkFieldDraft by remember { mutableStateOf("") }
         val appearanceExpanded = state.backgroundAppearanceExpanded
         val backgroundSectionExpanded = state.backgroundSectionExpanded
         val themePackageSectionExpanded = state.themePackageSectionExpanded
@@ -1234,6 +1243,88 @@ fun ColorPaletteScreenMiuix(
                                     )
                                     }
                                 }
+                                HorizontalDivider()
+                                OverlayDropdownPreference(
+                                    title = stringResource(R.string.settings_support_links),
+                                    items = listOf(
+                                        stringResource(R.string.settings_support_links_zephyrsu),
+                                        stringResource(R.string.settings_support_links_legacy),
+                                        stringResource(R.string.settings_support_links_custom),
+                                        stringResource(R.string.settings_support_links_hidden),
+                                    ),
+                                    startAction = {
+                                        Icon(
+                                            Icons.Filled.Info,
+                                            modifier = Modifier.padding(end = 8.dp),
+                                            contentDescription = stringResource(R.string.settings_support_links),
+                                            tint = colorScheme.onBackground,
+                                        )
+                                    },
+                                    selectedIndex = SupportLinksStyle.supported
+                                        .indexOf(state.supportLinksStyle).coerceAtLeast(0),
+                                    onSelectedIndexChange = { index ->
+                                        actions.onSetSupportLinksStyle(
+                                            SupportLinksStyle.supported
+                                                .getOrElse(index) { SupportLinksStyle.DEFAULT }
+                                        )
+                                    },
+                                )
+                                if (state.supportLinksStyle == SupportLinksStyle.CUSTOM) {
+                                    ArrowPreference(
+                                        title = stringResource(R.string.settings_support_links_custom_title),
+                                        summary = state.supportLinksCustomTitle.ifBlank {
+                                            stringResource(R.string.settings_support_links_custom_title_summary)
+                                        },
+                                        startAction = {
+                                            Icon(
+                                                Icons.Rounded.TextFields,
+                                                modifier = Modifier.padding(end = 8.dp),
+                                                contentDescription = stringResource(R.string.settings_support_links_custom_title),
+                                                tint = colorScheme.onBackground,
+                                            )
+                                        },
+                                        onClick = {
+                                            supportLinkFieldDraft = state.supportLinksCustomTitle
+                                            editingSupportLinkField = SupportLinksCustomField.TITLE
+                                        },
+                                    )
+                                    ArrowPreference(
+                                        title = stringResource(R.string.settings_support_links_custom_subtitle),
+                                        summary = state.supportLinksCustomSubtitle.ifBlank {
+                                            stringResource(R.string.settings_support_links_custom_subtitle_summary)
+                                        },
+                                        startAction = {
+                                            Icon(
+                                                Icons.AutoMirrored.Rounded.Notes,
+                                                modifier = Modifier.padding(end = 8.dp),
+                                                contentDescription = stringResource(R.string.settings_support_links_custom_subtitle),
+                                                tint = colorScheme.onBackground,
+                                            )
+                                        },
+                                        onClick = {
+                                            supportLinkFieldDraft = state.supportLinksCustomSubtitle
+                                            editingSupportLinkField = SupportLinksCustomField.SUBTITLE
+                                        },
+                                    )
+                                    ArrowPreference(
+                                        title = stringResource(R.string.settings_support_links_custom_url),
+                                        summary = state.supportLinksCustomUrl.ifBlank {
+                                            stringResource(R.string.settings_support_links_custom_url_summary)
+                                        },
+                                        startAction = {
+                                            Icon(
+                                                Icons.Rounded.Link,
+                                                modifier = Modifier.padding(end = 8.dp),
+                                                contentDescription = stringResource(R.string.settings_support_links_custom_url),
+                                                tint = colorScheme.onBackground,
+                                            )
+                                        },
+                                        onClick = {
+                                            supportLinkFieldDraft = state.supportLinksCustomUrl
+                                            editingSupportLinkField = SupportLinksCustomField.URL
+                                        },
+                                    )
+                                }
                                 val canUseStickers = state.homeLayout == HomeLayout.CLASSIC || (
                                     state.homeCardImageStyle == HomeCardImageStyle.BANNER &&
                                         state.homeCardImagePath.isNotBlank() &&
@@ -2005,6 +2096,127 @@ fun ColorPaletteScreenMiuix(
                                 onClick = {
                                     actions.onSetCustomHomeTitle(homeTitleDraft)
                                     showHomeTitleDialog = false
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.textButtonColorsPrimary(),
+                            )
+                        }
+                    }
+                },
+            )
+        }
+
+        if (editingSupportLinkField == SupportLinksCustomField.TITLE) {
+            OverlayDialog(
+                show = true,
+                title = stringResource(R.string.settings_support_links_custom_title),
+                summary = stringResource(R.string.settings_support_links_custom_title_summary),
+                onDismissRequest = { editingSupportLinkField = null },
+                content = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TextField(
+                            value = supportLinkFieldDraft,
+                            onValueChange = { supportLinkFieldDraft = it },
+                            label = stringResource(R.string.settings_support_links_custom_title),
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            useLabelAsPlaceholder = supportLinkFieldDraft.isEmpty(),
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            TextButton(
+                                text = stringResource(android.R.string.cancel),
+                                onClick = { editingSupportLinkField = null },
+                                modifier = Modifier.weight(1f),
+                            )
+                            TextButton(
+                                text = stringResource(android.R.string.ok),
+                                onClick = {
+                                    actions.onSetSupportLinksCustomTitle(supportLinkFieldDraft)
+                                    editingSupportLinkField = null
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.textButtonColorsPrimary(),
+                            )
+                        }
+                    }
+                },
+            )
+        }
+
+        if (editingSupportLinkField == SupportLinksCustomField.SUBTITLE) {
+            OverlayDialog(
+                show = true,
+                title = stringResource(R.string.settings_support_links_custom_subtitle),
+                summary = stringResource(R.string.settings_support_links_custom_subtitle_summary),
+                onDismissRequest = { editingSupportLinkField = null },
+                content = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TextField(
+                            value = supportLinkFieldDraft,
+                            onValueChange = { supportLinkFieldDraft = it },
+                            label = stringResource(R.string.settings_support_links_custom_subtitle),
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            useLabelAsPlaceholder = supportLinkFieldDraft.isEmpty(),
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            TextButton(
+                                text = stringResource(android.R.string.cancel),
+                                onClick = { editingSupportLinkField = null },
+                                modifier = Modifier.weight(1f),
+                            )
+                            TextButton(
+                                text = stringResource(android.R.string.ok),
+                                onClick = {
+                                    actions.onSetSupportLinksCustomSubtitle(supportLinkFieldDraft)
+                                    editingSupportLinkField = null
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.textButtonColorsPrimary(),
+                            )
+                        }
+                    }
+                },
+            )
+        }
+
+        if (editingSupportLinkField == SupportLinksCustomField.URL) {
+            OverlayDialog(
+                show = true,
+                title = stringResource(R.string.settings_support_links_custom_url),
+                summary = stringResource(R.string.settings_support_links_custom_url_summary),
+                onDismissRequest = { editingSupportLinkField = null },
+                content = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TextField(
+                            value = supportLinkFieldDraft,
+                            onValueChange = { supportLinkFieldDraft = it },
+                            label = stringResource(R.string.settings_support_links_custom_url),
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            useLabelAsPlaceholder = supportLinkFieldDraft.isEmpty(),
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            TextButton(
+                                text = stringResource(android.R.string.cancel),
+                                onClick = { editingSupportLinkField = null },
+                                modifier = Modifier.weight(1f),
+                            )
+                            TextButton(
+                                text = stringResource(android.R.string.ok),
+                                onClick = {
+                                    // A malformed link would silently do nothing on the home
+                                    // screen, so refuse it here.
+                                    if (isSupportedLinkUrl(supportLinkFieldDraft)) {
+                                        actions.onSetSupportLinksCustomUrl(supportLinkFieldDraft)
+                                        editingSupportLinkField = null
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            R.string.settings_support_links_custom_url_invalid,
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }
                                 },
                                 modifier = Modifier.weight(1f),
                                 colors = ButtonDefaults.textButtonColorsPrimary(),

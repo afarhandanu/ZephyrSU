@@ -22,6 +22,7 @@ import com.sukisu.ultra.ui.util.HomeStatusStyle
 import com.sukisu.ultra.ui.util.BuiltinAppIcons
 import com.sukisu.ultra.data.model.SuiApp
 import com.sukisu.ultra.data.model.SuiStatus
+import com.sukisu.ultra.data.model.SupportLinksStyle
 import com.sukisu.ultra.data.sui.SuiBridge
 import com.sukisu.ultra.ui.util.execKsud
 import com.sukisu.ultra.ui.util.execKsudResult
@@ -186,6 +187,24 @@ class SettingsRepositoryImpl : SettingsRepository {
     override var customHomeTitle: String
         get() = prefs.getString(KEY_CUSTOM_HOME_TITLE, "") ?: ""
         set(value) = prefs.edit { putString(KEY_CUSTOM_HOME_TITLE, value.trim()) }
+
+    override var supportLinksStyle: String
+        get() = SupportLinksStyle.fromValue(
+            prefs.getString("support_links_style", SupportLinksStyle.DEFAULT)
+        )
+        set(value) = prefs.edit { putString("support_links_style", SupportLinksStyle.fromValue(value)) }
+
+    override var supportLinksCustomTitle: String
+        get() = prefs.getString("support_links_custom_title", "") ?: ""
+        set(value) = prefs.edit { putString("support_links_custom_title", value) }
+
+    override var supportLinksCustomSubtitle: String
+        get() = prefs.getString("support_links_custom_subtitle", "") ?: ""
+        set(value) = prefs.edit { putString("support_links_custom_subtitle", value) }
+
+    override var supportLinksCustomUrl: String
+        get() = prefs.getString("support_links_custom_url", "") ?: ""
+        set(value) = prefs.edit { putString("support_links_custom_url", value) }
 
     override var customTexts: Map<String, String>
         get() {

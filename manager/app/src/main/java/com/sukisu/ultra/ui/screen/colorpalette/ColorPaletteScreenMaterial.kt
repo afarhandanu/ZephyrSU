@@ -1,6 +1,7 @@
 package com.sukisu.ultra.ui.screen.colorpalette
 
 import android.annotation.SuppressLint
+import android.widget.Toast
 import com.sukisu.ultra.ai.api.R as AiR
 import com.sukisu.ultra.ai.api.AiFeatureBridge
 import android.net.Uri
@@ -58,7 +59,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.automirrored.rounded.MenuOpen
+import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.filled.Brightness1
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Brightness3
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Brightness7
@@ -95,6 +98,8 @@ import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.ViewCarousel
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -156,7 +161,9 @@ import com.sukisu.ultra.ui.component.material.SegmentedSwitchItem
 import com.sukisu.ultra.ui.component.material.TonalCard
 import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
+import com.sukisu.ultra.data.model.SupportLinksStyle
 import com.sukisu.ultra.ui.screen.appicon.BuiltinAppIconPreview
+import com.sukisu.ultra.ui.screen.home.isSupportedLinkUrl
 import com.sukisu.ultra.ui.screen.settings.ThemePackageOptions
 import com.sukisu.ultra.ui.screen.settings.ThemePackageOptionsSaver
 import com.sukisu.ultra.ui.theme.ColorMode
@@ -197,6 +204,8 @@ fun ColorPaletteScreenMaterial(
     var showClearAllDialog by rememberSaveable { mutableStateOf(false) }
     var showHomeTitleDialog by rememberSaveable { mutableStateOf(false) }
     var homeTitleDraft by rememberSaveable { mutableStateOf("") }
+    var editingSupportLinkField by remember { mutableStateOf<SupportLinksCustomField?>(null) }
+    var supportLinkFieldDraft by remember { mutableStateOf("") }
     val appearanceExpanded = state.backgroundAppearanceExpanded
     val backgroundSectionExpanded = state.backgroundSectionExpanded
     val themePackageSectionExpanded = state.themePackageSectionExpanded
@@ -1244,6 +1253,91 @@ fun ColorPaletteScreenMaterial(
                         }
                         }
                     }
+                    item {
+                        SegmentedColumn(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            title = stringResource(R.string.settings_support_links),
+                        ) {
+                            item {
+                                val supportedSupportLinks = SupportLinksStyle.supported
+                                val supportLinksItems = supportedSupportLinks.map { style ->
+                                    stringResource(
+                                        when (style) {
+                                            SupportLinksStyle.ZEPHYRSU -> R.string.settings_support_links_zephyrsu
+                                            SupportLinksStyle.CUSTOM -> R.string.settings_support_links_custom
+                                            SupportLinksStyle.HIDDEN -> R.string.settings_support_links_hidden
+                                            else -> R.string.settings_support_links_legacy
+                                        }
+                                    )
+                                }
+                                val selectedSupportLinks =
+                                    supportedSupportLinks.indexOf(state.supportLinksStyle).coerceAtLeast(0)
+                                SegmentedDropdownItem(
+                                    icon = Icons.Filled.Info,
+                                    title = stringResource(id = R.string.settings_support_links),
+                                    summary = stringResource(id = R.string.settings_support_links_summary),
+                                    items = supportLinksItems,
+                                    selectedIndex = selectedSupportLinks,
+                                    onItemSelected = { index ->
+                                        actions.onSetSupportLinksStyle(
+                                            supportedSupportLinks.getOrElse(index) { SupportLinksStyle.DEFAULT }
+                                        )
+                                    }
+                                )
+                            }
+                            item(visible = state.supportLinksStyle == SupportLinksStyle.CUSTOM) {
+                                SegmentedListItem(
+                                    onClick = {
+                                        supportLinkFieldDraft = state.supportLinksCustomTitle
+                                        editingSupportLinkField = SupportLinksCustomField.TITLE
+                                    },
+                                    headlineContent = { Text(stringResource(R.string.settings_support_links_custom_title)) },
+                                    supportingContent = {
+                                        Text(
+                                            state.supportLinksCustomTitle.ifBlank {
+                                                stringResource(R.string.settings_support_links_custom_title_summary)
+                                            }
+                                        )
+                                    },
+                                    leadingContent = { Icon(Icons.Rounded.TextFields, null) },
+                                )
+                            }
+                            item(visible = state.supportLinksStyle == SupportLinksStyle.CUSTOM) {
+                                SegmentedListItem(
+                                    onClick = {
+                                        supportLinkFieldDraft = state.supportLinksCustomSubtitle
+                                        editingSupportLinkField = SupportLinksCustomField.SUBTITLE
+                                    },
+                                    headlineContent = { Text(stringResource(R.string.settings_support_links_custom_subtitle)) },
+                                    supportingContent = {
+                                        Text(
+                                            state.supportLinksCustomSubtitle.ifBlank {
+                                                stringResource(R.string.settings_support_links_custom_subtitle_summary)
+                                            }
+                                        )
+                                    },
+                                    leadingContent = { Icon(Icons.AutoMirrored.Rounded.Notes, null) },
+                                )
+                            }
+                            item(visible = state.supportLinksStyle == SupportLinksStyle.CUSTOM) {
+                                SegmentedListItem(
+                                    onClick = {
+                                        supportLinkFieldDraft = state.supportLinksCustomUrl
+                                        editingSupportLinkField = SupportLinksCustomField.URL
+                                    },
+                                    headlineContent = { Text(stringResource(R.string.settings_support_links_custom_url)) },
+                                    supportingContent = {
+                                        Text(
+                                            state.supportLinksCustomUrl.ifBlank {
+                                                stringResource(R.string.settings_support_links_custom_url_summary)
+                                            }
+                                        )
+                                    },
+                                    leadingContent = { Icon(Icons.Rounded.Link, null) },
+                                )
+                            }
+                        }
+                    }
                     val canUseStickers = state.homeLayout == HomeLayout.CLASSIC || (
                         state.homeCardImageStyle == HomeCardImageStyle.BANNER &&
                             state.homeCardImagePath.isNotBlank() &&
@@ -1978,6 +2072,128 @@ fun ColorPaletteScreenMaterial(
                 }
             },
         )
+    }
+
+    when (editingSupportLinkField) {
+        SupportLinksCustomField.TITLE -> AlertDialog(
+            onDismissRequest = { editingSupportLinkField = null },
+            title = { Text(stringResource(R.string.settings_support_links_custom_title)) },
+            text = {
+                Column {
+                    Text(
+                        text = stringResource(R.string.settings_support_links_custom_title_summary),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = supportLinkFieldDraft,
+                        onValueChange = { supportLinkFieldDraft = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(stringResource(R.string.settings_support_links_custom_title)) },
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        actions.onSetSupportLinksCustomTitle(supportLinkFieldDraft)
+                        editingSupportLinkField = null
+                    },
+                ) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingSupportLinkField = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+        SupportLinksCustomField.SUBTITLE -> AlertDialog(
+            onDismissRequest = { editingSupportLinkField = null },
+            title = { Text(stringResource(R.string.settings_support_links_custom_subtitle)) },
+            text = {
+                Column {
+                    Text(
+                        text = stringResource(R.string.settings_support_links_custom_subtitle_summary),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = supportLinkFieldDraft,
+                        onValueChange = { supportLinkFieldDraft = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(stringResource(R.string.settings_support_links_custom_subtitle)) },
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        actions.onSetSupportLinksCustomSubtitle(supportLinkFieldDraft)
+                        editingSupportLinkField = null
+                    },
+                ) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingSupportLinkField = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+        SupportLinksCustomField.URL -> AlertDialog(
+            onDismissRequest = { editingSupportLinkField = null },
+            title = { Text(stringResource(R.string.settings_support_links_custom_url)) },
+            text = {
+                Column {
+                    Text(
+                        text = stringResource(R.string.settings_support_links_custom_url_summary),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = supportLinkFieldDraft,
+                        onValueChange = { supportLinkFieldDraft = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(stringResource(R.string.settings_support_links_custom_url)) },
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // A malformed link would silently do nothing on the home screen,
+                        // so refuse it here.
+                        if (isSupportedLinkUrl(supportLinkFieldDraft)) {
+                            actions.onSetSupportLinksCustomUrl(supportLinkFieldDraft)
+                            editingSupportLinkField = null
+                        } else {
+                            Toast.makeText(
+                                context,
+                                R.string.settings_support_links_custom_url_invalid,
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    },
+                ) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingSupportLinkField = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+        null -> Unit
     }
 
     if (showResetThemeDialog) {
