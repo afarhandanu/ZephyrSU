@@ -95,6 +95,7 @@ import androidx.compose.ui.res.stringResource
 import com.sukisu.ultra.ui.util.customText
 import com.sukisu.ultra.ui.util.CustomTextKey
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -114,6 +115,7 @@ import com.sukisu.ultra.ui.component.ListPopupDefaults
 import com.sukisu.ultra.ui.component.ObserveAsEvents
 import com.sukisu.ultra.ui.component.ScrollToTopOnChange
 import com.sukisu.ultra.ui.component.SearchStatus
+import com.sukisu.ultra.ui.component.chart.ModuleStatsDonut
 import com.sukisu.ultra.ui.component.dialog.rememberConfirmDialog
 import com.sukisu.ultra.ui.component.dialog.rememberLoadingDialog
 import com.sukisu.ultra.ui.component.miuix.AppCard
@@ -629,6 +631,23 @@ fun ModulePagerMiuix(
                                 uiState.moduleList.count { it.enabled },
                                 uiState.updateInfo.count { it.value.downloadUrl.isNotBlank() },
                             ),
+                            header = if (uiState.moduleList.isEmpty()) null else {
+                                {
+                                    ModuleStatsDonut(
+                                        modules = uiState.moduleList,
+                                        enabledColor = colorScheme.primary,
+                                        disabledColor = colorScheme.surfaceVariant,
+                                        labelColor = colorScheme.onSurfaceVariantSummary,
+                                        centerStyle = TextStyle(
+                                            fontSize = 22.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = colorScheme.onSurface,
+                                        ),
+                                        labelStyle = TextStyle(fontSize = 14.sp),
+                                        modifier = Modifier.padding(start = 28.dp, end = 16.dp, bottom = 10.dp),
+                                    )
+                                }
+                            },
                         )
                     }
                 }
@@ -796,6 +815,7 @@ private fun ModuleList(
     listState: LazyListState = rememberLazyListState(),
     reorderEnabled: Boolean = false,
     summary: String? = null,
+    header: (@Composable () -> Unit)? = null,
 ) {
     val loadingDialog = rememberLoadingDialog()
     val scope = rememberCoroutineScope()
@@ -813,6 +833,9 @@ private fun ModuleList(
         contentPadding = contentPadding,
         overscrollEffect = null,
     ) {
+        if (header != null) {
+            item(key = "header", contentType = "header") { header() }
+        }
         if (summary != null) {
             item(key = "summary", contentType = "summary") {
                 Text(

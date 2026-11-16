@@ -137,6 +137,7 @@ import com.sukisu.ultra.data.model.ModuleUpdateInfo
 import com.sukisu.ultra.data.repository.isSoftRebootPreferred
 import com.sukisu.ultra.ui.component.ObserveAsEvents
 import com.sukisu.ultra.ui.component.ScrollToTopOnChange
+import com.sukisu.ultra.ui.component.chart.ModuleStatsDonut
 import com.sukisu.ultra.ui.component.dialog.rememberConfirmDialog
 import com.sukisu.ultra.ui.component.dialog.rememberLoadingDialog
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
@@ -577,16 +578,28 @@ fun ModulePagerMaterial(
                 reorderEnabled = uiState.sortManual,
                 header = if (uiState.moduleList.isEmpty()) null else {
                     {
-                        Text(
-                            text = stringResource(
-                                R.string.module_summary,
-                                uiState.moduleList.count { it.enabled },
-                                uiState.updateInfo.count { it.value.downloadUrl.isNotBlank() },
-                            ),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.padding(horizontal = 4.dp),
-                        )
+                        ) {
+                            ModuleStatsDonut(
+                                modules = uiState.moduleList,
+                                enabledColor = MaterialTheme.colorScheme.primary,
+                                disabledColor = MaterialTheme.colorScheme.surfaceVariant,
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                centerStyle = MaterialTheme.typography.titleLarge,
+                                labelStyle = MaterialTheme.typography.bodyMedium,
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.module_summary,
+                                    uiState.moduleList.count { it.enabled },
+                                    uiState.updateInfo.count { it.value.downloadUrl.isNotBlank() },
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 },
             )
