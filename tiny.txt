@@ -1,0 +1,255 @@
+=== 1. SecurityTarget callers in finasu ===
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/data/security/SecurityRepositoryImpl.kt:219:                    put(SecurityTarget.MODULE_UNINSTALL, method)
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/data/security/SecurityRepositoryImpl.kt:220:                    put(SecurityTarget.MODULE_DISABLE, method)
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/data/security/SecurityRepositoryImpl.kt:224:                    val target = requireNotNull(SecurityTarget.fromKey(key)) { "Unknown authentication target" }
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/MainActivity.kt:105:import me.weishu.kernelsu.ui.component.security.LocalAppAuthenticator
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/MainActivity.kt:334:                LocalAppAuthenticator provides authenticationSession.authenticator,
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/component/ThemePackageDialogs.kt:58:import me.weishu.kernelsu.ui.component.security.LocalAppAuthenticator
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/component/ThemePackageDialogs.kt:71:    val authenticator = LocalAppAuthenticator.current
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/component/ThemePackageDialogs.kt:91:                        if (!authenticator.require(SecurityTarget.THEME_IMPORT)) return@launch
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/component/ThemePackageDialogs.kt:108:                if (!authenticator.require(SecurityTarget.THEME_IMPORT)) return@launch
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/component/rebootlistpopup/RebootListPopup.kt:16:import me.weishu.kernelsu.ui.component.security.LocalAppAuthenticator
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/component/rebootlistpopup/RebootListPopup.kt:50:    val authenticator = LocalAppAuthenticator.current
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/component/rebootlistpopup/RebootListPopup.kt:53:            if (authenticator.require(SecurityTarget.REBOOT)) reboot()
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/component/rebootlistpopup/RebootListPopup.kt:63:                    if (authenticator.require(SecurityTarget.REBOOT)) reboot(reason)
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/component/security/AppAuthenticator.kt:21:val LocalAppAuthenticator = staticCompositionLocalOf<AppAuthenticator> {
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/component/security/AppLockGate.kt:57:    val policy = state.loaded && state.config.methodFor(SecurityTarget.APP_START) != AuthMethod.NONE
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/component/security/AuthenticationHost.kt:92:        authenticator.require(SecurityTarget.APP_START, fresh = true)
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/flash/FlashScreen.kt:26:import me.weishu.kernelsu.ui.component.security.LocalAppAuthenticator
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/flash/FlashScreen.kt:47:    val target = if (flashIt is FlashIt.FlashModules) SecurityTarget.MODULE_INSTALL
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/flash/FlashScreen.kt:48:    else SecurityTarget.MODULE_FLASH
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/flash/FlashScreen.kt:49:    val authenticator = LocalAppAuthenticator.current
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/flash/FlashScreen.kt:110:                if (!authenticator.require(SecurityTarget.REBOOT)) return@launch
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/module/ModuleMaterial.kt:33:import me.weishu.kernelsu.ui.component.security.LocalAppAuthenticator
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/module/ModuleMaterial.kt:271:    val authenticator = LocalAppAuthenticator.current
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/module/ModuleMaterial.kt:292:                        if (authenticator.require(SecurityTarget.REBOOT)) {
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/module/ModuleScreen.kt:29:import me.weishu.kernelsu.ui.component.security.LocalAppAuthenticator
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/module/ModuleScreen.kt:50:    val authenticator = LocalAppAuthenticator.current
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/module/ModuleScreen.kt:181:                    if (module.enabled && !authenticator.require(SecurityTarget.MODULE_DISABLE)) return@launch
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/module/ModuleScreen.kt:187:                    if (authenticator.require(SecurityTarget.MODULE_UNINSTALL)) viewModel.uninstallModule(module)
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/settings/AuthenticationSettingsContent.kt:35:import me.weishu.kernelsu.ui.component.security.LocalAppAuthenticator
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/settings/AuthenticationSettingsContent.kt:42:    val authenticator = LocalAppAuthenticator.current
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/settings/AuthenticationSettingsContent.kt:145:            SecurityTarget.entries.forEach { target ->
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/screen/settings/search/SettingsSearchIndex.kt:1026:    SecurityTarget.entries.forEach { target ->
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/themepreview/ThemePreviewActivity.kt:43:import me.weishu.kernelsu.ui.component.security.LocalAppAuthenticator
+finasu/master:manager/app/src/main/java/me/weishu/kernelsu/ui/themepreview/ThemePreviewActivity.kt:169:                LocalAppAuthenticator provides PreviewAuthenticator,
+=== 2. AppLockGate.kt ===
+package me.weishu.kernelsu.ui.component.security
+
+import android.content.Context
+import android.content.ContextWrapper
+import android.view.WindowManager
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.CancellationException
+import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.security.AuthMethod
+import me.weishu.kernelsu.data.security.SecurityTarget
+
+val LocalAppUnlocked = staticCompositionLocalOf { false }
+
+/** Business content starts only after authentication, then stays mounted beneath the lock. */
+@Composable
+fun AppLockGate(session: AuthenticationSession, onCancel: () -> Unit, content: @Composable () -> Unit) {
+    val state by session.repository.state.collectAsStateWithLifecycle()
+    // Must observe STOP immediately, rather than defer its emission until the next START.
+    val foreground by session.foregroundState.collectAsState()
+    val request by session.request.collectAsState()
+    var granted by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    var failed by remember { mutableStateOf(false) }
+    var attempt by remember { mutableIntStateOf(0) }
+    var entered by remember { mutableStateOf(false) }
+    // Only a stored policy locks the screen. A repository that has not answered yet holds no
+    // policy, so waiting for it must not put a lock screen over an app that has no lock at all.
+    // A storage failure is the one case that fails closed: the policy may exist but be unreadable.
+    val policy = state.loaded && state.config.methodFor(SecurityTarget.APP_START) != AuthMethod.NONE
+    val protected = policy || state.storageError
+    // Authentication is per app launch: returning from the background must not prompt again.
+    val unlocked = state.loaded && !state.storageError && (!policy || granted)
+    val locked = state.loaded && !unlocked
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(locked) { if (locked) focusManager.clearFocus(force = true) }
+    DisposableEffect(context, protected, unlocked) {
+        var host: Context = context
+        while (host is ContextWrapper && host !is FragmentActivity) host = host.baseContext
+        val window = (host as? FragmentActivity)?.window
+        val originallySecure = window?.attributes?.flags?.and(WindowManager.LayoutParams.FLAG_SECURE) == WindowManager.LayoutParams.FLAG_SECURE
+        // Only the locked screen blocks captures; an unlocked session keeps its normal behaviour.
+        if (protected && !unlocked) window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        onDispose {
+            if (!originallySecure) window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+    }
+
+    LaunchedEffect(foreground, state.loaded, attempt) {
+        if (!foreground || !state.loaded || unlocked) return@LaunchedEffect
+        busy = true
+        failed = false
+        try {
+            session.resetCancellation()
+            if (session.unlock()) {
+                granted = true
+            } else if (session.userCancelled) {
+                onCancel()
+            } else {
+                failed = true
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            failed = true
+        } finally {
+            busy = false
+        }
+    }
+    LaunchedEffect(unlocked) { if (unlocked) entered = true }
+    Box(Modifier.fillMaxSize()) {
+    if (entered || unlocked) {
+        // Keep in-flight flash work mounted: relocking must never restart its LaunchedEffect.
+        Box(Modifier.fillMaxSize().graphicsLayer { alpha = if (unlocked) 1f else 0f }
+            .then(if (unlocked) Modifier else Modifier.clearAndSetSemantics {})) {
+            CompositionLocalProvider(LocalAppUnlocked provides unlocked) { content() }
+        }
+    }
+    if (locked) {
+        BackHandler(onBack = onCancel)
+        Box(
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer)
+                .pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) awaitPointerEvent().changes.forEach { it.consume() }
+                    }
+                }.safeDrawingPadding(),
+            contentAlignment = Alignment.Center,
+        ) {
+            val pending = request?.takeIf { it.fullScreen }
+            val pendingKind = pending?.kind
+            if (pending != null && pendingKind != null) {
+                StartupCredentialScreen(
+                    kind = pendingKind,
+                    repository = session.repository,
+                    onVerified = { pending.answer.complete(true) },
+                    onCancel = { session.cancel(pending) },
+                )
+            } else {
+                AppAuthenticationScreen(
+                    state = if (pending != null || failed || state.storageError) AuthenticationVisualState.ERROR
+                        else if (busy || !foreground) AuthenticationVisualState.BUSY
+                        else AuthenticationVisualState.BIOMETRIC,
+                    error = when {
+                        state.storageError -> stringResource(R.string.security_storage_error)
+                        pending != null -> stringResource(R.string.security_biometric_unavailable)
+                        failed -> stringResource(R.string.security_unlock_failed)
+                        else -> null
+                    },
+                    enabled = state.loaded && foreground && (!busy || pending != null),
+                    actionEnabled = true,
+                    onVerify = {
+                        if (pending != null) pending.answer.complete(false)
+                        attempt++
+                    },
+                    onCancel = { if (pending != null) session.cancel(pending) else onCancel() },
+                    fallbackAction = if (pending?.fallback == true) ({
+                        androidx.compose.material3.TextButton(onClick = { pending.answer.complete(true) }) {
+                            Text(stringResource(R.string.security_use_credential))
+                        }
+                    }) else null,
+                )
+            }
+        }
+    }
+    if (!state.loaded) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
+        }
+    }
+    }
+}
+=== 3. AuthenticationHost.kt bottom 50 ===
+                Lifecycle.Event.ON_START -> session.started()
+                Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> session.stopped()
+                else -> Unit
+            }
+        }
+        activity.lifecycle.addObserver(observer)
+        onDispose {
+            activity.lifecycle.removeObserver(observer)
+            session.stopped()
+        }
+    }
+    LaunchedEffect(session) {
+        repository.initialize()
+        repository.state.collect { session.authenticator.invalidate() }
+    }
+    return session
+}
+
+/** Non-startup prompts only; the startup lock renders its own full-screen surface. */
+@Composable
+fun AuthenticationHost(session: AuthenticationSession) {
+    val request by session.request.collectAsStateWithLifecycle()
+    val pending = request?.takeUnless { it.fullScreen } ?: return
+    val kind = pending.kind
+    key(pending) {
+        if (kind != null) {
+            CredentialEntryDialog(
+                kind = kind,
+                repository = session.repository,
+                onDismiss = { session.cancel(pending) },
+                onVerified = { pending.answer.complete(true) },
+            )
+        } else {
+            ExpressiveDialog(
+                onDismissRequest = { session.cancel(pending) },
+                title = { Text(stringResource(R.string.security_biometric_title)) },
+                text = { Text(stringResource(R.string.security_biometric_unavailable)) },
+                confirmButton = {
+                    FolkTextButton(onClick = { pending.answer.complete(pending.fallback) }) {
+                        Text(
+                            stringResource(
+                                if (pending.fallback) R.string.security_use_credential else android.R.string.ok
+                            )
+                        )
+                    }
+                },
+                dismissButton = if (pending.fallback) ({
+                    FolkTextButton(onClick = { session.cancel(pending) }) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                }) else null,
+            )
+        }
+    }
+}
