@@ -97,6 +97,7 @@ fun SettingPager(
         onSetSELinuxMode = viewModel::setSELinuxMode,
         onOpenFont = { navigator.push(Route.Font) },
         onOpenMultimedia = { navigator.push(Route.Multimedia) },
+        onOpenAuthentication = { navigator.push(Route.Authentication) },
     )
 
     when (LocalUiMode.current) {

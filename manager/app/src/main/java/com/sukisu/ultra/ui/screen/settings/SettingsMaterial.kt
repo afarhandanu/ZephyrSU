@@ -533,6 +533,15 @@ fun SettingPagerMaterial(
                                 onCheckedChange = actions.onSetUseSoftReboot
                             )
                         },
+                        {
+                            // App Lock (ported from FinaSU, Milestone 2).
+                            SegmentedListItem(
+                                onClick = actions.onOpenAuthentication,
+                                headlineContent = { Text(stringResource(R.string.settings_category_authentication)) },
+                                supportingContent = { Text(stringResource(R.string.security_default_method_summary)) },
+                                leadingContent = { IconTile(Icons.Filled.Security, stringResource(R.string.settings_category_authentication)) },
+                            )
+                        },
                     )
                 )
 

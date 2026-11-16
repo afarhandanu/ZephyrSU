@@ -643,6 +643,20 @@ fun SettingPagerMiuix(
                                 checked = uiState.isLateLoadMode || uiState.useSoftReboot,
                                 onCheckedChange = actions.onSetUseSoftReboot
                             )
+                            // App Lock (ported from FinaSU, Milestone 2).
+                            ArrowPreference(
+                                title = stringResource(R.string.settings_category_authentication),
+                                summary = stringResource(R.string.security_default_method_summary),
+                                startAction = {
+                                    Icon(
+                                        Icons.Rounded.Security,
+                                        modifier = Modifier.padding(end = 6.dp),
+                                        contentDescription = stringResource(R.string.settings_category_authentication),
+                                        tint = colorScheme.onBackground
+                                    )
+                                },
+                                onClick = actions.onOpenAuthentication
+                            )
                         }
 
                         AppCard(
