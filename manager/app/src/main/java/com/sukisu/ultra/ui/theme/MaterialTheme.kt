@@ -41,6 +41,8 @@ fun AiAssistantMaterialTheme(
 fun MaterialExpressivePalette(
     content: @Composable () -> Unit,
 ) {
+    val fontFamily = FontConfig.getFontFamily(LocalContext.current)
+    val typography = remember(fontFamily) { Typography.withFontFamily(fontFamily) }
     val appSettings = LocalAppSettings.current ?: ThemeController.getAppSettings()
     val systemDarkTheme = isSystemInDarkTheme()
     val darkTheme = appSettings.colorMode.isDark || (appSettings.colorMode.isSystem && systemDarkTheme)
@@ -59,7 +61,7 @@ fun MaterialExpressivePalette(
         colorScheme = overlaidScheme,
         motionScheme = MotionScheme.expressive(),
         shapes = Shapes,
-        typography = Typography,
+        typography = typography,
         content = content,
     )
 }
@@ -70,6 +72,8 @@ fun MaterialKernelSUTheme(
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
+    val fontFamily = FontConfig.getFontFamily(context)
+    val typography = remember(fontFamily) { Typography.withFontFamily(fontFamily) }
     val systemDarkTheme = isSystemInDarkTheme()
     val darkTheme = appSettings.colorMode.isDark || (appSettings.colorMode.isSystem && systemDarkTheme)
     val amoledMode = appSettings.colorMode.isAmoled
@@ -119,7 +123,7 @@ fun MaterialKernelSUTheme(
         colorScheme = overlaidScheme,
         motionScheme = MotionScheme.expressive(),
         shapes = Shapes,
-        typography = Typography,
+        typography = typography,
         content = {
             MonetColorsProvider.UpdateCss(overlaidScheme)
             content()

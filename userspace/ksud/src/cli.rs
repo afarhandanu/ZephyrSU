@@ -49,6 +49,12 @@ enum Commands {
         command: crate::sui::Command,
     },
 
+    /// Hide bootloader unlock state from system properties
+    BootHide {
+        #[command(subcommand)]
+        command: crate::boot_hide::Command,
+    },
+
     /// Trigger `post-fs-data` event
     PostFsData,
 
@@ -1305,6 +1311,7 @@ pub fn run() -> Result<()> {
         },
 
         Commands::Sui { command } => crate::sui::run(&command),
+        Commands::BootHide { command } => crate::boot_hide::run(&command),
         Commands::Zygisk { command } => match command {
             ZygiskCommand::On => {
                 // The flag alone would only count from the next boot; turning it on also

@@ -14,6 +14,7 @@
 
 mod apk_sign;
 mod assets;
+mod boot_hide;
 mod boot_patch;
 #[cfg(target_os = "android")]
 pub mod builtin_zygisk;

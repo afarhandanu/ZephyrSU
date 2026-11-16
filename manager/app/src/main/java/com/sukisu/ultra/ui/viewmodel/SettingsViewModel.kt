@@ -152,6 +152,8 @@ class SettingsViewModel(
         viewModelScope.launch {
             val suiGen = suiGeneration
             val suiJob = async { repo.getSuiStatus() }
+            val bootHideJob = async { repo.getBootHideStatus() }
+            val selinuxJob = async { repo.getSELinuxMode() }
             val appIconId = repo.appIconId
             val appIconDynamicColor = repo.appIconDynamicColor
             val themeMode = repo.themeMode
@@ -229,6 +231,8 @@ class SettingsViewModel(
             val systemWallpaperPath = ImageStorage.systemWallpaperFile(ksuApp)
                 .takeIf { it.isFile }?.absolutePath.orEmpty()
             val suiResult = suiJob.await()
+            val isBootHideEnabled = bootHideJob.await() == "enabled"
+            val selinuxMode = selinuxJob.await()
             val suiManagement = if (suiResult.getOrNull()?.state == SuiStatus.STATE_ENABLED) {
                 refreshSuiManagement()
             } else {

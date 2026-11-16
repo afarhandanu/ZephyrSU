@@ -25,6 +25,8 @@ import com.sukisu.ultra.data.model.SuiStatus
 import com.sukisu.ultra.data.sui.SuiBridge
 import com.sukisu.ultra.ui.util.execKsud
 import com.sukisu.ultra.ui.util.execKsudResult
+import com.sukisu.ultra.ui.util.getSELinuxStatusRaw
+import com.sukisu.ultra.ui.util.setSELinuxEnforcing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -758,4 +760,16 @@ class SettingsRepositoryImpl : SettingsRepository {
             .requestedPermissions
             ?.contains(SuiApp.PERMISSION_API_V23) == true
     }.getOrDefault(false)
+
+    override suspend fun getBootHideStatus(): String = withContext(Dispatchers.IO) {
+        execKsudResult("boot-hide status").out.firstOrNull()?.trim().orEmpty()
+    }
+
+    override fun setBootHideEnabled(enabled: Boolean): Boolean =
+        execKsud("boot-hide ${if (enabled) "enable" else "disable"}", true)
+
+    override suspend fun getSELinuxMode(): String = withContext(Dispatchers.IO) { getSELinuxStatusRaw() }
+
+    override suspend fun setSELinuxMode(enforcing: Boolean): Boolean =
+        withContext(Dispatchers.IO) { setSELinuxEnforcing(enforcing) }
 }

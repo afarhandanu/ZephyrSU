@@ -35,7 +35,19 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.SelectableDropdownMenuItem
 import androidx.compose.material3.Surface
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSliderState
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -716,5 +728,78 @@ fun SegmentedTextField(
                 )
             }
         }
+    )
+}
+
+fun snapToPercent(value: Float): Float = (value * 100f).roundToInt() / 100f
+
+@Composable
+fun SliderCommitEffect(value: Float, commit: () -> Unit) {
+    val currentCommit by rememberUpdatedState(commit)
+    val currentValue by rememberUpdatedState(value)
+    var committed by remember { mutableStateOf(value) }
+    LaunchedEffect(value) {
+        if (value == committed) return@LaunchedEffect
+        delay(400)
+        currentCommit()
+        committed = value
+    }
+    DisposableEffect(Unit) { onDispose { if (currentValue != committed) currentCommit() } }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SegmentedSliderItem(
+    icon: ImageVector? = null,
+    title: String,
+    summary: String? = null,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    valueText: (Float) -> String,
+    colors: ListItemColors = defaultSegmentedColors(),
+    enabled: Boolean = true,
+    discreteSteps: Int = 19,
+    onValueChange: ((Float) -> Unit)? = null,
+    onValueChangeFinished: (Float) -> Unit,
+) {
+    val hoisted = onValueChange != null
+    val steps = discreteSteps.coerceAtLeast(0)
+    val sliderState = rememberSliderState(value = value, steps = steps, trackRange = valueRange)
+    SegmentedListItem(
+        enabled = enabled,
+        colors = colors,
+        headlineContent = { Text(title) },
+        leadingContent = icon?.let { { Icon(it, title) } },
+        trailingContent = { Text(valueText(if (hoisted) value else sliderState.value)) },
+        supportingContent = {
+            Column {
+                summary?.let { Text(it) }
+                if (hoisted) {
+                    val state = remember(valueRange, steps) { SliderState(value = value, steps = steps, trackRange = valueRange) }
+                    if (state.value != value) state.value = value
+                    SliderCommitEffect(value) { onValueChangeFinished(state.value) }
+                    Slider(
+                        state = state,
+                        onValueChange = onValueChange,
+                        onValueChangeFinished = { onValueChangeFinished(state.value) },
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth().pointerInput(title) {
+                            awaitEachGesture {
+                                val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                                var dragged = false
+                                do {
+                                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                                    if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) dragged = true
+                                    if (!change.pressed && !dragged) change.consume()
+                                } while (event.changes.any { it.pressed })
+                            }
+                        },
+                    )
+                } else {
+                    Slider(state = sliderState, onValueChangeFinished = { onValueChangeFinished(sliderState.value) }, enabled = enabled, modifier = Modifier.fillMaxWidth())
+                }
+            }
+        },
     )
 }

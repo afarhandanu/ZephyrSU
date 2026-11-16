@@ -186,4 +186,9 @@ interface SettingsRepository {
     suspend fun setSuiSettingsFlags(flags: Int): Result<Unit>
     suspend fun suiHiddenUids(): Result<List<Int>>
     suspend fun setSuiAppMode(uid: Int, mode: Int): Result<Unit>
+
+    suspend fun getBootHideStatus(): String
+    fun setBootHideEnabled(enabled: Boolean): Boolean
+    suspend fun getSELinuxMode(): String
+    suspend fun setSELinuxMode(enforcing: Boolean): Boolean
 }

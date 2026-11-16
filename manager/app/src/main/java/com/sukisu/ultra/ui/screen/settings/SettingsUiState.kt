@@ -97,6 +97,9 @@ data class SettingsUiState(
     val isSuiLoading: Boolean = true,
     val isSuiWriting: Boolean = false,
     val suiManagementAvailable: Boolean? = null,
+    val isBootHideEnabled: Boolean = false,
+    val selinuxMode: String = "",
+    val isSELinuxModeWriting: Boolean = false,
 
     // Soft Reboot
     val useSoftReboot: Boolean = false,
@@ -270,4 +273,8 @@ data class SettingsScreenActions(
     val onSetSuiEnabled: (Boolean) -> Unit = {},
     val onRepairSui: () -> Unit = {},
     val onManageSuiPermissions: () -> Unit = {},
+    val onSetBootHideEnabled: (Boolean) -> Unit = {},
+    val onSetSELinuxMode: (Boolean) -> Unit = {},
+    val onOpenFont: () -> Unit = {},
+    val onOpenMultimedia: () -> Unit = {},
 )
