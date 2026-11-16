@@ -22,6 +22,9 @@ import com.sukisu.ultra.ai.api.AiFeatureBridge
 import com.sukisu.ultra.ai.host.ManagerAiHost
 import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.data.repository.SuperUserRepositoryImpl
+import com.sukisu.ultra.data.security.SecurityRepository
+import com.sukisu.ultra.data.security.SecurityRepositoryImpl
+import com.sukisu.ultra.ui.component.security.BiometricAuthenticator
 import com.sukisu.ultra.ui.util.BuiltinAppIcons
 import com.sukisu.ultra.ui.viewmodel.SuperUserViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +60,15 @@ class KernelSUApplication : Application(), ViewModelStoreOwner {
     }
 
     lateinit var okhttpClient: OkHttpClient
+
+    /** App Lock policy + credentials (ported from FinaSU, Milestone 2). */
+    val securityRepository: SecurityRepository by lazy {
+        SecurityRepositoryImpl(
+            getSharedPreferences(SecurityRepositoryImpl.PREFS_NAME, MODE_PRIVATE),
+            biometricSupported = { BiometricAuthenticator.isSupported(this) },
+        )
+    }
+
     private val appViewModelStore by lazy { ViewModelStore() }
     private val launcherRestoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
