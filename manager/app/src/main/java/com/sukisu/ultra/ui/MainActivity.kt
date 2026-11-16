@@ -133,7 +133,16 @@ import com.sukisu.ultra.ui.screen.umountmanager.UmountManagerScreen
 import com.sukisu.ultra.data.sui.SuiPermissionHost
 import com.sukisu.ultra.ui.screen.builtinzygisk.BuiltinZygiskScreen
 import com.sukisu.ultra.ui.screen.sui.SuiPermissionRequestDialog
+import com.sukisu.ultra.media.MusicConfig
+import com.sukisu.ultra.media.MusicManager
+import com.sukisu.ultra.media.SoundEffectConfig
+import com.sukisu.ultra.media.SoundEffectManager
+import com.sukisu.ultra.media.VibrationConfig
+import com.sukisu.ultra.ui.component.settings.ProfileConfig
+import com.sukisu.ultra.ui.screen.font.FontScreen
+import com.sukisu.ultra.ui.screen.settings.MultimediaScreen
 import com.sukisu.ultra.ui.screen.sui.SuiPermissionsScreen
+import com.sukisu.ultra.ui.theme.FontConfig
 import com.sukisu.ultra.ui.theme.AiAssistantMaterialTheme
 import com.sukisu.ultra.ui.theme.KernelSUTheme
 import com.sukisu.ultra.ui.theme.LocalColorMode
@@ -186,6 +195,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        FontConfig.load(this)
+        ProfileConfig.load(this)
+        MusicConfig.load(this)
+        SoundEffectConfig.load(this)
+        VibrationConfig.load(this)
+        MusicManager.init(this)
+        SoundEffectManager.playStartup(this)
         if (ThemeTrialManager.isActive(this)) {
             ViewModelProvider(this)[SettingsViewModel::class.java]
                 .restoreThemeTrial(this, taskId)
@@ -432,6 +448,8 @@ class MainActivity : ComponentActivity() {
                                 entry<Route.VersionSpoof>(swipeDismiss = swipeDismiss) { VersionSpoofScreen() }
                                 entry<Route.BuiltinZygisk>(swipeDismiss = swipeDismiss) { BuiltinZygiskScreen() }
                                 entry<Route.SuiPermissions>(swipeDismiss = swipeDismiss) { SuiPermissionsScreen() }
+                                entry<Route.Font>(swipeDismiss = swipeDismiss) { FontScreen() }
+                                entry<Route.Multimedia>(swipeDismiss = swipeDismiss) { MultimediaScreen() }
                                 entry<Route.AiAssistant>(swipeDismiss = swipeDismiss) {
                                     if (!AiFeatureBridge.isAvailable) {
                                         LaunchedEffect(Unit) { navigator.pop() }

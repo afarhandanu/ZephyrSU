@@ -93,6 +93,10 @@ fun SettingPager(
         onSetSuiEnabled = viewModel::setSuiEnabled,
         onRepairSui = viewModel::repairSui,
         onManageSuiPermissions = { navigator.push(Route.SuiPermissions) },
+        onSetBootHideEnabled = viewModel::setBootHideEnabled,
+        onSetSELinuxMode = viewModel::setSELinuxMode,
+        onOpenFont = { navigator.push(Route.Font) },
+        onOpenMultimedia = { navigator.push(Route.Multimedia) },
     )
 
     when (LocalUiMode.current) {

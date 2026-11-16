@@ -83,6 +83,14 @@ import com.sukisu.ultra.ui.component.rebootlistpopup.rememberRebootChoices
 import com.sukisu.ultra.ui.screen.builtinzygisk.problemMessage
 import com.sukisu.ultra.ui.screen.builtinzygisk.problemTitle
 import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
+import android.os.Build
+import androidx.compose.material.icons.filled.FontDownload
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PhonelinkLock
+import androidx.compose.material.icons.filled.Shield
+import com.sukisu.ultra.ui.component.settings.ProfileConfig
+import com.sukisu.ultra.ui.component.settings.ProfileEditSheet
+import com.sukisu.ultra.ui.component.settings.ProfileHeader
 import com.sukisu.ultra.ui.util.LocaleHelper
 import android.content.Intent
 import androidx.compose.material.icons.filled.Extension
@@ -118,12 +126,24 @@ fun SettingPagerMaterial(
     }
     val snackBarHost = remember { SnackbarHostState() }
     val showUninstallDialog = rememberSaveable { mutableStateOf(false) }
+    var showProfileEditor by remember { mutableStateOf(false) }
+    var showSelinuxModeDialog by remember { mutableStateOf(false) }
     var showBottomSheet by remember { mutableStateOf(false) }
 
     UninstallDialog(
         show = showUninstallDialog.value,
         onDismissRequest = { showUninstallDialog.value = false }
     )
+    if (showProfileEditor) {
+        ProfileEditSheet(onDismiss = { showProfileEditor = false })
+    }
+    if (showSelinuxModeDialog) {
+        SELinuxModeDialog(
+            currentMode = uiState.selinuxMode,
+            onDismiss = { showSelinuxModeDialog = false },
+            onConfirm = actions.onSetSELinuxMode,
+        )
+    }
 
     // ksud finishes the handover in the background; the dialog only asks how to finish it,
     // with the same reboot entries the Home page's menu offers. The action is created out
@@ -172,6 +192,67 @@ fun SettingPagerMaterial(
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .verticalScroll(rememberScrollState())
         ) {
+            ProfileHeader(
+                nickname = ProfileConfig.nickname.ifBlank { ProfileConfig.DEFAULT_NICKNAME },
+                signature = ProfileConfig.signature,
+                deviceName = "${Build.MANUFACTURER} ${Build.MODEL}".trim(),
+                avatarUri = ProfileConfig.avatarUri,
+                avatarOpacity = ProfileConfig.avatarOpacity,
+                onAvatarClick = { showProfileEditor = true },
+            )
+
+            SegmentedColumn(
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
+            ) {
+                item(key = "zephyr_font") {
+                    val t = stringResource(R.string.font_title)
+                    SegmentedListItem(
+                        onClick = actions.onOpenFont,
+                        headlineContent = { Text(t) },
+                        leadingContent = { IconTile(Icons.Filled.FontDownload, t) },
+                    )
+                }
+                item(key = "zephyr_multimedia") {
+                    val t = stringResource(R.string.media_music)
+                    SegmentedListItem(
+                        onClick = actions.onOpenMultimedia,
+                        headlineContent = { Text(t) },
+                        leadingContent = { IconTile(Icons.Filled.MusicNote, t) },
+                    )
+                }
+            }
+
+            KsuIsValid {
+                SegmentedColumn(
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
+                ) {
+                    item(key = "zephyr_boothide") {
+                        SegmentedSwitchItem(
+                            icon = Icons.Filled.PhonelinkLock,
+                            title = stringResource(R.string.settings_zephyrsu_hide),
+                            summary = stringResource(R.string.settings_zephyrsu_hide_summary),
+                            checked = uiState.isBootHideEnabled,
+                            onCheckedChange = actions.onSetBootHideEnabled,
+                        )
+                    }
+                    item(key = "zephyr_selinux_mode") {
+                        val t = stringResource(R.string.settings_selinux_mode)
+                        val modeLabel = when (uiState.selinuxMode) {
+                            "Enforcing" -> stringResource(R.string.settings_selinux_mode_enforcing)
+                            "Permissive" -> stringResource(R.string.settings_selinux_mode_permissive)
+                            else -> uiState.selinuxMode
+                        }
+                        SegmentedListItem(
+                            onClick = { showSelinuxModeDialog = true },
+                            enabled = !uiState.isSELinuxModeWriting && (uiState.selinuxMode == "Enforcing" || uiState.selinuxMode == "Permissive"),
+                            headlineContent = { Text(t) },
+                            supportingContent = if (modeLabel.isNotBlank()) { { Text(stringResource(R.string.settings_selinux_current_mode, modeLabel)) } } else null,
+                            leadingContent = { IconTile(Icons.Filled.Shield, t) },
+                        )
+                    }
+                }
+            }
+
             SettingsAnchor(SettingsSection.GENERAL, anchorRequesters) {
             SegmentedColumn(
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),

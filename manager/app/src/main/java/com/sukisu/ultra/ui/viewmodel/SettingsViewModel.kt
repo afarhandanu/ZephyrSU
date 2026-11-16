@@ -328,6 +328,8 @@ homePillScale = HomeStatusStyle.coercePillScale(repo.homePillScale),
                     isSuiLoading = if (suiGen == suiGeneration) false else it.isSuiLoading,
                     suiManagementAvailable = if (suiGen == suiGeneration) suiManagement else it.suiManagementAvailable,
                     isLateLoadMode = isLateLoadMode,
+                    isBootHideEnabled = isBootHideEnabled,
+                    selinuxMode = selinuxMode,
                     customBackgroundUri = repo.customBackgroundUri,
                     customBackgroundUpdatedAt = repo.customBackgroundUpdatedAt,
                     useSystemWallpaper = repo.useSystemWallpaper && systemWallpaperPath.isNotEmpty(),
@@ -3087,6 +3089,35 @@ homePillScale = repo.homePillScale,
                 if (result.isSuccess) R.string.sui_repair_done else R.string.sui_repair_failed,
                 Toast.LENGTH_LONG,
             ).show()
+        }
+    }
+
+    fun setBootHideEnabled(enabled: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val ok = repo.setBootHideEnabled(enabled)
+            val status = repo.getBootHideStatus() == "enabled"
+            _uiState.update { it.copy(isBootHideEnabled = status) }
+            withContext(Dispatchers.Main) {
+                val msg = when {
+                    !ok -> R.string.settings_zephyrsu_hide_failed
+                    !enabled -> R.string.settings_zephyrsu_hide_reboot_hint
+                    else -> null
+                }
+                msg?.let { Toast.makeText(ksuApp, it, Toast.LENGTH_SHORT).show() }
+            }
+        }
+    }
+
+    fun setSELinuxMode(enforcing: Boolean) {
+        if (_uiState.value.isSELinuxModeWriting) return
+        _uiState.update { it.copy(isSELinuxModeWriting = true) }
+        viewModelScope.launch {
+            val ok = repo.setSELinuxMode(enforcing)
+            val mode = repo.getSELinuxMode()
+            _uiState.update { it.copy(isSELinuxModeWriting = false, selinuxMode = mode) }
+            if (!ok) {
+                Toast.makeText(ksuApp, R.string.settings_selinux_mode_failed, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

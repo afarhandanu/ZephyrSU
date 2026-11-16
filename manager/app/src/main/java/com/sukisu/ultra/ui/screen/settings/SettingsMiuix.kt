@@ -70,6 +70,17 @@ import com.sukisu.ultra.ui.theme.LocalEnableBlur
 import com.sukisu.ultra.ui.theme.backgroundAwareCardColors
 import com.sukisu.ultra.ui.util.BlurredBar
 import com.sukisu.ultra.ui.util.CustomTextKey
+import android.os.Build
+import androidx.compose.material.icons.rounded.FontDownload
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.PhonelinkLock
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.sukisu.ultra.ui.component.settings.ProfileConfig
+import com.sukisu.ultra.ui.component.settings.ProfileEditSheet
+import com.sukisu.ultra.ui.component.settings.ProfileHeader
+import com.sukisu.ultra.ui.theme.AiAssistantMaterialTheme
 import com.sukisu.ultra.ui.util.LocaleHelper
 import com.sukisu.ultra.ui.util.customText
 import com.sukisu.ultra.ui.util.rememberBlurBackdrop
@@ -125,6 +136,19 @@ fun SettingPagerMiuix(
     val loadingDialog = rememberLoadingDialog()
     val showUninstallDialog = rememberSaveable { mutableStateOf(false) }
     val showSendLogDialog = rememberSaveable { mutableStateOf(false) }
+    var showProfileEditor by remember { mutableStateOf(false) }
+    var showSelinuxModeDialog by remember { mutableStateOf(false) }
+
+    if (showProfileEditor) {
+        ProfileEditSheet(onDismiss = { showProfileEditor = false })
+    }
+    if (showSelinuxModeDialog) {
+        SELinuxModeDialog(
+            currentMode = uiState.selinuxMode,
+            onDismiss = { showSelinuxModeDialog = false },
+            onConfirm = actions.onSetSELinuxMode,
+        )
+    }
 
     // ksud finishes the handover in the background; the dialog only asks how to finish it,
     // with the same reboot entries the Home page's menu offers. The action is created out
@@ -206,6 +230,62 @@ fun SettingPagerMiuix(
                 contentPadding = innerPadding,
                 overscrollEffect = null,
             ) {
+                item {
+                    AiAssistantMaterialTheme {
+                        ProfileHeader(
+                            nickname = ProfileConfig.nickname.ifBlank { ProfileConfig.DEFAULT_NICKNAME },
+                            signature = ProfileConfig.signature,
+                            deviceName = "${Build.MANUFACTURER} ${Build.MODEL}".trim(),
+                            avatarUri = ProfileConfig.avatarUri,
+                            avatarOpacity = ProfileConfig.avatarOpacity,
+                            onAvatarClick = { showProfileEditor = true },
+                        )
+                    }
+                    AppCard(
+                        modifier = Modifier.padding(top = 4.dp).fillMaxWidth(),
+                        colors = backgroundAwareCardColors(),
+                    ) {
+                        ArrowPreference(
+                            title = stringResource(R.string.font_title),
+                            startAction = {
+                                Icon(Icons.Rounded.FontDownload, modifier = Modifier.padding(end = 6.dp), contentDescription = stringResource(R.string.font_title), tint = colorScheme.onBackground)
+                            },
+                            onClick = actions.onOpenFont,
+                        )
+                        ArrowPreference(
+                            title = stringResource(R.string.media_music),
+                            startAction = {
+                                Icon(Icons.Rounded.MusicNote, modifier = Modifier.padding(end = 6.dp), contentDescription = stringResource(R.string.media_music), tint = colorScheme.onBackground)
+                            },
+                            onClick = actions.onOpenMultimedia,
+                        )
+                        KsuIsValid {
+                            SwitchPreference(
+                                title = stringResource(R.string.settings_zephyrsu_hide),
+                                summary = stringResource(R.string.settings_zephyrsu_hide_summary),
+                                startAction = {
+                                    Icon(Icons.Rounded.PhonelinkLock, modifier = Modifier.padding(end = 6.dp), contentDescription = stringResource(R.string.settings_zephyrsu_hide), tint = colorScheme.onBackground)
+                                },
+                                checked = uiState.isBootHideEnabled,
+                                onCheckedChange = actions.onSetBootHideEnabled,
+                            )
+                            val modeLabel = when (uiState.selinuxMode) {
+                                "Enforcing" -> stringResource(R.string.settings_selinux_mode_enforcing)
+                                "Permissive" -> stringResource(R.string.settings_selinux_mode_permissive)
+                                else -> uiState.selinuxMode
+                            }
+                            ArrowPreference(
+                                title = stringResource(R.string.settings_selinux_mode),
+                                summary = if (modeLabel.isNotBlank()) stringResource(R.string.settings_selinux_current_mode, modeLabel) else null,
+                                enabled = !uiState.isSELinuxModeWriting && (uiState.selinuxMode == "Enforcing" || uiState.selinuxMode == "Permissive"),
+                                startAction = {
+                                    Icon(Icons.Rounded.Shield, modifier = Modifier.padding(end = 6.dp), contentDescription = stringResource(R.string.settings_selinux_mode), tint = colorScheme.onBackground)
+                                },
+                                onClick = { showSelinuxModeDialog = true },
+                            )
+                        }
+                    }
+                }
                 item {
                     AppCard(
                         modifier = Modifier
