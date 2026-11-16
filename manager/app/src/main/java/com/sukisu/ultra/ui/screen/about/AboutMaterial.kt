@@ -168,6 +168,20 @@ fun AboutScreenMaterial(
                     }
                 )
             }
+            item {
+                // First-run guide replay (ported from FinaSU, Milestone 3).
+                SegmentedColumn(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                ) {
+                    item {
+                        SegmentedListItem(
+                            onClick = actions.onShowGuide,
+                            headlineContent = { Text(stringResource(R.string.guide_about_entry_title)) },
+                            supportingContent = { Text(stringResource(R.string.guide_about_entry_summary)) },
+                        )
+                    }
+                }
+            }
             if (contributors.isNotEmpty()) {
                 item {
                     Row(

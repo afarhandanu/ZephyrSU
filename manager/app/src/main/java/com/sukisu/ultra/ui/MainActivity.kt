@@ -1,6 +1,7 @@
 package com.sukisu.ultra.ui
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -21,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
+import com.sukisu.ultra.ui.component.onboarding.FirstRunGuide
 import com.sukisu.ultra.ui.component.splash.SplashScreen
 import com.sukisu.ultra.ui.theme.LocalAppBackgroundBackdrop
 import com.sukisu.ultra.ui.theme.LocalAppSettings
@@ -590,6 +592,27 @@ class MainActivity : FragmentActivity() {
                                 onDismissed = { splashDismissed = true }
                             )
                         }
+                    }
+
+                    // First-run guide (ported from FinaSU, Milestone 3): show once, on the
+                    // first launch after install. Placed inside the AppLockGate so it only
+                    // appears after unlock; replayable from Settings -> About.
+                    val prefs = remember {
+                        ksuApp.getSharedPreferences("settings", Context.MODE_PRIVATE)
+                    }
+                    var showFirstRunGuide by rememberSaveable {
+                        mutableStateOf(
+                            savedInstanceState == null &&
+                                !prefs.getBoolean("first_run_guide_done", false),
+                        )
+                    }
+                    if (showFirstRunGuide) {
+                        FirstRunGuide(
+                            onDismiss = {
+                                prefs.edit().putBoolean("first_run_guide_done", true).apply()
+                                showFirstRunGuide = false
+                            },
+                        )
                     }
                     }
                     AuthenticationHost(authenticationSession)

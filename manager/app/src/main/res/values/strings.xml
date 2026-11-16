@@ -1825,4 +1825,27 @@
     <string name="security_target_module_flash">Flash a partition</string>
     <string name="security_target_theme_import">Theme / FPT import</string>
     <string name="security_target_reboot">Reboot</string>
+    <!-- First-run guide (ported from FinaSU, Milestone 3; copy adapted to ZephyrSU) -->
+    <string name="guide_welcome_title">Welcome to ZephyrSU</string>
+    <string name="guide_welcome_desc">Kernel-level root management with a built-in Zygisk engine, a Shizuku API backend and App Lock built in.</string>
+    <string name="guide_repo_title">Open source on GitHub</string>
+    <string name="guide_repo_desc">Source code, issue reports and release notes all live in the repository.</string>
+    <string name="guide_repo_url">github.com/afarhandanu/ZephyrSU</string>
+    <string name="guide_repo_action">Open repository</string>
+    <string name="guide_features_title">What\'s built in</string>
+    <string name="guide_features_desc">These run inside the manager, no extra module required.</string>
+    <string name="guide_feature_zygisk">Built-in Zygisk — Zygisk implementation</string>
+    <string name="guide_feature_sui">Sui — Shizuku API backend</string>
+    <string name="guide_feature_boothide">ZephyrSU Hide — hide the manager app</string>
+    <string name="guide_feature_applock">App Lock — PIN, pattern or fingerprint protection</string>
+    <string name="guide_docs_title">Stuck? Read the docs</string>
+    <string name="guide_docs_desc">Installation, modules and troubleshooting are all documented. You can reopen this guide from Settings → About at any time.</string>
+    <string name="guide_docs_action">Open documentation</string>
+    <string name="guide_next">Next</string>
+    <string name="guide_prev">Back</string>
+    <string name="guide_skip">Skip</string>
+    <string name="guide_start">Get started</string>
+    <string name="guide_page_indicator">Page %1$d of %2$d</string>
+    <string name="guide_about_entry_title">Show welcome guide again</string>
+    <string name="guide_about_entry_summary">Replay the first-launch introduction</string>
 </resources>
