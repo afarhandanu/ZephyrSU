@@ -5,10 +5,10 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.fragment.app.FragmentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
@@ -133,6 +133,7 @@ import com.sukisu.ultra.ui.screen.umountmanager.UmountManagerScreen
 import com.sukisu.ultra.data.sui.SuiPermissionHost
 import com.sukisu.ultra.ui.screen.builtinzygisk.BuiltinZygiskScreen
 import com.sukisu.ultra.ui.screen.sui.SuiPermissionRequestDialog
+import com.sukisu.ultra.ui.screen.sui.SuiPermissionsScreen
 import com.sukisu.ultra.media.MusicConfig
 import com.sukisu.ultra.media.MusicManager
 import com.sukisu.ultra.media.SoundEffectConfig
@@ -141,7 +142,12 @@ import com.sukisu.ultra.media.VibrationConfig
 import com.sukisu.ultra.ui.component.settings.ProfileConfig
 import com.sukisu.ultra.ui.screen.font.FontScreen
 import com.sukisu.ultra.ui.screen.settings.MultimediaScreen
-import com.sukisu.ultra.ui.screen.sui.SuiPermissionsScreen
+import com.sukisu.ultra.ksuApp
+import com.sukisu.ultra.ui.component.security.AppLockGate
+import com.sukisu.ultra.ui.component.security.AuthenticationHost
+import com.sukisu.ultra.ui.component.security.LocalAppAuthenticator
+import com.sukisu.ultra.ui.component.security.rememberAuthenticationSession
+import com.sukisu.ultra.ui.screen.settings.AuthenticationScreen
 import com.sukisu.ultra.ui.theme.FontConfig
 import com.sukisu.ultra.ui.theme.AiAssistantMaterialTheme
 import com.sukisu.ultra.ui.theme.KernelSUTheme
@@ -183,7 +189,9 @@ import androidx.core.graphics.drawable.toDrawable
 import com.sukisu.ultra.R
 
 
-class MainActivity : ComponentActivity() {
+// FragmentActivity (not ComponentActivity): App Lock's BiometricPrompt needs it.
+// Ported from FinaSU, Milestone 2.
+class MainActivity : FragmentActivity() {
     private val intentChannel = Channel<Intent>(capacity = Channel.BUFFERED)
 
     override fun attachBaseContext(newBase: android.content.Context) {
@@ -257,6 +265,8 @@ class MainActivity : ComponentActivity() {
             }
 
             val navigator = rememberNavigator(Route.Main)
+            // App Lock session (ported from FinaSU, Milestone 2).
+            val authenticationSession = rememberAuthenticationSession(this@MainActivity, ksuApp.securityRepository)
             val context = LocalContext.current
             val uriHandler = LocalUriHandler.current
             val systemDensity = LocalDensity.current
@@ -286,6 +296,7 @@ class MainActivity : ComponentActivity() {
                     }
                 },
                 LocalNavigator provides navigator,
+                LocalAppAuthenticator provides authenticationSession.authenticator,
                 LocalDensity provides density,
                 LocalColorMode provides appSettings.colorMode.value,
                 LocalAppSettings provides themedAppSettings,
@@ -448,6 +459,7 @@ class MainActivity : ComponentActivity() {
                                 entry<Route.VersionSpoof>(swipeDismiss = swipeDismiss) { VersionSpoofScreen() }
                                 entry<Route.BuiltinZygisk>(swipeDismiss = swipeDismiss) { BuiltinZygiskScreen() }
                                 entry<Route.SuiPermissions>(swipeDismiss = swipeDismiss) { SuiPermissionsScreen() }
+                                entry<Route.Authentication>(swipeDismiss = swipeDismiss) { AuthenticationScreen() }
                                 entry<Route.Font>(swipeDismiss = swipeDismiss) { FontScreen() }
                                 entry<Route.Multimedia>(swipeDismiss = swipeDismiss) { MultimediaScreen() }
                                 entry<Route.AiAssistant>(swipeDismiss = swipeDismiss) {
@@ -497,6 +509,10 @@ class MainActivity : ComponentActivity() {
                         if (!appContentReady) appContentReady = true
                     }
 
+                    // App Lock (ported from FinaSU, Milestone 2): gate all manager
+                    // content behind the stored authentication policy; with no policy
+                    // stored, no prompt appears.
+                    AppLockGate(authenticationSession, onCancel = { finish() }) {
                     Box(
                         modifier = Modifier.fillMaxSize()
                     ) {
@@ -575,6 +591,8 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                    }
+                    AuthenticationHost(authenticationSession)
                 }
             }
         }

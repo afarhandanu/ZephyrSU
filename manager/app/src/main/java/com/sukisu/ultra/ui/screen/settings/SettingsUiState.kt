@@ -277,4 +277,5 @@ data class SettingsScreenActions(
     val onSetSELinuxMode: (Boolean) -> Unit = {},
     val onOpenFont: () -> Unit = {},
     val onOpenMultimedia: () -> Unit = {},
+    val onOpenAuthentication: () -> Unit = {},
 )
