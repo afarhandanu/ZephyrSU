@@ -207,7 +207,11 @@ sealed interface Route : NavKey, Parcelable {
     @Parcelize
     @Serializable
     data object Multimedia : Route
-    
+
+    @Parcelize
+    @Serializable
+    data object Authentication : Route
+
     @Parcelize
     @Serializable
     data object AiAssistant : Route
