@@ -33,6 +33,14 @@ interface SettingsRepository {
     var detailsSectionExpanded: Boolean
     var customHomeTitle: String
     var customTexts: Map<String, String>
+    /** Style token of the home screen bottom card; see [com.sukisu.ultra.data.model.SupportLinksStyle]. */
+    var supportLinksStyle: String
+    /** Title of the `SupportLinksStyle.CUSTOM` home card. Empty values hide the card. */
+    var supportLinksCustomTitle: String
+    /** Subtitle of the `SupportLinksStyle.CUSTOM` home card. Empty values hide the card. */
+    var supportLinksCustomSubtitle: String
+    /** URL of the `SupportLinksStyle.CUSTOM` home card. Empty values hide the card. */
+    var supportLinksCustomUrl: String
     
     var themeStoreBaseUrl: String
     

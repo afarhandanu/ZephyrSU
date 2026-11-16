@@ -31,6 +31,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.VolunteerActivism
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.rounded.CheckCircleOutline
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.runtime.Composable
@@ -59,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import com.sukisu.ultra.KernelVersion
 import com.sukisu.ultra.Natives
 import com.sukisu.ultra.R
+import com.sukisu.ultra.data.model.SupportLinksStyle
 import com.sukisu.ultra.ui.component.WarningLevel
 import com.sukisu.ultra.ui.component.HomeCardStickerOverlays
 import com.sukisu.ultra.ui.component.dialog.rememberConfirmDialog
@@ -579,6 +581,77 @@ private fun StatsRow(
 
 @Composable
 private fun SupportLinks(
+    onOpenUrl: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    when (LocalSupportLinksStyle.current) {
+        SupportLinksStyle.HIDDEN -> Unit
+        SupportLinksStyle.CUSTOM -> CustomSupportLinks(onOpenUrl = onOpenUrl, modifier = modifier)
+        SupportLinksStyle.ZEPHYRSU -> LearnZephyrSuCard(onOpenUrl = onOpenUrl, modifier = modifier)
+        else -> LegacySupportLinks(onOpenUrl = onOpenUrl, modifier = modifier)
+    }
+}
+
+/** The user-authored card. It draws nothing while any of the three fields is blank. */
+@Composable
+private fun CustomSupportLinks(
+    onOpenUrl: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val custom = LocalSupportLinksCustom.current
+    if (!custom.isRenderable) return
+
+    AppCard(
+        modifier = modifier,
+        colors = backgroundAwareCardColors(),
+    ) {
+        ArrowPreference(
+            title = custom.title,
+            summary = custom.subtitle,
+            startAction = {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = custom.title,
+                    modifier = Modifier.padding(end = 6.dp),
+                    tint = colorScheme.onBackground,
+                )
+            },
+            onClick = { onOpenUrl(custom.url) },
+        )
+    }
+}
+
+/** A single row that opens the ZephyrSU repository. */
+@Composable
+private fun LearnZephyrSuCard(
+    onOpenUrl: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val learnMoreUrl = stringResource(R.string.home_learn_zephyrsu_url)
+
+    AppCard(
+        modifier = modifier,
+        colors = backgroundAwareCardColors(),
+    ) {
+        ArrowPreference(
+            title = stringResource(R.string.home_learn_zephyrsu),
+            summary = stringResource(R.string.home_click_to_learn_zephyrsu),
+            startAction = {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = stringResource(R.string.home_learn_zephyrsu),
+                    modifier = Modifier.padding(end = 6.dp),
+                    tint = colorScheme.onBackground,
+                )
+            },
+            onClick = { onOpenUrl(learnMoreUrl) },
+        )
+    }
+}
+
+/** The upstream KernelSU pair: a donation row and a KernelSU documentation row. */
+@Composable
+private fun LegacySupportLinks(
     onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {

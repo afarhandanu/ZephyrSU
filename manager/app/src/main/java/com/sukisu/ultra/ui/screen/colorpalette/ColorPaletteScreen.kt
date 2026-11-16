@@ -24,6 +24,9 @@ import com.sukisu.ultra.ui.util.ImageStorage
 import com.sukisu.ultra.ui.viewmodel.SettingsViewModel
 import com.sukisu.ultra.ui.component.themeimport.ThemeImportDialog
 
+/** Which custom support-link field a text dialog is editing, if any. */
+internal enum class SupportLinksCustomField { TITLE, SUBTITLE, URL }
+
 @Composable
 fun ColorPaletteScreen(section: String? = null, importUri: String? = null) {
     val navigator = LocalNavigator.current
@@ -89,6 +92,10 @@ fun ColorPaletteScreen(section: String? = null, importUri: String? = null) {
         onSetInteractionSectionExpanded = viewModel::setInteractionSectionExpanded,
         onSetDetailsSectionExpanded = viewModel::setDetailsSectionExpanded,
         onSetCustomHomeTitle = viewModel::setCustomHomeTitle,
+        onSetSupportLinksStyle = viewModel::setSupportLinksStyle,
+        onSetSupportLinksCustomTitle = viewModel::setSupportLinksCustomTitle,
+        onSetSupportLinksCustomSubtitle = viewModel::setSupportLinksCustomSubtitle,
+        onSetSupportLinksCustomUrl = viewModel::setSupportLinksCustomUrl,
         onPickCustomBackground = { ctx, uri ->
             viewModel.stagePickedBackground(ctx, uri) { path ->
                 if (path != null) {

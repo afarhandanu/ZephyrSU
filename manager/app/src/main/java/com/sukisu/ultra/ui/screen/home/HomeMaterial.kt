@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.VolunteerActivism
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
@@ -76,6 +77,7 @@ import com.sukisu.ultra.KernelVersion
 import com.sukisu.ultra.Natives
 import com.sukisu.ultra.R
 import com.sukisu.ultra.ai.api.AiFeatureBridge
+import com.sukisu.ultra.data.model.SupportLinksStyle
 import com.sukisu.ultra.ui.component.HomeCardStickerOverlays
 import com.sukisu.ultra.ui.component.WarningLevel
 import com.sukisu.ultra.ui.component.dialog.rememberConfirmDialog
@@ -599,6 +601,67 @@ private fun WarningCard(
 
 @Composable
 private fun SupportLinks(
+    onOpenUrl: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    when (LocalSupportLinksStyle.current) {
+        SupportLinksStyle.HIDDEN -> Unit
+        SupportLinksStyle.CUSTOM -> CustomSupportLinks(onOpenUrl = onOpenUrl, modifier = modifier)
+        SupportLinksStyle.ZEPHYRSU -> LearnZephyrSuCard(onOpenUrl = onOpenUrl, modifier = modifier)
+        else -> LegacySupportLinks(onOpenUrl = onOpenUrl, modifier = modifier)
+    }
+}
+
+/** The user-authored card. It draws nothing while any of the three fields is blank. */
+@Composable
+private fun CustomSupportLinks(
+    onOpenUrl: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val custom = LocalSupportLinksCustom.current
+    if (!custom.isRenderable) return
+
+    SegmentedColumn(modifier = modifier.fillMaxWidth()) {
+        item {
+            SegmentedListItem(
+                onClick = { onOpenUrl(custom.url) },
+                headlineContent = { Text(custom.title) },
+                supportingContent = { Text(custom.subtitle) },
+                leadingContent = {
+                    IconTile(Icons.Outlined.Info, custom.title)
+                },
+                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) },
+            )
+        }
+    }
+}
+
+/** A single row that opens the ZephyrSU repository. */
+@Composable
+private fun LearnZephyrSuCard(
+    onOpenUrl: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val learnMoreUrl = stringResource(R.string.home_learn_zephyrsu_url)
+
+    SegmentedColumn(modifier = modifier.fillMaxWidth()) {
+        item {
+            SegmentedListItem(
+                onClick = { onOpenUrl(learnMoreUrl) },
+                headlineContent = { Text(stringResource(R.string.home_learn_zephyrsu)) },
+                supportingContent = { Text(stringResource(R.string.home_click_to_learn_zephyrsu)) },
+                leadingContent = {
+                    IconTile(Icons.Outlined.Info, stringResource(R.string.home_learn_zephyrsu))
+                },
+                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) },
+            )
+        }
+    }
+}
+
+/** The upstream KernelSU pair: a donation row and a KernelSU documentation row. */
+@Composable
+private fun LegacySupportLinks(
     onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {

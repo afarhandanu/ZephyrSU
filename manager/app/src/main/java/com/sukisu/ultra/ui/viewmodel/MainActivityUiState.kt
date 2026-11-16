@@ -23,6 +23,11 @@ data class MainActivityUiState(
     val customBackgroundBlurPercent: Int = 50,
     val customBackgroundScrimPercent: Int = -35,
     
+    val supportLinksStyle: String = "",
+    val supportLinksCustomTitle: String = "",
+    val supportLinksCustomSubtitle: String = "",
+    val supportLinksCustomUrl: String = "",
+
     val keyColorOverride: Int? = null,
     val uiMode: UiMode,
     val customTexts: Map<String, String> = emptyMap(),

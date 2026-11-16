@@ -158,6 +158,10 @@ class MainActivityViewModel(
                 .takeIf { it != NO_PENDING_SEED },
             uiMode = UiMode.fromValue(settingRepo.uiMode),
             customTexts = settingRepo.customTexts,
+            supportLinksStyle = settingRepo.supportLinksStyle,
+            supportLinksCustomTitle = settingRepo.supportLinksCustomTitle,
+            supportLinksCustomSubtitle = settingRepo.supportLinksCustomSubtitle,
+            supportLinksCustomUrl = settingRepo.supportLinksCustomUrl,
         )
     }
 
@@ -193,6 +197,10 @@ class MainActivityViewModel(
             KEY_COLOR_PENDING,
             "ui_mode",
             "custom_texts",
+            "support_links_style",
+            "support_links_custom_title",
+            "support_links_custom_subtitle",
+            "support_links_custom_url",
             "adaptive_theme",
             "adaptive_applied_mode",
             KEY_CUSTOM_APPEARANCE,

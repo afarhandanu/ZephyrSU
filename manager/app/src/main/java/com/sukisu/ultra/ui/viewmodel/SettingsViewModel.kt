@@ -15,6 +15,7 @@ import com.materialkolor.dynamiccolor.ColorSpec
 import com.sukisu.ultra.Natives
 import com.sukisu.ultra.R
 import com.sukisu.ultra.data.model.SuiStatus
+import com.sukisu.ultra.data.model.SupportLinksStyle
 import com.sukisu.ultra.data.repository.SettingsRepository
 import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.ksuApp
@@ -98,6 +99,10 @@ class SettingsViewModel(
         detailsSectionExpanded = repo.detailsSectionExpanded,
         customHomeTitle = repo.customHomeTitle,
         customTexts = repo.customTexts,
+        supportLinksStyle = repo.supportLinksStyle,
+        supportLinksCustomTitle = repo.supportLinksCustomTitle,
+        supportLinksCustomSubtitle = repo.supportLinksCustomSubtitle,
+        supportLinksCustomUrl = repo.supportLinksCustomUrl,
         themeStoreBaseUrl = repo.themeStoreBaseUrl,
         themeStoreToken = repo.themeStoreToken,
         themeStoreAuthorId = repo.themeStoreAuthorId,
@@ -259,6 +264,10 @@ class SettingsViewModel(
                     detailsSectionExpanded = repo.detailsSectionExpanded,
                     customHomeTitle = repo.customHomeTitle,
                     customTexts = repo.customTexts,
+                    supportLinksStyle = repo.supportLinksStyle,
+                    supportLinksCustomTitle = repo.supportLinksCustomTitle,
+                    supportLinksCustomSubtitle = repo.supportLinksCustomSubtitle,
+                    supportLinksCustomUrl = repo.supportLinksCustomUrl,
                     adaptiveThemeActive = AdaptiveThemeStore.isActive(repo),
                     adaptiveDraftLightCaptured = AdaptiveThemeStore.loadDraft(repo)?.light != null,
                     adaptiveDraftDarkCaptured = AdaptiveThemeStore.loadDraft(repo)?.dark != null,
@@ -2701,6 +2710,30 @@ homePillScale = repo.homePillScale,
         }
     }
 
+    fun setSupportLinksStyle(style: String) {
+        val normalized = SupportLinksStyle.fromValue(style)
+        repo.supportLinksStyle = normalized
+        _uiState.update { it.copy(supportLinksStyle = normalized) }
+    }
+
+    fun setSupportLinksCustomTitle(title: String) {
+        val normalized = title.trim()
+        repo.supportLinksCustomTitle = normalized
+        _uiState.update { it.copy(supportLinksCustomTitle = normalized) }
+    }
+
+    fun setSupportLinksCustomSubtitle(subtitle: String) {
+        val normalized = subtitle.trim()
+        repo.supportLinksCustomSubtitle = normalized
+        _uiState.update { it.copy(supportLinksCustomSubtitle = normalized) }
+    }
+
+    fun setSupportLinksCustomUrl(url: String) {
+        val normalized = url.trim()
+        repo.supportLinksCustomUrl = normalized
+        _uiState.update { it.copy(supportLinksCustomUrl = normalized) }
+    }
+
     fun setCustomText(key: String, value: String) {
         val trimmed = value.trim()
         val current = repo.customTexts.toMutableMap()
@@ -3223,6 +3256,10 @@ homePillScale = repo.homePillScale,
             enableNavigationBadge = enableNavigationBadge,
             pageScale = pageScale,
             customHomeTitle = customHomeTitle,
+            supportLinksStyle = supportLinksStyle,
+            supportLinksCustomTitle = supportLinksCustomTitle,
+            supportLinksCustomSubtitle = supportLinksCustomSubtitle,
+            supportLinksCustomUrl = supportLinksCustomUrl,
             homeCardImagePath = homeCardImagePath,
             hideHomeCardStatusText = hideHomeCardStatusText,
             hideHomeCardDecoration = hideHomeCardDecoration,
