@@ -1,0 +1,138 @@
+Traceback (most recent call last):
+  File "<stdin>", line 7, in <module>
+AssertionError
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/navigation3/Routes.kt Routes Font & Multimedia
+PATCHED manager/app/src/main/java/com/sukisu/ultra/data/repository/SettingsRepository.kt SettingsRepository M1
+PATCHED manager/app/src/main/java/com/sukisu/ultra/data/repository/SettingsRepositoryImpl.kt SettingsRepositoryImpl imports
+PATCHED manager/app/src/main/java/com/sukisu/ultra/data/repository/SettingsRepositoryImpl.kt SettingsRepositoryImpl M1
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsUiState.kt SettingsUiState M1
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsUiState.kt SettingsScreenActions M1
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/SettingsViewModel.kt VM jobs
+PATCHED manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/SettingsViewModel.kt VM await
+Traceback (most recent call last):
+  File "/tmp/m1_c.py", line 96, in <module>
+    replace_exact(
+    ~~~~~~~~~~~~~^
+        f"{ROOT}/ui/viewmodel/SettingsViewModel.kt",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        "VM state update",
+        ^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/tmp/m1_c.py", line 8, in replace_exact
+    assert s.count(old) == 1, f"Mismatch [{label}] in {path}: count={s.count(old)}"
+           ^^^^^^^^^^^^^^^^^
+AssertionError: Mismatch [VM state update] in manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/SettingsViewModel.kt: count=2
+ M manager/app/build.gradle.kts
+ M manager/app/src/main/AndroidManifest.xml
+A  manager/app/src/main/assets/fonts/xiaolai-OFL.txt
+A  manager/app/src/main/assets/sound/Baka.wav
+A  manager/app/src/main/assets/sound/Ciallo.wav
+A  manager/app/src/main/assets/sound/Ehe.wav
+A  manager/app/src/main/assets/sound/Imoi.wav
+A  manager/app/src/main/assets/sound/Zako.wav
+A  manager/app/src/main/assets/sound/Zako2.wav
+A  manager/app/src/main/assets/start/Hentai.wav
+A  manager/app/src/main/assets/start/Zako.wav
+ M manager/app/src/main/java/com/sukisu/ultra/data/repository/SettingsRepository.kt
+ M manager/app/src/main/java/com/sukisu/ultra/data/repository/SettingsRepositoryImpl.kt
+ M manager/app/src/main/java/com/sukisu/ultra/ui/component/material/SegmentedList.kt
+ M manager/app/src/main/java/com/sukisu/ultra/ui/navigation3/Routes.kt
+ M manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SettingsUiState.kt
+ M manager/app/src/main/java/com/sukisu/ultra/ui/theme/MaterialTheme.kt
+ M manager/app/src/main/java/com/sukisu/ultra/ui/theme/Type.kt
+ M manager/app/src/main/java/com/sukisu/ultra/ui/util/SELinuxChecker.kt
+ M manager/app/src/main/java/com/sukisu/ultra/ui/viewmodel/SettingsViewModel.kt
+A  manager/app/src/main/res/font/xiaolai.ttf
+ M manager/gradle/libs.versions.toml
+ M userspace/ksud/src/cli.rs
+ M userspace/ksud/src/init_event.rs
+ M userspace/ksud/src/main.rs
+?? manager/app/src/main/java/com/sukisu/ultra/media/
+?? manager/app/src/main/java/com/sukisu/ultra/ui/component/CropGeometry.kt
+?? manager/app/src/main/java/com/sukisu/ultra/ui/component/ImageCropper.kt
+?? manager/app/src/main/java/com/sukisu/ultra/ui/component/settings/
+?? manager/app/src/main/java/com/sukisu/ultra/ui/screen/font/
+?? manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/MultimediaScreen.kt
+?? manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/MultimediaSettings.kt
+?? manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SELinuxModeDialog.kt
+?? manager/app/src/main/java/com/sukisu/ultra/ui/theme/FontConfig.kt
+?? manager/app/src/main/res/values-ar/zephyr_m1.xml
+?? manager/app/src/main/res/values-es/zephyr_m1.xml
+?? manager/app/src/main/res/values-in/zephyr_m1.xml
+?? manager/app/src/main/res/values-ja/zephyr_m1.xml
+?? manager/app/src/main/res/values-ko/zephyr_m1.xml
+?? manager/app/src/main/res/values-mgl/zephyr_m1.xml
+?? manager/app/src/main/res/values-pl/zephyr_m1.xml
+?? manager/app/src/main/res/values-pt-rBR/zephyr_m1.xml
+?? manager/app/src/main/res/values-ru/zephyr_m1.xml
+?? manager/app/src/main/res/values-tr/zephyr_m1.xml
+?? manager/app/src/main/res/values-vi/zephyr_m1.xml
+?? manager/app/src/main/res/values-zh-rAG/zephyr_m1.xml
+?? manager/app/src/main/res/values-zh-rAT/zephyr_m1.xml
+?? manager/app/src/main/res/values-zh-rCK/zephyr_m1.xml
+?? manager/app/src/main/res/values-zh-rCN/zephyr_m1.xml
+?? manager/app/src/main/res/values-zh-rMC/zephyr_m1.xml
+?? manager/app/src/main/res/values-zh-rTW/zephyr_m1.xml
+?? manager/app/src/main/res/values-zh-rWC/zephyr_m1.xml
+?? manager/app/src/main/res/values/zephyr_m1.xml
+?? userspace/ksud/src/boot_hide.rs
+?? userspace/ksud/src/boot_hide_tests.rs
+[main efcf808e4] feat: port BootHide, SELinux mode, Profile editor, Custom Font, and Multimedia from FinaSU
+ 65 files changed, 4822 insertions(+), 4 deletions(-)
+ create mode 100644 manager/app/src/main/assets/fonts/xiaolai-OFL.txt
+ create mode 100644 manager/app/src/main/assets/sound/Baka.wav
+ create mode 100644 manager/app/src/main/assets/sound/Ciallo.wav
+ create mode 100644 manager/app/src/main/assets/sound/Ehe.wav
+ create mode 100644 manager/app/src/main/assets/sound/Imoi.wav
+ create mode 100644 manager/app/src/main/assets/sound/Zako.wav
+ create mode 100644 manager/app/src/main/assets/sound/Zako2.wav
+ create mode 100644 manager/app/src/main/assets/start/Hentai.wav
+ create mode 100644 manager/app/src/main/assets/start/Zako.wav
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/media/MediaFeedback.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/media/MediaFiles.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/media/MusicConfig.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/media/MusicManager.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/media/SoundEffectConfig.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/media/SoundEffectManager.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/media/VibrationConfig.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/media/VibrationManager.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/ui/component/CropGeometry.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/ui/component/ImageCropper.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/ui/component/settings/ProfileAvatarSources.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/ui/component/settings/ProfileConfig.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/ui/component/settings/ProfileEditSheet.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/ui/component/settings/ProfileHeader.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/ui/screen/font/FontScreen.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/MultimediaScreen.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/MultimediaSettings.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/ui/screen/settings/SELinuxModeDialog.kt
+ create mode 100644 manager/app/src/main/java/com/sukisu/ultra/ui/theme/FontConfig.kt
+ create mode 100644 manager/app/src/main/res/font/xiaolai.ttf
+ create mode 100644 manager/app/src/main/res/values-ar/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-es/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-in/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-ja/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-ko/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-mgl/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-pl/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-pt-rBR/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-ru/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-tr/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-vi/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-zh-rAG/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-zh-rAT/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-zh-rCK/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-zh-rCN/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-zh-rMC/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-zh-rTW/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values-zh-rWC/zephyr_m1.xml
+ create mode 100644 manager/app/src/main/res/values/zephyr_m1.xml
+ create mode 100644 userspace/ksud/src/boot_hide.rs
+ create mode 100644 userspace/ksud/src/boot_hide_tests.rs
+To https://github.com/afarhandanu/ZephyrSU
+   6f0b8ba34..efcf808e4  main -> main
+efcf808e4 feat: port BootHide, SELinux mode, Profile editor, Custom Font, and Multimedia from FinaSU
+6f0b8ba34 fix: replace missing Icons.Outlined.Timelapse with Icons.Outlined.Timer
+RUN_M1_C_PATCH_EXIT: 0
