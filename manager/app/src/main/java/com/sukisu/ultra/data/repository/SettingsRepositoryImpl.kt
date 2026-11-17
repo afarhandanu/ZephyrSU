@@ -22,6 +22,7 @@ import com.sukisu.ultra.ui.util.HomeStatusStyle
 import com.sukisu.ultra.ui.util.BuiltinAppIcons
 import com.sukisu.ultra.data.model.SuiApp
 import com.sukisu.ultra.data.model.SuiStatus
+import com.sukisu.ultra.data.modulestore.StoreSourceKind
 import com.sukisu.ultra.data.model.SupportLinksStyle
 import com.sukisu.ultra.data.sui.SuiBridge
 import com.sukisu.ultra.ui.util.execKsud
@@ -514,6 +515,21 @@ class SettingsRepositoryImpl : SettingsRepository {
             putString("module_repo_sort", value)
             remove("module_repo_sort_order")
         }
+
+    override var repoSourceKind: StoreSourceKind
+        // Unset means Nova's own registry (current behaviour); only an explicitly stored
+        // unrecognised value falls back to OFFICIAL via fromValue.
+        get() = prefs.getString("repo_source", null)?.let { StoreSourceKind.fromValue(it) }
+            ?: StoreSourceKind.KERNELSU
+        set(value) = prefs.edit { putString("repo_source", value.value) }
+
+    override var repoCustomUrl: String
+        get() = prefs.getString("repo_custom_url", "").orEmpty()
+        set(value) = prefs.edit { putString("repo_custom_url", value) }
+
+    override var repoSelectedRepositoryUrl: String
+        get() = prefs.getString("repo_cluster_url", "").orEmpty()
+        set(value) = prefs.edit { putString("repo_cluster_url", value) }
 
     override var superuserShowSystemApps: Boolean
         get() = prefs.getBoolean("show_system_apps", false)

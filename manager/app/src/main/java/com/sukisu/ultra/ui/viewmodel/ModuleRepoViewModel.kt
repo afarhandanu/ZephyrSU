@@ -18,6 +18,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import com.sukisu.ultra.R
+import com.sukisu.ultra.data.modulestore.ModuleStoreRegistry
+import com.sukisu.ultra.data.modulestore.StoreRepository
+import com.sukisu.ultra.data.modulestore.StoreSourceKind
+import com.sukisu.ultra.data.modulestore.isHttpUrl
 import com.sukisu.ultra.data.registry.UnsupportedSchemaException
 import com.sukisu.ultra.data.repository.ModuleRepoRepository
 import com.sukisu.ultra.data.repository.ModuleRepoRepositoryImpl
@@ -58,7 +62,10 @@ class ModuleRepoViewModel(
         _uiState.update {
             it.copy(
                 sortOrder = initial,
-                offline = !networkAvailable()
+                offline = !networkAvailable(),
+                sourceKind = settingsRepo.repoSourceKind,
+                customUrl = settingsRepo.repoCustomUrl,
+                selectedRepositoryUrl = settingsRepo.repoSelectedRepositoryUrl,
             )
         }
 
@@ -163,6 +170,99 @@ class ModuleRepoViewModel(
                 }
             }
         }
+    }
+
+    /** Handles a selection from the source switcher (M3.4, mirrors FinaSU). */
+    fun selectSourceKind(kind: StoreSourceKind) {
+        when (kind) {
+            StoreSourceKind.OFFICIAL, StoreSourceKind.KERNELSU -> {
+                if (_uiState.value.sourceKind == kind) return
+                settingsRepo.repoSourceKind = kind
+                // Drop the previous source's list so it is never shown as the new source's.
+                _uiState.update {
+                    it.copy(
+                        sourceKind = kind,
+                        modules = emptyList(),
+                        searchResults = emptyList(),
+                        hasLoaded = false,
+                        error = null,
+                    )
+                }
+                refresh()
+            }
+
+            StoreSourceKind.CLUSTER -> {
+                _uiState.update { it.copy(showRepositoryPicker = true) }
+                loadRepositories()
+            }
+
+            StoreSourceKind.CUSTOM -> {
+                _uiState.update { it.copy(showRepositoryPicker = false, showCustomUrlDialog = true) }
+            }
+        }
+    }
+
+    private fun loadRepositories() {
+        if (_uiState.value.repositories.isNotEmpty() || _uiState.value.repositoryPickerLoading) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(repositoryPickerLoading = true) }
+            val cluster = ModuleStoreRegistry.clusterFor(_uiState.value.selectedRepositoryUrl)
+            val result = withContext(Dispatchers.IO) { cluster.listRepositories() }
+            result.onSuccess { repositories ->
+                _uiState.update { it.copy(repositories = repositories, repositoryPickerLoading = false) }
+            }.onFailure { error ->
+                Log.e(TAG, "list repositories failed", error)
+                _uiState.update { it.copy(repositoryPickerLoading = false) }
+            }
+        }
+    }
+
+    fun selectRepository(repository: StoreRepository) {
+        settingsRepo.repoSourceKind = StoreSourceKind.CLUSTER
+        settingsRepo.repoSelectedRepositoryUrl = repository.url
+        _uiState.update {
+            it.copy(
+                sourceKind = StoreSourceKind.CLUSTER,
+                selectedRepositoryUrl = repository.url,
+                showRepositoryPicker = false,
+                modules = emptyList(),
+                searchResults = emptyList(),
+                hasLoaded = false,
+                error = null,
+            )
+        }
+        refresh()
+    }
+
+    fun confirmCustomUrl(url: String) {
+        val normalized = url.trim()
+        if (!normalized.isHttpUrl()) return
+        settingsRepo.repoSourceKind = StoreSourceKind.CUSTOM
+        settingsRepo.repoCustomUrl = normalized
+        _uiState.update {
+            it.copy(
+                sourceKind = StoreSourceKind.CUSTOM,
+                customUrl = normalized,
+                showCustomUrlDialog = false,
+                modules = emptyList(),
+                searchResults = emptyList(),
+                hasLoaded = false,
+                error = null,
+            )
+        }
+        refresh()
+    }
+
+    fun dismissRepositoryPicker() {
+        _uiState.update { it.copy(showRepositoryPicker = false) }
+    }
+
+    fun openCustomUrlDialog() {
+        _uiState.update { it.copy(showRepositoryPicker = false, showCustomUrlDialog = true) }
+    }
+
+    fun dismissCustomUrlDialog() {
+        _uiState.update { it.copy(showCustomUrlDialog = false) }
     }
 
     private fun errorMessage(e: Throwable, cached: Boolean): String = when {

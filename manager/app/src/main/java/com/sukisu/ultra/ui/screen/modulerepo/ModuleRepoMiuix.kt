@@ -8,6 +8,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -78,6 +81,8 @@ import kotlinx.coroutines.launch
 import com.sukisu.ultra.R
 import com.sukisu.ultra.data.model.RepoModule
 import com.sukisu.ultra.data.model.RepoRelease
+import com.sukisu.ultra.data.modulestore.StoreRepository
+import com.sukisu.ultra.data.modulestore.StoreSourceKind
 import com.sukisu.ultra.ui.component.ListPopupDefaults
 import com.sukisu.ultra.ui.component.ScrollToTopOnChange
 import com.sukisu.ultra.ui.component.SearchStatus
@@ -101,6 +106,7 @@ import com.sukisu.ultra.ui.util.BlurredBar
 import com.sukisu.ultra.ui.util.isDownloadAvailable
 import com.sukisu.ultra.ui.util.rememberBlurBackdrop
 import com.sukisu.ultra.ui.util.rememberContentReady
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.CircularProgressIndicator
 import top.yukonga.miuix.kmp.basic.DropdownImpl
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
@@ -118,6 +124,7 @@ import top.yukonga.miuix.kmp.basic.TabRow
 import top.yukonga.miuix.kmp.basic.TabRowDefaults
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
@@ -130,6 +137,7 @@ import top.yukonga.miuix.kmp.icon.extended.Link
 import top.yukonga.miuix.kmp.icon.extended.Play
 import top.yukonga.miuix.kmp.icon.extended.Sort
 import top.yukonga.miuix.kmp.icon.extended.TopDownloads
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.overlay.OverlayListPopup
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.utils.PagerNavigationSpringSpec
@@ -205,6 +213,45 @@ fun ModuleRepoScreenMiuix(
                                     imageVector = MiuixIcons.Sort,
                                     tint = colorScheme.onSurface,
                                     contentDescription = stringResource(R.string.menu_sort),
+                                )
+                            }
+
+                            val showSourcePopup = remember { mutableStateOf(false) }
+                            OverlayListPopup(
+                                show = showSourcePopup.value,
+                                popupPositionProvider = ListPopupDefaults.MenuPositionProvider,
+                                alignment = PopupPositionProvider.Align.TopEnd,
+                                onDismissRequest = { showSourcePopup.value = false },
+                                content = {
+                                    ListPopupColumn {
+                                        val options = listOf(
+                                            StoreSourceKind.OFFICIAL to R.string.module_repo_source_official,
+                                            StoreSourceKind.CLUSTER to R.string.module_repo_source_cluster,
+                                            StoreSourceKind.CUSTOM to R.string.module_repo_source_custom,
+                                            StoreSourceKind.KERNELSU to R.string.module_repo_source_kernelsu,
+                                        )
+                                        options.forEachIndexed { index, (kind, labelRes) ->
+                                            DropdownImpl(
+                                                text = stringResource(labelRes),
+                                                optionSize = options.size,
+                                                isSelected = state.sourceKind == kind,
+                                                onSelectedIndexChange = {
+                                                    actions.onSelectSourceKind(kind)
+                                                    showSourcePopup.value = false
+                                                },
+                                                index = index,
+                                            )
+                                        }
+                                    }
+                                })
+                            IconButton(
+                                onClick = { showSourcePopup.value = true },
+                                holdDownState = showSourcePopup.value
+                            ) {
+                                Icon(
+                                    imageVector = MiuixIcons.Link,
+                                    tint = colorScheme.onSurface,
+                                    contentDescription = stringResource(R.string.module_repo_source),
                                 )
                             }
                         },
@@ -518,7 +565,155 @@ fun ModuleRepoScreenMiuix(
                 }
             }
         }
+
+        if (state.showRepositoryPicker) {
+            RepositoryPickerDialogMiuix(
+                repositories = state.repositories,
+                loading = state.repositoryPickerLoading,
+                onSelect = actions.onSelectRepository,
+                onManualInput = actions.onOpenCustomUrlDialog,
+                onDismiss = actions.onDismissRepositoryPicker,
+            )
+        }
+
+        if (state.showCustomUrlDialog) {
+            CustomUrlDialogMiuix(
+                initialUrl = state.customUrl,
+                onConfirm = actions.onConfirmCustomUrl,
+                onDismiss = actions.onDismissCustomUrlDialog,
+            )
+        }
     }
+}
+
+@Composable
+private fun RepositoryPickerDialogMiuix(
+    repositories: List<StoreRepository>,
+    loading: Boolean,
+    onSelect: (StoreRepository) -> Unit,
+    onManualInput: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    OverlayDialog(
+        show = true,
+        title = stringResource(R.string.module_repo_pick_repository),
+        onDismissRequest = onDismiss,
+        content = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                when {
+                    loading && repositories.isEmpty() -> Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        InfiniteProgressIndicator()
+                    }
+
+                    repositories.isEmpty() -> Text(
+                        text = stringResource(R.string.network_offline),
+                        fontSize = 14.sp,
+                        color = colorScheme.onSurfaceVariantSummary,
+                    )
+
+                    else -> Column(
+                        modifier = Modifier
+                            .heightIn(max = 420.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        repositories.forEach { repository ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onSelect(repository) }
+                                    .padding(vertical = 8.dp),
+                            ) {
+                                Text(
+                                    text = repository.name,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight(550),
+                                    color = colorScheme.onSurface,
+                                )
+                                Text(
+                                    text = stringResource(
+                                        R.string.module_repo_modules_count,
+                                        repository.modulesCount,
+                                    ),
+                                    fontSize = 12.sp,
+                                    color = colorScheme.onSurfaceVariantSummary,
+                                )
+                                if (repository.description.isNotBlank()) {
+                                    Text(
+                                        text = repository.description,
+                                        fontSize = 12.sp,
+                                        color = colorScheme.onSurfaceVariantSummary,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TextButton(
+                        text = stringResource(R.string.module_repo_manual_url),
+                        onClick = onManualInput,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(
+                        text = stringResource(android.R.string.cancel),
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun CustomUrlDialogMiuix(
+    initialUrl: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var url by remember(initialUrl) { mutableStateOf(initialUrl) }
+    val normalized = url.trim()
+    val isValid = normalized.startsWith("http://", ignoreCase = true) ||
+        normalized.startsWith("https://", ignoreCase = true)
+
+    OverlayDialog(
+        show = true,
+        title = stringResource(R.string.module_repo_custom_url),
+        onDismissRequest = onDismiss,
+        content = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                TextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    label = stringResource(R.string.module_repo_custom_url_hint),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    useLabelAsPlaceholder = url.isEmpty(),
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TextButton(
+                        text = stringResource(android.R.string.cancel),
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(
+                        text = stringResource(R.string.confirm),
+                        onClick = { if (isValid) onConfirm(normalized) },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.textButtonColorsPrimary(),
+                    )
+                }
+            }
+        },
+    )
 }
 
 @Composable
