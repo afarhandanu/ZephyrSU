@@ -924,9 +924,7 @@ fn collect_plan_filtered(only: Option<&str>) -> Result<crate::nomount_plan::Plan
         std::path::Path::new("/"),
         std::path::Path::new("/system"),
     );
-    let fs = crate::nomount_plan::StdFs::new(
-        read_opaque as fn(&std::path::Path) -> Result<bool>,
-    );
+    let fs = crate::nomount_plan::StdFs::new(read_opaque as fn(&std::path::Path) -> Result<bool>);
     only.map_or_else(
         || crate::nomount_plan::collect_rules(&fs, &cfg),
         |id| crate::nomount_plan::collect_rules_for(&fs, &cfg, id),
@@ -944,9 +942,7 @@ pub fn collect_rule_counts() -> Result<Vec<(String, usize)>> {
         std::path::Path::new("/"),
         std::path::Path::new("/system"),
     );
-    let fs = crate::nomount_plan::StdFs::new(
-        read_opaque as fn(&std::path::Path) -> Result<bool>,
-    );
+    let fs = crate::nomount_plan::StdFs::new(read_opaque as fn(&std::path::Path) -> Result<bool>);
     crate::nomount_plan::rule_counts(&fs, &cfg)
 }
 
@@ -992,9 +988,7 @@ pub fn hot_unload(id: &str) -> Result<usize> {
         std::path::Path::new("/"),
         std::path::Path::new("/system"),
     );
-    let fs = crate::nomount_plan::StdFs::new(
-        read_opaque as fn(&std::path::Path) -> Result<bool>,
-    );
+    let fs = crate::nomount_plan::StdFs::new(read_opaque as fn(&std::path::Path) -> Result<bool>);
     let plan = crate::nomount_plan::collect_rules_ignoring_marks(&fs, &cfg, id)?;
     let paths: Vec<String> = plan
         .rules
@@ -1980,6 +1974,8 @@ fn clear_legacy_load_record() -> Result<()> {
 }
 
 #[cfg(target_os = "android")]
+// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+#[allow(dead_code)]
 pub fn preserve_legacy_load_guard() -> Result<()> {
     preserve_legacy_load_guard_at(
         Path::new(crate::defs::MOUNT_INFLIGHT),
@@ -1989,6 +1985,8 @@ pub fn preserve_legacy_load_guard() -> Result<()> {
 }
 
 #[cfg(any(target_os = "android", test))]
+// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+#[allow(dead_code)]
 fn preserve_legacy_load_guard_at(legacy: &Path, attempt: &Path, lock_path: &Path) -> Result<()> {
     if !mount_guard::read(legacy).is_some_and(|record| record.stage == mount_guard::Stage::Load)
         || mount_guard::read(attempt).is_some()
@@ -2028,6 +2026,8 @@ fn load_lock() -> Result<std::fs::File> {
 /// Selecting NoMount again is the retry both guards are waiting for, so the
 /// record has to go before the next load or injection can run.
 #[cfg(target_os = "android")]
+// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+#[allow(dead_code)]
 pub fn forget_inflight() -> Result<()> {
     forget_inflight_at(
         load_attempt_path(),
@@ -2037,6 +2037,8 @@ pub fn forget_inflight() -> Result<()> {
 }
 
 #[cfg(any(target_os = "android", test))]
+// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+#[allow(dead_code)]
 fn forget_inflight_at(attempt: &Path, legacy: &Path, lock_path: &Path) -> Result<()> {
     let _lock = load_lock_at(lock_path)?;
     mount_guard::try_clear(attempt).context("nomount: cannot clear the load guard")?;
@@ -2159,4 +2161,3 @@ fn join_uids(uids: &[u32]) -> String {
         .collect::<Vec<_>>()
         .join(",")
 }
-

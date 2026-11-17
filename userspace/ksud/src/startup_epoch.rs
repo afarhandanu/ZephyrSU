@@ -16,7 +16,11 @@ use std::sync::atomic::{AtomicI32, Ordering};
 
 const STATE: &str = "/data/adb/ksu/startup_epoch.json";
 const LOCK: &str = "/data/adb/ksu/startup_epoch.lock";
+// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+#[allow(dead_code)]
 static OPERATION_LOCK: Mutex<Option<File>> = Mutex::new(None);
+// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+#[allow(dead_code)]
 static OPERATION_LOCK_FD: AtomicI32 = AtomicI32::new(-1);
 
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
@@ -79,6 +83,8 @@ fn lock(path: &Path) -> Result<File> {
 ///
 /// # Errors
 /// Returns an error when the lock is busy or cannot be created or acquired.
+// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+#[allow(dead_code)]
 pub fn try_lock(path: &Path, busy: &str) -> Result<File> {
     let parent = path
         .parent()
@@ -108,6 +114,8 @@ pub fn try_lock(path: &Path, busy: &str) -> Result<File> {
 ///
 /// # Errors
 /// Returns an error if another operation lock is already retained.
+// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+#[allow(dead_code)]
 pub fn retain_operation_lock(file: File) -> Result<()> {
     let fd = file.as_raw_fd();
     let mut retained = OPERATION_LOCK
@@ -123,6 +131,8 @@ pub fn retain_operation_lock(file: File) -> Result<()> {
     Ok(())
 }
 
+// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+#[allow(dead_code)]
 pub fn close_inherited_operation_lock() {
     let fd = OPERATION_LOCK_FD.swap(-1, Ordering::SeqCst);
     if fd >= 0 {
@@ -151,6 +161,8 @@ fn next_generation(current: u64) -> Result<u64> {
 }
 
 #[must_use]
+// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+#[allow(dead_code)]
 pub fn stop_confirmed(stop_succeeded: bool, services_stopped: Option<bool>) -> bool {
     stop_succeeded && services_stopped == Some(true)
 }
@@ -174,6 +186,8 @@ fn current_or_create_at(state: &Path, lock_path: &Path, boot_id: &str) -> Result
     Ok(epoch)
 }
 
+// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+#[allow(dead_code)]
 fn advance_at(state: &Path, lock_path: &Path, boot_id: &str) -> Result<StartupEpoch> {
     let _lock = lock(lock_path)?;
     let previous = read(state)?.unwrap_or_else(|| StartupEpoch {
@@ -195,6 +209,8 @@ pub fn current_or_create() -> Result<StartupEpoch> {
 }
 
 #[cfg_attr(not(target_os = "android"), allow(dead_code))]
+// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+#[allow(dead_code)]
 pub fn advance_soft_reboot() -> Result<StartupEpoch> {
     let boot_id = current_boot_id()?;
     bail_if_empty(&boot_id)?;
