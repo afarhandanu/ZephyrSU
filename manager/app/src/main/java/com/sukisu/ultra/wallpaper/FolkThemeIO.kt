@@ -14,10 +14,10 @@ import java.io.File
  *
  * M5.2 completes the registry: the main background, video/title visuals, one asset per
  * wallpaper surface slot, and the five page backgrounds now apply alongside the font,
- * nav icons, music and sound from M5.1. Only the home layout is still missing — its
- * asset needs the `homeLayoutStyle` preference and the home layouts (M5.3); its files
- * stay in the archive and in passthrough for re-export, but it is not offered as an
- * applyable part.
+ * nav icons, music and sound from M5.1. M5.3 adds the home layout asset: a theme's
+ * `homeLayoutStyle` token is stored verbatim, and the GridUI layout renders when the
+ * token is `kernelsu`; Focus/Dashboard/Stats tokens are kept for a follow-up layout
+ * port and render the standard home until then.
  */
 object FolkThemeIO {
     const val FILE_NAME = "wallpaper.fpt"
@@ -32,6 +32,7 @@ object FolkThemeIO {
         add(ModuleBackgroundAsset)
         add(SettingsBackgroundAsset)
         add(FontAsset)
+        add(HomeLayoutAsset)
     }
     internal val groups = listOf(NavIconsAsset, MusicThemeAsset, SoundThemeAsset)
 

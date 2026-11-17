@@ -96,7 +96,6 @@ import com.sukisu.ultra.ui.navigation3.LocalNavigator
 import com.sukisu.ultra.ui.navigation3.Navigator
 import com.sukisu.ultra.ui.navigation3.Route
 import com.sukisu.ultra.ui.navigation3.rememberNavigator
-import com.sukisu.ultra.data.model.HomeLayoutStyle
 import com.sukisu.ultra.media.VisualMediaConfig
 import com.sukisu.ultra.ui.component.material.SliderTrackConfig
 import com.sukisu.ultra.ui.navigation3.mainPageToWallpaperPage
@@ -340,7 +339,7 @@ class MainActivity : FragmentActivity() {
                 LocalModuleDescriptionMaxLines provides uiState.moduleDescriptionMaxLines,
                 LocalBackgroundImagePath provides uiState.customBackgroundUri,
                 LocalWallpaperPage provides wallpaperPage,
-                LocalHomeLayoutStyle provides HomeLayoutStyle.DEFAULT,
+                LocalHomeLayoutStyle provides uiState.homeLayoutStyle,
                 LocalAppBackgroundBackdrop provides appBackgroundBackdrop.takeIf { captureAppBackground },
                 LocalCardBackgroundAlpha provides (uiState.cardBackgroundAlphaPercent / 100f),
                 LocalUiMode provides uiMode,

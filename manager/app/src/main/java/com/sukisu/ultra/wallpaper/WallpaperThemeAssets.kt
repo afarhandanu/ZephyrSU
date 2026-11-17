@@ -2,6 +2,7 @@ package com.sukisu.ultra.wallpaper
 
 import android.content.Context
 import android.net.Uri
+import com.sukisu.ultra.data.model.HomeLayoutStyle
 import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.ui.theme.FontConfig
 import com.sukisu.ultra.ui.theme.FontMode
@@ -343,13 +344,51 @@ internal object FontAsset : ThemedAsset {
 }
 
 /**
- * The home layout style — SKIPPED in M5.2, belongs to M5.3.
+ * The home layout style (M5.3).
  *
- * It needs the `homeLayoutStyle` preference and the home layouts themselves; FinaSU's
- * HomeLayoutAsset reads/writes `SettingsRepositoryImpl().homeLayoutStyle`, which does not
- * exist in ZephyrSU yet. The `.fpt` home-layout part stays filtered out of the import
- * dialog until M5.3 ports it.
+ * It is pure configuration with no payload file, so it only round-trips through `theme.json`. The
+ * key `homeLayoutStyle` and the tokens (`kernelsu` for the grid UI, `circle` for the single column,
+ * `focus`/`dashboard_ui`/`stats` for the tile layouts) are shared with the wider theme ecosystem, so
+ * a theme exported elsewhere imports here.
+ *
+ * The `default` (ListUI) and `sign` (SignUI) tokens of that ecosystem have no counterpart here;
+ * they are close enough to the circle layout that they are mapped onto it rather than dropped or
+ * reimplemented. Any other token is left untouched instead of forcing a layout the user did not
+ * pick.
+ *
+ * Note: M5.3 ports only the GridUI layout, so a theme that asks for `focus`/`dashboard_ui`/`stats`
+ * stores that token verbatim and the home keeps rendering Nova's standard home until those
+ * layouts land in a follow-up. The picker offers Circle/Grid only, and picking either rewrites
+ * the stored token.
  */
+internal object HomeLayoutAsset : ThemedAsset {
+    private const val KEY = "homeLayoutStyle"
+
+    override val base = "home_layout"
+
+    override fun currentFile(context: Context): File? = null
+
+    override fun writeConfig(json: JSONObject) {
+        json.put(KEY, SettingsRepositoryImpl().homeLayoutStyle)
+    }
+
+    override suspend fun apply(context: Context, json: JSONObject, file: File?) {
+        if (!json.has(KEY)) return
+        val token = when (json.optString(KEY)) {
+            HomeLayoutStyle.GRID -> HomeLayoutStyle.GRID
+            HomeLayoutStyle.FOCUS -> HomeLayoutStyle.FOCUS
+            HomeLayoutStyle.DASHBOARD -> HomeLayoutStyle.DASHBOARD
+            HomeLayoutStyle.STATS -> HomeLayoutStyle.STATS
+            HomeLayoutStyle.CIRCLE, "default", "sign" -> HomeLayoutStyle.CIRCLE
+            else -> return
+        }
+        SettingsRepositoryImpl().homeLayoutStyle = token
+    }
+
+    override suspend fun reset(context: Context) {
+        SettingsRepositoryImpl().homeLayoutStyle = HomeLayoutStyle.DEFAULT
+    }
+}
 
 /** The file-name stem of a zip entry: `nav_icon_Home.png` -> `nav_icon_Home`. */
 internal fun zipStem(entryName: String): String =

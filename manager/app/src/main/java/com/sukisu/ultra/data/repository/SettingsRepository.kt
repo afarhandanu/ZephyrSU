@@ -27,6 +27,8 @@ interface SettingsRepository {
     var statsTopLayout: String
     /** Hide the working-card mode switch on the home screen (M5.2). */
     var listWorkingCardModeHidden: Boolean
+    /** Home layout style token: "circle" (Nova home) or "kernelsu" (GridUI), see HomeLayoutStyle (M5.3). */
+    var homeLayoutStyle: String
     
     var backgroundSectionExpanded: Boolean
     var themePackageSectionExpanded: Boolean

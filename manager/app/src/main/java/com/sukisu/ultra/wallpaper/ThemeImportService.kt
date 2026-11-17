@@ -29,15 +29,16 @@ class PreparedTheme internal constructor(
 }
 
 /**
- * The parts of a `.fpt` package ZephyrSU can actually apply in M5.2. Page backgrounds
- * and surfaces are now applyable (the wallpaper system landed); only the home layout
- * still needs the home layouts (M5.3). Its files stay in the archive and in passthrough
- * for re-export, but it is not offered in the import dialog.
+ * The parts of a `.fpt` package ZephyrSU can actually apply in M5.3. The home layout is
+ * applyable now that the GridUI layout and its preference exist; a theme asking for a
+ * not-yet-ported layout (Focus/Dashboard/Stats) stores its token verbatim and keeps
+ * rendering the standard home until that layout lands.
  */
 private val ApplicableParts = setOf(
     ThemePart.MAIN_BACKGROUND, ThemePart.PAGE_BACKGROUNDS, ThemePart.SURFACES,
     ThemePart.FONT, ThemePart.NAV_ICONS, ThemePart.MUSIC,
     ThemePart.SOUND, ThemePart.COLORS, ThemePart.INTERFACE, ThemePart.LANGUAGE,
+    ThemePart.HOME_LAYOUT,
 )
 
 /** File picker and store both prepare once, confirm the same immutable payload, then apply. */

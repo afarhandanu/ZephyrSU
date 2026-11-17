@@ -86,9 +86,15 @@
     <string name="settings_wallpaper_summary">Set a background image for the app</string>
     <string name="settings_wallpaper_gallery">Wallpaper Gallery</string>
     <string name="settings_wallpaper_gallery_summary">Download wallpapers from the gallery</string>
-    <!-- Focus/dashboard surface titles (M5.2): ported from FinaSU; the manager tile is rebranded ZephyrSU. -->
+    <!-- Home layout picker (M5.3) + focus/dashboard surface titles (M5.2): ported from FinaSU; the manager tile is rebranded ZephyrSU. -->
+    <string name="settings_home_layout">Home layout</string>
+    <string name="settings_home_layout_summary">Choose how the home screen is arranged.</string>
+    <string name="settings_home_layout_circle">CircleUI</string>
+    <string name="settings_home_layout_grid">GridUI</string>
     <string name="settings_home_layout_focus">FocusUI</string>
     <string name="settings_home_layout_dashboard">DashboardUI</string>
+    <string name="settings_home_layout_stats">StatsUI</string>
+    <string name="metric_unavailable">Unavailable</string>
     <string name="home_tile_status">KernelSU</string>
     <string name="home_tile_manager">ZephyrSU</string>
     <string name="home_tile_device">Device</string>

@@ -77,6 +77,7 @@ import com.sukisu.ultra.KernelVersion
 import com.sukisu.ultra.Natives
 import com.sukisu.ultra.R
 import com.sukisu.ultra.ai.api.AiFeatureBridge
+import com.sukisu.ultra.data.model.HomeLayoutStyle
 import com.sukisu.ultra.data.model.SupportLinksStyle
 import com.sukisu.ultra.ui.component.HomeCardStickerOverlays
 import com.sukisu.ultra.ui.component.WarningLevel
@@ -123,10 +124,23 @@ fun HomePagerMaterial(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            StatusCard(
-                state = state,
-                actions = actions,
-            )
+            // GridUI (M5.3) replaces Nova's status card + stats row with the two-column grid;
+            // every other layout keeps the standard home. Warnings, update card, InfoCard and
+            // SupportLinks below render the same in both cases.
+            val layout = LocalHomeLayoutStyle.current
+            if (layout == HomeLayoutStyle.GRID) {
+                GridHomeContent(
+                    state = state,
+                    actions = actions,
+                    superuserCount = state.superuserCount ?: 0,
+                    moduleEnabledCount = state.moduleCount ?: 0,
+                )
+            } else {
+                StatusCard(
+                    state = state,
+                    actions = actions,
+                )
+            }
             if (state.showVersionMismatchWarning) {
                 WarningCard(
                     customText(CustomTextKey.HOME_WARN_VERSION_SPOOF),
@@ -173,7 +187,9 @@ fun HomePagerMaterial(
             if (state.showAiHomeCard && AiFeatureBridge.isAvailable) {
                 AiFeatureBridge.HomeCard(onOpenChat = actions.onOpenAi)
             }
-            StatsRow(state = state, actions = actions)
+            if (layout != HomeLayoutStyle.GRID) {
+                StatsRow(state = state, actions = actions)
+            }
             InfoCard(systemInfo = state.systemInfo, showFullStatus = state.showFullStatus)
             SupportLinks(onOpenUrl = actions.onOpenUrl)
             Spacer(

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Collections
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DesignServices
@@ -431,6 +432,18 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
             icon = Icons.Filled.Collections,
             route = Route.WallpaperGallery,
             aliases = listOf("wallpaper", "gallery", "photo", "galeri"),
+        )
+    )
+    add(
+        sectionRow(
+            groupKey = SettingsSection.GENERAL,
+            groupTitleRes = R.string.settings_search_section_general,
+            id = "general.home_layout",
+            titleRes = R.string.settings_home_layout,
+            summaryRes = R.string.settings_home_layout_summary,
+            icon = Icons.Filled.GridView,
+            anchor = SettingsSection.GENERAL,
+            aliases = listOf("home", "layout", "grid", "gridui", "circle", "tampilan", "beranda"),
         )
     )
 

@@ -24,6 +24,7 @@ import com.sukisu.ultra.data.model.SuiApp
 import com.sukisu.ultra.data.model.SuiStatus
 import com.sukisu.ultra.data.themestore.ThemeStoreMode
 import com.sukisu.ultra.data.modulestore.StoreSourceKind
+import com.sukisu.ultra.data.model.HomeLayoutStyle
 import com.sukisu.ultra.data.model.SupportLinksStyle
 import com.sukisu.ultra.data.sui.SuiBridge
 import com.sukisu.ultra.ui.util.execKsud
@@ -161,6 +162,12 @@ class SettingsRepositoryImpl : SettingsRepository {
     override var listWorkingCardModeHidden: Boolean
         get() = prefs.getBoolean("list_working_card_mode_hidden", false)
         set(value) = prefs.edit { putBoolean("list_working_card_mode_hidden", value) }
+
+    override var homeLayoutStyle: String
+        get() = HomeLayoutStyle.fromValue(
+            prefs.getString("home_layout_style", HomeLayoutStyle.DEFAULT)
+        )
+        set(value) = prefs.edit { putString("home_layout_style", HomeLayoutStyle.fromValue(value)) }
 
     override var backgroundSectionExpanded: Boolean
         get() = prefs.getBoolean("background_section_expanded", true)

@@ -1,0 +1,294 @@
+package com.sukisu.ultra.ui.screen.home
+
+import android.animation.ValueAnimator
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.sukisu.ultra.Natives
+import com.sukisu.ultra.R
+import com.sukisu.ultra.ui.component.SurfaceOptionsDialog
+import com.sukisu.ultra.ui.component.statustag.StatusTag
+import com.sukisu.ultra.ui.theme.FolkType
+import com.sukisu.ultra.wallpaper.WallpaperConfig
+import com.sukisu.ultra.wallpaper.surface.SurfaceBounds
+import com.sukisu.ultra.wallpaper.surface.SurfaceFlag
+import com.sukisu.ultra.wallpaper.surface.SurfaceRegistry
+
+/**
+ * Ported from FinaSU (M5.3, GridUI home layout).
+ *
+ * Adaptations for ZephyrSU:
+ * - `useFullFeaturedLayout()` is Nova's `Natives.isFullFeatured()`.
+ * - FinaSU's `kernelHook.failed` has no counterpart here: ZephyrSU tracks no kernel-hook probe
+ *   state (its `HomeUiState` has no `kernelHook` field), so the hook-failure branch is dropped
+ *   and the card reads working/not-installed/unsupported only. The hook type itself is still
+ *   shown by Nova's own InfoCard via `rememberHookTypeLabel`.
+ * - The working-mode tag reuses ZephyrSU's `HomeUiState.workingModeLabel` (same LKM/Built-In
+ *   mapping, including the pre-5.10 Built-In rule).
+ * - `StatusJailbreakButton` is a small local copy with a Material3 [Button] (FinaSU's
+ *   `FolkButton` does not exist here).
+ * - `FolkShape.Corner20` is the same 20dp corner, written inline.
+ * - Counts come from ZephyrSU's `HomeUiState.superuserCount` / `moduleCount` at the call site.
+ */
+
+/** The gap between the tiles of the two-column grid. */
+private val GridTileSpacing = 12.dp
+
+/**
+ * The two-column grid: a hero status card on the left with the two count cards stacked on the
+ * right. Unavailable counts keep their place so changes in capability do not rearrange the grid.
+ */
+@Composable
+internal fun GridHomeContent(
+    state: HomeUiState,
+    actions: HomeActions,
+    superuserCount: Int,
+    moduleEnabledCount: Int,
+) {
+    val countsAvailable = Natives.isFullFeatured() && state.isRootAvailable
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(GridTileSpacing)
+    ) {
+        GridStatusCard(
+            state = state,
+            actions = actions,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+        )
+        CountCardPair(
+            superuserCount = superuserCount,
+            moduleEnabledCount = moduleEnabledCount,
+            onOpenSuperUser = actions.onSuperuserClick,
+            onOpenModule = actions.onModuleClick,
+            layout = CountCardLayout.Vertical,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+            pairSpacing = GridTileSpacing,
+            // Keep enough room for the label and value in each tile.
+            contentPadding = PaddingValues(18.dp),
+            emphasis = CountCardEmphasis.Value,
+            available = countsAvailable,
+        )
+    }
+}
+
+/**
+ * The grid hero card. The status icon sits in the top corner while the state title and its mode
+ * tag sit against the bottom edge, so the card reads as a tile rather than a list row.
+ */
+@Composable
+private fun GridStatusCard(
+    state: HomeUiState,
+    actions: HomeActions,
+    modifier: Modifier = Modifier,
+) {
+    val ksuActive = state.ksuVersion != null
+    val notInstalled = !ksuActive && state.kernelVersion.isGKI()
+
+    val workCardSurface = previewSurface(SurfaceRegistry.GRID_WORK_CARD, WallpaperConfig.workCardSurface)
+    val workCardPhoto = rememberSurfacePhoto(workCardSurface.imageUri.takeIf { workCardSurface.hasImage })
+    val workCardStyle = HomeWorkCardControl.style(
+        layout = HomeWorkCardLayout.Grid,
+        working = ksuActive,
+        surface = workCardSurface,
+        photo = workCardPhoto,
+    )
+    val containerColor = workCardStyle.containerColor
+    val contentColor = workCardStyle.contentColor ?: contentColorFor(containerColor)
+    val backgroundUri = workCardStyle.workCardBackgroundUri
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val reduceMotion = !ValueAnimator.areAnimatorsEnabled()
+    val pressed by interactionSource.collectIsPressedAsState()
+    var longPressActive by remember { mutableStateOf(false) }
+    var petCount by remember { mutableStateOf(0) }
+    val petBounce = remember { Animatable(0f) }
+    val heldDeformation by animateFloatAsState(
+        targetValue = if (backgroundUri != null && !reduceMotion) {
+            if (longPressActive) 0.16f else if (pressed) 0.045f else 0f
+        } else 0f,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = 300f),
+        label = "workCardHeldDeformation",
+    )
+
+    LaunchedEffect(petCount, reduceMotion, backgroundUri) {
+        if (petCount > 0 && !reduceMotion && backgroundUri != null) {
+            petBounce.snapTo(0.14f)
+            petBounce.animateTo(0f, spring(dampingRatio = 0.28f, stiffness = 180f))
+        } else {
+            petBounce.snapTo(0f)
+        }
+    }
+
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            if (interaction is PressInteraction.Release || interaction is PressInteraction.Cancel) {
+                longPressActive = false
+            }
+        }
+    }
+
+    val statusIcon = when {
+        ksuActive -> Icons.Rounded.CheckCircle
+        notInstalled -> Icons.Rounded.Warning
+        else -> Icons.Rounded.Block
+    }
+    val statusTitle = when {
+        ksuActive -> stringResource(R.string.home_working)
+        notInstalled -> stringResource(R.string.home_not_installed)
+        else -> stringResource(R.string.home_unsupported)
+    }
+    val workingMode = state.workingModeLabel
+
+    var showWorkCardOptions by remember { mutableStateOf(false) }
+
+    HomeCard(
+        modifier = modifier,
+        containerColor = containerColor,
+        contentColor = contentColor,
+        interactionSource = interactionSource,
+        onClick = {
+            if (backgroundUri != null) petCount++
+        },
+        onLongClick = {
+            longPressActive = true
+            showWorkCardOptions = true
+        },
+    ) {
+        Box(
+            modifier = Modifier
+                // Size the image's actual parent, not only the outer Card's Column.
+                .heightIn(min = 160.dp)
+                .fillMaxSize()
+                .onSizeChanged { SurfaceBounds.report(SurfaceRegistry.GRID_WORK_CARD, it.width, it.height) },
+        ) {
+            if (backgroundUri != null) {
+                SurfaceBackgroundImage(
+                    photo = workCardPhoto,
+                    surface = workCardSurface,
+                    modifier = Modifier
+                        .matchParentSize()
+                        .graphicsLayer {
+                            val deformation = heldDeformation + petBounce.value
+                            scaleX = 1f + deformation * 0.7f
+                            scaleY = 1f - deformation
+                        },
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (!workCardSurface.hasFlag(SurfaceFlag.HideText)) {
+                    Text(
+                        text = statusTitle,
+                        style = FolkType.Title
+                    )
+                }
+                if (ksuActive && workingMode.isNotEmpty()) {
+                    if (!workCardSurface.hasFlag(SurfaceFlag.HideMode)) {
+                        StatusTag(
+                            label = workingMode,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            backgroundColor = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                } else if (notInstalled && state.isSELinuxPermissive) {
+                    StatusJailbreakButton(onClick = actions.onJailbreakClick)
+                }
+            }
+            if (!workCardSurface.hasFlag(SurfaceFlag.HideIcon)) {
+                Icon(
+                    imageVector = statusIcon,
+                    contentDescription = statusTitle,
+                    tint = contentColor,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(48.dp)
+                )
+            }
+            if (backgroundUri != null && reduceMotion && pressed) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .border(
+                            width = if (longPressActive) 3.dp else 2.dp,
+                            color = contentColor.copy(alpha = if (longPressActive) 1f else 0.8f),
+                            shape = RoundedCornerShape(20.dp),
+                        )
+                )
+            }
+        }
+    }
+
+    if (showWorkCardOptions) {
+        SurfaceOptionsDialog(
+            surfaceId = SurfaceRegistry.GRID_WORK_CARD,
+            onDismiss = { showWorkCardOptions = false },
+        )
+    }
+}
+
+/** The jailbreak action, offered while the module is installed but the kernel refuses to load it. */
+@Composable
+private fun StatusJailbreakButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.error,
+            contentColor = MaterialTheme.colorScheme.onError,
+        ),
+    ) {
+        Text(stringResource(R.string.home_jailbreak))
+    }
+}
