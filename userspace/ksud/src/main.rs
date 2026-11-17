@@ -49,6 +49,8 @@ mod late_load;
 mod lkm_image;
 mod lkm_image_btf;
 #[cfg(target_os = "android")]
+mod magic_mount;
+#[cfg(target_os = "android")]
 mod magica;
 #[cfg(target_os = "android")]
 mod metamodule;
@@ -57,7 +59,14 @@ mod module;
 #[cfg(target_os = "android")]
 mod module_config;
 #[cfg(target_os = "android")]
+mod module_markers;
+#[cfg(target_os = "android")]
+mod mount_capture;
+#[cfg(target_os = "android")]
 mod mount_guard;
+mod mount_plan;
+#[cfg(target_os = "android")]
+mod mount_ui;
 #[cfg(target_os = "android")]
 mod nomount;
 #[cfg(target_os = "android")]

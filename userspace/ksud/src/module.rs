@@ -2,6 +2,7 @@
 use crate::utils::*;
 use crate::{
     assets, defs, hot_install, ksucalls, metamodule,
+    module_markers::clear_activation_markers,
     restorecon::{restore_syscon, setsyscon},
     sepolicy,
 };
@@ -198,13 +199,13 @@ pub enum ScriptWait {
     Until(Instant),
 }
 
-struct SigchldBlock {
+pub struct SigchldBlock {
     set: libc::sigset_t,
     previous: libc::sigset_t,
 }
 
 impl SigchldBlock {
-    fn block() -> std::io::Result<Self> {
+    pub fn block() -> std::io::Result<Self> {
         // Initialize both sets before passing them to libc.
         let mut set = unsafe { std::mem::zeroed() };
         let mut previous = unsafe { std::mem::zeroed() };
@@ -218,12 +219,27 @@ impl SigchldBlock {
         Ok(Self { set, previous })
     }
 
-    fn wait_until(&self, pid: libc::pid_t, deadline: Instant) -> std::io::Result<bool> {
+    pub fn wait_until(&self, pid: libc::pid_t, deadline: Instant) -> std::io::Result<bool> {
+        Ok(self.wait_status_until(pid, deadline)?.is_some())
+    }
+
+    /// Waits for one child and reports its raw wait status once it exits.
+    // `as` is the only cast that compiles on every target: `From<u32>` does not exist
+    // for i32 on armv7, so clippy's `libc::c_long::from(...)` suggestion would re-break
+    // the armv7 build. The clippy job runs on the host (x86_64) only, where this cast
+    // is lossless — hence the allow, scoped to this function.
+    #[allow(clippy::cast_lossless)]
+    pub fn wait_status_until(
+        &self,
+        pid: libc::pid_t,
+        deadline: Instant,
+    ) -> std::io::Result<Option<libc::c_int>> {
         loop {
             // Only reap the script being waited for. Other children can also send SIGCHLD.
-            let result = unsafe { libc::waitpid(pid, std::ptr::null_mut(), libc::WNOHANG) };
+            let mut status: libc::c_int = 0;
+            let result = unsafe { libc::waitpid(pid, &raw mut status, libc::WNOHANG) };
             if result == pid {
-                return Ok(true);
+                return Ok(Some(status));
             }
             if result < 0 {
                 let error = std::io::Error::last_os_error();
@@ -235,12 +251,11 @@ impl SigchldBlock {
 
             let remaining = deadline.saturating_duration_since(Instant::now());
             if remaining.is_zero() {
-                return Ok(false);
+                return Ok(None);
             }
-            #[allow(clippy::unnecessary_fallible_conversions)]
             let timeout = libc::timespec {
                 tv_sec: remaining.as_secs() as libc::time_t,
-                tv_nsec: libc::c_long::try_from(remaining.subsec_nanos()).unwrap(),
+                tv_nsec: remaining.subsec_nanos() as libc::c_long, // subsec_nanos < 1e9, cannot overflow; c_long is i32 on armv7, i64 elsewhere
             };
             // SIGCHLD stays blocked between waitpid and sigtimedwait to avoid lost wakeups.
             if unsafe {
@@ -253,7 +268,7 @@ impl SigchldBlock {
             {
                 let error = std::io::Error::last_os_error();
                 match error.raw_os_error() {
-                    Some(libc::EAGAIN) => return Ok(false),
+                    Some(libc::EAGAIN) => return Ok(None),
                     Some(libc::EINTR) => {}
                     _ => return Err(error),
                 }
@@ -900,6 +915,25 @@ fn install_module_to_system(zip: &str) -> Result<String> {
     if is_metamodule {
         info!("Installing metamodule: {module_id}");
 
+        // A metamodule injects on its own through its own scripts. While the
+        // built-in NoMount backend owns injection, installing one would put two
+        // injectors on the same paths.
+        if crate::nomount::owns_injection().unwrap_or(false) {
+            println!("\n❌ Installation Failed");
+            println!("┌────────────────────────────────");
+            println!("│ The built-in NoMount backend is active");
+            println!("│");
+            println!("│ A metamodule injects files on its own, so it and NoMount");
+            println!("│ would both own the same paths.");
+            println!("│");
+            println!("│ To install this metamodule:");
+            println!("│   1. Set the mount mode to auto, builtin or off");
+            println!("│   2. Reboot your device");
+            println!("│   3. Install the new metamodule");
+            println!("└─────────────────────────────────\n");
+            bail!("NO_MOUNT_ACTIVE: NoMount owns module injection; switch the mount mode first");
+        }
+
         // Check if there's already a metamodule installed
         if metamodule::has_metamodule()
             && let Some(existing_path) = metamodule::get_metamodule_path()
@@ -1010,29 +1044,34 @@ pub fn install_module(zip: &str) -> Result<()> {
     Ok(())
 }
 
+/// Sui's module entry belongs to the built-in extension: it owns the payload, the dependency
+/// check and the daemon, so plain module mutations have to go through `ksud sui`.
+fn ensure_not_managed(id: &str) -> Result<()> {
+    ensure!(
+        id != crate::sui::MODULE_ID,
+        "{id} is managed by the built-in Sui extension; use `ksud sui enable|disable|uninstall`"
+    );
+    Ok(())
+}
+
 pub fn undo_uninstall_module(id: &str) -> Result<()> {
     validate_module_id(id)?;
+    ensure_not_managed(id)?;
 
     let module_path = Path::new(defs::MODULE_DIR).join(id);
     ensure!(module_path.exists(), "Module {id} not found");
 
-    // Remove the remove mark
-    let remove_file = module_path.join(defs::REMOVE_FILE_NAME);
-    if remove_file.exists() {
-        std::fs::remove_file(&remove_file)
-            .with_context(|| format!("Failed to delete remove file for module '{id}'"))?;
-        info!("Removed the remove mark for module {id}");
-    }
-
-    if let Err(e) = regenerate_preinit() {
-        warn!("regenerate preinit failed: {e:#}");
-    }
-
-    Ok(())
+    clear_activation_markers(
+        &module_path,
+        &Path::new(defs::MODULE_UPDATE_DIR).join(id),
+        defs::REMOVE_FILE_NAME,
+        regenerate_preinit,
+    )
 }
 
 pub fn uninstall_module(id: &str) -> Result<()> {
     validate_module_id(id)?;
+    ensure_not_managed(id)?;
 
     let module_path = Path::new(defs::MODULE_DIR).join(id);
     ensure!(module_path.exists(), "Module {id} not found");
@@ -1076,28 +1115,44 @@ pub fn run_action(id: &str) -> Result<()> {
     exec_script(&action_script_path, ScriptWait::Forever)
 }
 
+/// Mark or unmark a module as `skip_mount`: it keeps running, but the mount
+/// backends stop injecting its files.
+///
+/// # Errors
+/// Returns an error for an invalid id, a missing module, or a failed write.
+pub fn set_skip_mount(id: &str, skip: bool) -> Result<()> {
+    validate_module_id(id)?;
+    let module_path = Path::new(defs::MODULE_DIR).join(id);
+    ensure!(module_path.exists(), "Module {id} not found");
+    let marker = module_path.join(defs::SKIP_MOUNT_FILE_NAME);
+    if skip {
+        ensure_file_exists(&marker)?;
+    } else if let Err(e) = std::fs::remove_file(&marker)
+        && e.kind() != std::io::ErrorKind::NotFound
+    {
+        return Err(e).with_context(|| format!("remove {}", marker.display()));
+    }
+    Ok(())
+}
+
 pub fn enable_module(id: &str) -> Result<()> {
     validate_module_id(id)?;
+    ensure_not_managed(id)?;
 
     let module_path = Path::new(defs::MODULE_DIR).join(id);
     ensure!(module_path.exists(), "Module {id} not found");
 
-    let disable_path = module_path.join(defs::DISABLE_FILE_NAME);
-    if disable_path.exists() {
-        std::fs::remove_file(&disable_path).with_context(|| {
-            format!("Failed to remove disable file: {}", disable_path.display())
-        })?;
-        info!("Module {id} enabled");
-    }
-
-    if let Err(e) = regenerate_preinit() {
-        warn!("regenerate preinit failed: {e:#}");
-    }
-
-    Ok(())
+    clear_activation_markers(
+        &module_path,
+        &Path::new(defs::MODULE_UPDATE_DIR).join(id),
+        defs::DISABLE_FILE_NAME,
+        regenerate_preinit,
+    )
 }
 
 pub fn disable_module(id: &str) -> Result<()> {
+    validate_module_id(id)?;
+    ensure_not_managed(id)?;
     let module_path = Path::new(defs::MODULE_DIR).join(id);
     ensure!(module_path.exists(), "Module {id} not found");
 
@@ -1107,7 +1162,7 @@ pub fn disable_module(id: &str) -> Result<()> {
     info!("Module {id} disabled");
 
     if let Err(e) = regenerate_preinit() {
-        warn!("regenerate preinit failed: {e:#}");
+        warn!("regenerate preinit rc failed: {e}");
     }
 
     Ok(())

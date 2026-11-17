@@ -27,13 +27,9 @@ pub enum Stage {
 ///
 /// The kernel reports a task blocked for 120s on its own, so the default sits
 /// just past that: whatever the kernel noticed is already in the log.
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
-#[allow(dead_code)]
 pub const CAPTURE_DELAY_SECS: u64 = 150;
 
 /// Upper bound for a requested delay, so a typo cannot park a helper for hours.
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
-#[allow(dead_code)]
 pub const CAPTURE_MAX_DELAY_SECS: u64 = 900;
 
 /// Read the capture delay out of a flag file.
@@ -41,8 +37,6 @@ pub const CAPTURE_MAX_DELAY_SECS: u64 = 900;
 /// A file without a `delay=` line still arms the capture; that is the point of
 /// touching the flag by hand, so the caller only has to know whether it exists.
 #[must_use]
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
-#[allow(dead_code)]
 pub fn parse_capture_delay(content: &str) -> u64 {
     content
         .lines()
@@ -107,8 +101,6 @@ impl Inflight {
 
 /// Current boot id; empty when it cannot be read.
 #[must_use]
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
-#[allow(dead_code)]
 pub fn current_boot_id() -> String {
     std::fs::read_to_string("/proc/sys/kernel/random/boot_id")
         .map_or_else(|_| String::new(), |value| value.trim().to_string())
@@ -189,8 +181,6 @@ pub fn read(path: &Path) -> Option<Inflight> {
 /// reset before it completed. Repeating it has to be a deliberate choice rather
 /// than an automatic part of the next boot.
 #[must_use]
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
-#[allow(dead_code)]
 pub fn died(path: &Path) -> bool {
     let Ok(epoch) = crate::startup_epoch::current_or_create() else {
         return false;
@@ -198,8 +188,6 @@ pub fn died(path: &Path) -> bool {
     died_at(path, &epoch)
 }
 
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
-#[allow(dead_code)]
 fn died_at(path: &Path, epoch: &crate::startup_epoch::StartupEpoch) -> bool {
     read(path).is_some_and(|record| {
         record.boot_id != epoch.boot_id
@@ -208,8 +196,6 @@ fn died_at(path: &Path, epoch: &crate::startup_epoch::StartupEpoch) -> bool {
 }
 
 /// Drop the record; failures only warn.
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
-#[allow(dead_code)]
 pub fn clear(path: &Path) {
     if let Err(error) = try_clear(path) {
         log::warn!("mount guard: {error:#}");
@@ -226,14 +212,14 @@ pub fn try_clear(path: &Path) -> Result<()> {
 /// A stale record has to survive: it is what tells the next boot not to repeat
 /// a step that stopped an earlier one (booting into safe mode, for instance,
 /// skips mounting and must not swallow the evidence).
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+// Only used by FinaSU mount_ui tests (stripped in ZephyrSU); kept for a future port.
 #[allow(dead_code)]
 pub fn clear_if_ours(path: &Path) -> Result<()> {
     let epoch = crate::startup_epoch::current_or_create()?;
     clear_if_ours_at(path, &epoch)
 }
 
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
+// Only used by FinaSU mount_ui tests (stripped in ZephyrSU); kept for a future port.
 #[allow(dead_code)]
 pub fn clear_if_ours_at(path: &Path, epoch: &crate::startup_epoch::StartupEpoch) -> Result<()> {
     let ours = read(path).is_none_or(|record| {

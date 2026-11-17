@@ -22,6 +22,8 @@ import com.sukisu.ultra.ui.util.HomeStatusStyle
 import com.sukisu.ultra.ui.util.BuiltinAppIcons
 import com.sukisu.ultra.data.model.SuiApp
 import com.sukisu.ultra.data.model.SuiStatus
+import com.sukisu.ultra.data.model.FolkMountMode
+import com.sukisu.ultra.data.model.FolkMountStatus
 import com.sukisu.ultra.data.model.NomountStatus
 import com.sukisu.ultra.data.themestore.ThemeStoreMode
 import com.sukisu.ultra.data.modulestore.StoreSourceKind
@@ -776,6 +778,39 @@ class SettingsRepositoryImpl : SettingsRepository {
         runCatching {
             check(execKsud("nomount hot-unload ${id.shellQuote()}", true)) {
                 "ksud nomount hot-unload failed"
+            }
+        }
+    }
+
+    override suspend fun getFolkMountStatus(): Result<FolkMountStatus> = withContext(Dispatchers.IO) {
+        runCatching {
+            val result = execKsudResult("mount status --json")
+            check(result.isSuccess) { "ksud mount status failed (exit ${result.code})" }
+            val payload = result.out.firstOrNull { it.isNotBlank() }
+                ?: error("ksud mount status returned no payload")
+            val json = JSONObject(payload)
+            val schema = json.optInt("schema_version", -1)
+            check(schema == FolkMountStatus.SCHEMA_VERSION) {
+                "unsupported folk mount schema_version $schema"
+            }
+            FolkMountStatus.fromJson(json)
+        }
+    }
+
+    override suspend fun setFolkMountMode(mode: FolkMountMode): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            // `mode.token` is a fixed enum value; never interpolate arbitrary input.
+            check(execKsudResult("mount set-mode ${mode.token}").isSuccess) {
+                "ksud mount set-mode ${mode.token} failed"
+            }
+        }
+    }
+
+    override suspend fun setModuleSkip(id: String, skip: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            val flag = if (skip) "" else " --off"
+            check(execKsud("module skip ${id.shellQuote()}$flag", true)) {
+                "ksud module skip failed"
             }
         }
     }

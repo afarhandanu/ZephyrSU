@@ -3,7 +3,7 @@ use crate::kpm;
 use crate::module::{ScriptWait, handle_updated_modules, prune_modules};
 use crate::utils::is_safe_mode;
 use crate::{
-    assets, defs, ksucalls, metamodule, restorecon,
+    assets, defs, ksucalls, magic_mount, metamodule, restorecon,
     utils::{self},
 };
 use anyhow::{Context, Result};
@@ -59,8 +59,6 @@ pub fn on_post_fs_data() -> Result<()> {
             warn!("exec common post-fs-data scripts failed: {e}");
         }
     }
-
-    let module_dir = defs::MODULE_DIR;
 
     assets::ensure_binaries(true).with_context(|| "Failed to extract bin assets")?;
 
@@ -166,9 +164,11 @@ pub fn on_post_fs_data() -> Result<()> {
         warn!("load system.prop failed: {e}");
     }
 
-    // execute metamodule mount script
-    if let Err(e) = metamodule::exec_mount_script(module_dir) {
-        warn!("execute metamodule mount failed: {e}");
+    // Folk Mount: run the selected provider (metamodule script or the built-in
+    // executor; never both) before the post-mount stage to preserve the
+    // KernelSU contract.
+    if let Err(e) = magic_mount::mount_selected_provider() {
+        warn!("module mount failed: {e:#}");
     }
 
     // Load umount config and apply to kernel

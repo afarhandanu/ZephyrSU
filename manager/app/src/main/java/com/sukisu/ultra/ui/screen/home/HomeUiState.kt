@@ -2,6 +2,8 @@ package com.sukisu.ultra.ui.screen.home
 
 import androidx.compose.runtime.Immutable
 import com.sukisu.ultra.KernelVersion
+import com.sukisu.ultra.data.model.FolkMountProvider
+import com.sukisu.ultra.data.model.FolkMountStatus
 import com.sukisu.ultra.ui.util.HomeCardSticker
 import com.sukisu.ultra.ui.util.HomeCardImageStyle
 import com.sukisu.ultra.ui.util.HomeLayout
@@ -67,6 +69,8 @@ data class HomeUiState(
     val homeStatusWidthFraction: Float = 1f,
     val homeCardImageStyle: HomeCardImageStyle = HomeCardImageStyle.BANNER,
     val showHomeCardImageWithoutBackground: Boolean = false,
+    /** The provider that really mounted modules this boot; a null provider hides the row. */
+    val mount: HomeMount = HomeMount(),
 ) {
     val isSELinuxPermissive: Boolean
         get() = systemInfo.selinuxStatus == "Permissive"
@@ -125,6 +129,28 @@ data class HomeUiState(
 
     val hasUpdate: Boolean
         get() = latestVersionInfo.versionCode > currentManagerVersionCode
+}
+
+/** The installed metamodule, named by its module entry when the module list has loaded. */
+@Immutable
+data class HomeMetamodule(
+    val id: String,
+    val name: String,
+    val version: String,
+)
+
+/** The provider that actually mounted modules this boot; a null provider hides the row. */
+@Immutable
+data class HomeMount(
+    val provider: FolkMountProvider? = null,
+    val metamoduleId: String? = null,
+    val metamodule: HomeMetamodule? = null,
+)
+
+internal fun resolveHomeMountProvider(status: FolkMountStatus?): FolkMountProvider? {
+    status ?: return null
+    if (status.bootResult == "skipped") return FolkMountProvider.NONE
+    return status.bootProvider ?: status.nextProvider
 }
 
 @Immutable

@@ -1001,6 +1001,11 @@ fun SettingPagerMiuix(
                             state = uiState,
                             actions = actions,
                         )
+
+                        FolkMountSectionMiuix(
+                            state = uiState,
+                            actions = actions,
+                        )
                     }
 
                     if (uiState.isLkmMode) {

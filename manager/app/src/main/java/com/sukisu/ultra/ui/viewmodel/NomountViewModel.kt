@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.sukisu.ultra.Natives
+import com.sukisu.ultra.data.model.FolkMountMode
+import com.sukisu.ultra.data.model.FolkMountStatus
 import com.sukisu.ultra.data.model.NomountStatus
 import com.sukisu.ultra.data.repository.SettingsRepository
 import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
@@ -32,17 +34,13 @@ data class ExclusionApp(
  *
  * A failed read is kept as a flag instead of a fallback status: the screen must
  * never show a plausible-looking driver state it did not actually receive.
- *
- * Adapted from FinaSU (M6.2): the Folk Mount mode state is dropped — there is no
- * mount-mode selection yet (Folk Mount arrives in M6.3), so there is no setup
- * section to gate on and no `enableNomount` mode switch. `setSkip` is dropped too:
- * ZephyrSU has no `setModuleSkip` in SettingsRepository.
  */
 @Immutable
 data class NomountUiState(
     val isLoading: Boolean = true,
     val isWriting: Boolean = false,
     val status: NomountStatus? = null,
+    val folkMountStatus: FolkMountStatus? = null,
     val readError: Boolean = false,
     val actionError: Boolean = false,
     val apps: List<ExclusionApp> = emptyList(),
@@ -69,13 +67,24 @@ class NomountViewModel(
         }
     }
 
+    fun enableNomount() {
+        if (_uiState.value.isWriting) return
+        _uiState.update { it.copy(isWriting = true, actionError = false) }
+        viewModelScope.launch {
+            val result = repo.setFolkMountMode(FolkMountMode.NOMOUNT)
+            refreshStatuses(actionError = result.isFailure)
+        }
+    }
+
     private suspend fun refreshStatuses(actionError: Boolean? = null) {
         val statusResult = repo.getNomountStatus()
+        val mountResult = repo.getFolkMountStatus()
         _uiState.update {
             it.copy(
                 isLoading = false,
                 isWriting = false,
                 status = statusResult.getOrNull() ?: it.status,
+                folkMountStatus = mountResult.getOrNull() ?: it.folkMountStatus,
                 readError = statusResult.isFailure,
                 actionError = actionError ?: it.actionError,
             )
@@ -96,6 +105,14 @@ class NomountViewModel(
 
     /** Drop a module's rules without waiting for a reboot. */
     fun hotUnload(id: String) = runAction { repo.hotUnloadNomountModule(id) }
+
+    /** Keep a module running but stop injecting its files (and re-apply at once). */
+    fun setSkip(id: String, skip: Boolean) =
+        runAction {
+            repo.setModuleSkip(id, skip).also { result ->
+                if (result.isSuccess) repo.injectNomountRules()
+            }
+        }
 
     fun setShowSystemApps(show: Boolean) {
         _uiState.update { it.copy(showSystemApps = show) }
@@ -153,6 +170,14 @@ class NomountViewModel(
         }
     }
 }
+
+internal fun shouldShowNomountSetup(
+    status: NomountStatus?,
+    mount: FolkMountStatus?,
+): Boolean = mount != null &&
+    status != null &&
+    status.deferredTo == null &&
+    (mount.configuredMode != FolkMountMode.NOMOUNT || mount.shouldWrite(FolkMountMode.NOMOUNT))
 
 /**
  * Installed apps for the picker, loaded through the manager's own app list.

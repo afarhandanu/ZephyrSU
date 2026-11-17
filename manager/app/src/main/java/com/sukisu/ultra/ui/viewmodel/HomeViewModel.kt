@@ -41,8 +41,10 @@ import java.io.File
 import com.sukisu.ultra.getKernelVersion
 import com.sukisu.ultra.ksuApp
 import com.sukisu.ultra.ui.screen.home.HomeLoadState
+import com.sukisu.ultra.ui.screen.home.HomeMount
 import com.sukisu.ultra.ui.screen.home.HomeUiState
 import com.sukisu.ultra.ui.screen.home.SystemInfo
+import com.sukisu.ultra.ui.screen.home.resolveHomeMountProvider
 import com.sukisu.ultra.ui.screen.home.getHomeModuleCount
 import com.sukisu.ultra.ui.screen.home.getManagerVersion
 import com.sukisu.ultra.ui.util.checkNewCiVersion
@@ -174,6 +176,18 @@ class HomeViewModel(
                         current.copy(
                             content = baseState.copy(ciUpdateBusy = current.content?.ciUpdateBusy ?: false),
                             isRefreshing = false,
+                        )
+                    }
+                    // The provider that really mounted modules this boot. A read
+                    // failure, or a record that cannot name one, hides the row
+                    // rather than guessing.
+                    val mountStatus = withContext(Dispatchers.IO) { settingsRepo.getFolkMountStatus().getOrNull() }
+                    updateContent {
+                        it.copy(
+                            mount = HomeMount(
+                                provider = resolveHomeMountProvider(mountStatus),
+                                metamoduleId = mountStatus?.metamoduleId,
+                            )
                         )
                     }
                     if (baseState.checkUpdateEnabled) {

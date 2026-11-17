@@ -53,6 +53,7 @@ mod android {
     pub const DISABLE_FILE_NAME: &str = "disable";
     pub const UPDATE_FILE_NAME: &str = "update";
     pub const REMOVE_FILE_NAME: &str = "remove";
+    pub const SKIP_MOUNT_FILE_NAME: &str = "skip_mount";
     pub const MODULE_INIT_RC_DIR: &str = "initrc";
     pub const MODULE_PREINIT_DIR: &str = "preinit";
     pub const PREINIT_CONF: &str = "preinit.conf";
@@ -68,6 +69,14 @@ mod android {
     pub const METAMODULE_MOUNT_SCRIPT: &str = "metamount.sh";
     pub const METAMODULE_METAINSTALL_SCRIPT: &str = "metainstall.sh";
     pub const METAMODULE_METAUNINSTALL_SCRIPT: &str = "metauninstall.sh";
+
+    // Folk Mount (built-in module mounting)
+    pub const FOLK_MOUNT_CONFIG: &str = concatcp!(WORKING_DIR, "mount_mode");
+    pub const FOLK_MOUNT_WORK_DIR: &str = concatcp!(WORKING_DIR, "workdir/");
+    pub const FOLK_MOUNT_FS_NAME: &str = "FolkMount";
+    // Per-boot runtime record and the concurrency lock for the built-in executor.
+    pub const FOLK_MOUNT_RUNTIME: &str = concatcp!(WORKING_DIR, "mount_runtime");
+    pub const FOLK_MOUNT_LOCK: &str = concatcp!(WORKING_DIR, "mount.lock");
 
     pub const KSU_BACKUP_DIR: &str = WORKING_DIR;
     pub const KSU_BACKUP_FILE_PREFIX: &str = "ksu_backup_";
@@ -86,8 +95,16 @@ mod android {
     pub const NOMOUNT_LOAD_LOCK: &str = concatcp!(WORKING_DIR, "nomount_load.lock");
     // Shared mount-step journal (Folk Mount, M6.3, reuses these too).
     pub const MOUNT_INFLIGHT: &str = concatcp!(WORKING_DIR, "mount_inflight");
+    pub const MOUNT_UI_PENDING: &str = concatcp!(WORKING_DIR, "mount_ui_pending");
+    pub const MOUNT_UI_CONFIG: &str = concatcp!(WORKING_DIR, "mount_ui_guard");
     pub const MOUNT_LOG: &str = concatcp!(LOG_DIR, "mount.log");
     pub const MOUNT_LOG_MAX_BYTES: u64 = 256 * 1024;
+    /// Flag file that arms the opt-in capture of a boot that never finished.
+    pub const MOUNT_CAPTURE_FLAG: &str = concatcp!(WORKING_DIR, "mount_capture");
+    /// Where a capture writes what a stuck boot was doing.
+    pub const MOUNT_CAPTURE_LOG: &str = concatcp!(LOG_DIR, "mount_capture.log");
+    /// Size the capture log may reach before the previous one is rotated aside.
+    pub const MOUNT_CAPTURE_LOG_MAX_BYTES: u64 = 512 * 1024;
 
     pub const BUILTIN_ZYGISK_FLAG: &str = concatcp!(WORKING_DIR, ".builtin_zygisk");
     /// Where ksud stages the built-in Zygisk binaries and its `module.prop`,
