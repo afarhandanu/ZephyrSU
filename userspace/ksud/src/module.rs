@@ -224,6 +224,11 @@ impl SigchldBlock {
     }
 
     /// Waits for one child and reports its raw wait status once it exits.
+    // `as` is the only cast that compiles on every target: `From<u32>` does not exist
+    // for i32 on armv7, so clippy's `libc::c_long::from(...)` suggestion would re-break
+    // the armv7 build. The clippy job runs on the host (x86_64) only, where this cast
+    // is lossless — hence the allow, scoped to this function.
+    #[allow(clippy::cast_lossless)]
     pub fn wait_status_until(
         &self,
         pid: libc::pid_t,
@@ -250,15 +255,7 @@ impl SigchldBlock {
             }
             let timeout = libc::timespec {
                 tv_sec: remaining.as_secs() as libc::time_t,
-                tv_nsec: {
-                    // subsec_nanos < 1e9, cannot overflow; c_long is i32 on armv7, i64
-                    // elsewhere, matching tv_nsec on every target. `From<u32>` does
-                    // not exist for i32 on armv7, so `as` is the only cast that
-                    // compiles on every target — clippy's ::from suggestion would
-                    // re-break the armv7 build.
-                    #[allow(clippy::cast_lossless)]
-                    remaining.subsec_nanos() as libc::c_long
-                },
+                tv_nsec: remaining.subsec_nanos() as libc::c_long, // subsec_nanos < 1e9, cannot overflow; c_long is i32 on armv7, i64 elsewhere
             };
             // SIGCHLD stays blocked between waitpid and sigtimedwait to avoid lost wakeups.
             if unsafe {
