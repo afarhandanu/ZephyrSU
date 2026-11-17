@@ -36,6 +36,14 @@ internal fun zygoteStateText(status: String): Int = when (status) {
     else -> com.sukisu.ultra.R.string.builtin_zygisk_zygote_not_injected
 }
 
+/// The localized label for a BootGuard startup failure code, from `ksud zygisk status`.
+internal fun startupFailureText(code: String?): Int = when (code) {
+    "tracer_missing" -> com.sukisu.ultra.R.string.builtin_zygisk_failure_tracer_missing
+    "monitor_spawn_failed" -> com.sukisu.ultra.R.string.builtin_zygisk_failure_monitor_spawn_failed
+    "injection_unconfirmed" -> com.sukisu.ultra.R.string.builtin_zygisk_failure_injection_unconfirmed
+    else -> com.sukisu.ultra.R.string.builtin_zygisk_failure_unknown
+}
+
 /// Title for a Zygisk state that still needs a soft restart to finish.
 internal fun problemTitle(problem: String): Int = when (problem) {
     "pending" -> com.sukisu.ultra.R.string.builtin_zygisk_pending_title

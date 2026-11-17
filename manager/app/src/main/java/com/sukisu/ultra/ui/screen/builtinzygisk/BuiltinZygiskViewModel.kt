@@ -8,6 +8,7 @@ import com.sukisu.ultra.ui.util.getBuiltinZygiskConfig
 import com.sukisu.ultra.ui.util.getBuiltinZygiskStatus
 import com.sukisu.ultra.ui.util.getInjectedZygiskModules
 import com.sukisu.ultra.ui.util.getZygiskImplementationInfo
+import com.sukisu.ultra.ui.util.recoverBuiltinZygisk
 import com.sukisu.ultra.ui.util.setBuiltinZygiskConfig
 import com.sukisu.ultra.ui.util.switchToZygisk
 import kotlinx.coroutines.Dispatchers
@@ -56,6 +57,18 @@ class BuiltinZygiskViewModel(
             val config = withContext(Dispatchers.IO) { getBuiltinZygiskConfig() }
             _uiState.update { it.copy(config = config) }
             if (!ok) onFailure()
+        }
+    }
+
+    /** Clears the BootGuard latch, then reloads so the UI shows the cleared state. */
+    fun recover(onFailure: () -> Unit) {
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.IO) { recoverBuiltinZygisk() }
+            if (ok) {
+                load()
+            } else {
+                onFailure()
+            }
         }
     }
 

@@ -212,6 +212,12 @@ pub fn soft_reboot() -> Result<()> {
     terminate_waitsys(&mut waitsys);
 
     info!("post-fs-data");
+    // A soft reboot is a new userspace cycle: advance the BootGuard epoch so
+    // the replayed post-fs-data gets a fresh startup attempt instead of
+    // sharing the stopped cycle's.
+    if let Err(e) = crate::boot_guard::advance_epoch() {
+        warn!("advance BootGuard epoch failed: {e:#}");
+    }
     on_post_fs_data()?;
     info!("start");
     let status = Command::new("start").status().context("start failed")?;

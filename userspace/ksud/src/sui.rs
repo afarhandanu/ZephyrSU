@@ -401,6 +401,10 @@ mod zygisk_bridge {
             "unverified"
         };
 
+        // BootGuard latch state, read live: the Sui gate below blocks Sui while
+        // Zygisk startup is latched, exactly as FinaSU's does. An unreadable
+        // guard reports as unlatched, so a corrupt latch file never blocks Sui.
+        let guard = crate::boot_guard::status().unwrap_or_default();
         ProviderStatus {
             schema_version: 1,
             enabled: builtin_enabled,
@@ -410,11 +414,11 @@ mod zygisk_bridge {
             injection_state,
             reboot_required: None,
             runtime: None,
-            startup_failures: 0,
-            startup_blocked: false,
-            startup_failure_code: None,
-            startup_failure_detail: None,
-            startup_generation: 0,
+            startup_failures: guard.failures,
+            startup_blocked: guard.blocked,
+            startup_failure_code: guard.failure_code,
+            startup_failure_detail: guard.failure_detail,
+            startup_generation: u32::try_from(guard.generation).unwrap_or(u32::MAX),
         }
     }
 

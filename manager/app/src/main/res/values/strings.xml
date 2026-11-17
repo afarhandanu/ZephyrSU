@@ -1844,6 +1844,13 @@
     <string name="builtin_zygisk_opt_custom_linker_summary">Load modules with the built-in ELF loader so they never enter the system linker\'s solist. Falls back to the system linker if a module cannot be loaded.</string>
     <string name="builtin_zygisk_opt_lsplt">Use LSPLT for PLT hooks</string>
     <string name="builtin_zygisk_opt_lsplt_summary">Off uses ByteHook, on uses LSPLT.</string>
+    <string name="builtin_zygisk_startup_blocked_summary">Zygisk failed to start %1$d times in a row and will not start on the next boot. Recover to try again.</string>
+    <string name="builtin_zygisk_recover">Recover Zygisk startup</string>
+    <string name="builtin_zygisk_recover_failed">Recovery failed</string>
+    <string name="builtin_zygisk_failure_tracer_missing">Tracer binary missing</string>
+    <string name="builtin_zygisk_failure_monitor_spawn_failed">Monitor failed to start</string>
+    <string name="builtin_zygisk_failure_injection_unconfirmed">Zygote injection was not confirmed</string>
+    <string name="builtin_zygisk_failure_unknown">Unknown startup failure</string>
 
     <!-- App Lock (ported from FinaSU, Milestone 2) -->
     <string name="settings_category_security">Security</string>
