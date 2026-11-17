@@ -20,6 +20,8 @@
     <string name="module_banner_opacity">Banner opacity</string>
 
     <string name="module_banner_custom_info">Customize info</string>
+    <string name="module_banner_select">Select banner</string>
+    <string name="module_banner_clear">Clear banner</string>
     <string name="module_banner_name">Name</string>
     <string name="module_banner_version">Version</string>
     <string name="module_banner_author">Author</string>

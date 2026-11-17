@@ -37,6 +37,13 @@ enum Commands {
         command: Module,
     },
 
+    /// Manage plugins
+    #[cfg(all(target_os = "android", target_arch = "aarch64"))]
+    Plugin {
+        #[command(subcommand)]
+        command: crate::plugin::Command,
+    },
+
     /// Manage built-in Zygisk
     Zygisk {
         #[command(subcommand)]
@@ -64,6 +71,11 @@ enum Commands {
     /// Run sulog reader daemon. Not for user. Use `ksud debug sulogd` to launch daemon.
     #[command(hide = true)]
     Sulogd,
+
+    /// Probes the plugin Lua engine.
+    #[cfg(all(target_os = "android", target_arch = "aarch64"))]
+    #[command(hide = true)]
+    LuaProbe,
 
     /// Trigger `boot-complete` event
     BootCompleted,
@@ -1344,6 +1356,13 @@ pub fn run() -> Result<()> {
             Ok(())
         }
         Commands::Sulogd => sulog::run_sulogd(),
+        #[cfg(all(target_os = "android", target_arch = "aarch64"))]
+        Commands::LuaProbe => crate::lua_probe::run(),
+        #[cfg(all(target_os = "android", target_arch = "aarch64"))]
+        Commands::Plugin { command } => {
+            utils::switch_mnt_ns(1)?;
+            crate::plugin::run(command)
+        }
         Commands::TemporaryRoot { command } => match command {
             TemporaryRoot::Set {
                 uid,

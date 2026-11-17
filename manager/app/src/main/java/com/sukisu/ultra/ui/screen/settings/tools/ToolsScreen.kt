@@ -109,6 +109,9 @@ fun ToolsScreen() {
         onOpenNomount = {
             navigator.push(Route.Nomount)
         },
+        onOpenPlugin = {
+            navigator.push(Route.Plugin)
+        },
     )
 
     val state = ToolsUiState(

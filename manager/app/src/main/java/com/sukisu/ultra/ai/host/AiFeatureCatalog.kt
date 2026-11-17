@@ -467,6 +467,15 @@ object AiFeatureCatalog : AiFeatureService {
                 solution = rootSolution(a, manager),
             ),
             entry(
+                id = "plugin",
+                title = "Plugin",
+                summary = "Install and manage Lua plugins that run at boot stages or on demand.",
+                target = ManagerAiTarget.Push(Route.Plugin),
+                supported = kernelReady,
+                reason = rootReason(a, manager),
+                solution = rootSolution(a, manager),
+            ),
+            entry(
                 id = "backup",
                 title = "Backup",
                 summary = "Back up the superuser list, installed modules and boot images to Download/ZephyrSU, restore or delete them, and snapshot before flashing.",

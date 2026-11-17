@@ -157,6 +157,22 @@ pub fn on_post_fs_data() -> Result<()> {
         warn!("Failed to exec post-fs-data lua: {e}");
     }
 
+    // Plugin callbacks share the same boot budget as the scripts above: a plugin
+    // that no longer fits is left for the next boot rather than extending the wait.
+    #[cfg(all(target_os = "android", target_arch = "aarch64"))]
+    if let Err(e) = crate::plugin::stage::run(
+        Path::new(defs::PLUGIN_DIR),
+        Path::new(defs::PLUGIN_LOCK_DIR),
+        Path::new(defs::PLUGIN_STATE_DIR),
+        "post-fs-data",
+        match wait {
+            ScriptWait::Until(instant) => Some(instant),
+            _ => None,
+        },
+    ) {
+        warn!("exec plugin post-fs-data callbacks failed: {e}");
+    }
+
     crate::boot_hide::boot_apply();
 
     // load system.prop
@@ -216,6 +232,15 @@ pub fn run_stage(stage: &str, wait: ScriptWait) {
         crate::module::exec_stage_lua(stage, !matches!(wait, ScriptWait::NoWait), "kernelsu")
     {
         warn!("Failed to exec {stage} lua: {e}");
+    }
+
+    // Later stages do not block the boot, so plugin callbacks are dispatched in
+    // the background. The bounded stages above keep their deadline instead.
+    #[cfg(all(target_os = "android", target_arch = "aarch64"))]
+    if matches!(wait, ScriptWait::NoWait)
+        && let Err(e) = crate::plugin::stage::background(stage)
+    {
+        warn!("Failed to dispatch plugin {stage} callbacks: {e}");
     }
 }
 
