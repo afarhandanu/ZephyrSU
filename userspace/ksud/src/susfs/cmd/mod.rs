@@ -10,6 +10,7 @@
 //! - [`kstat`]  — `sus_kstat` operations
 
 pub mod kstat;
+pub mod lkm;
 pub mod paths;
 pub mod priority_uid_filter;
 pub mod spoof;

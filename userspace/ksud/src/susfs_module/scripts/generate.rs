@@ -7,6 +7,7 @@
 
 use std::fmt::Write as FmtWrite;
 
+use crate::susfs_config::RedirectRule;
 use crate::susfs_module::consts::{DEFAULT_BUILD_TIME, DEFAULT_UNAME, shell_quote};
 use crate::susfs_module::scripts::{cleanup, hide_bl, prelude};
 
@@ -25,12 +26,18 @@ fn should_configure_in_service(
     execute_in_post_fs_data: bool,
     uname_value: &str,
     build_time_value: &str,
+    redirect_rules: &[RedirectRule],
+    hidden_modules: &[String],
+    mount_prefixes: &[String],
 ) -> bool {
     !sus_paths.is_empty()
         || !sus_loop_paths.is_empty()
         || !kstat_configs.is_empty()
         || !add_kstat_paths.is_empty()
         || !cmdline_or_bootconfig_path.is_empty()
+        || !redirect_rules.is_empty()
+        || !hidden_modules.is_empty()
+        || !mount_prefixes.is_empty()
         || (!execute_in_post_fs_data
             && (uname_value != DEFAULT_UNAME || build_time_value != DEFAULT_BUILD_TIME))
 }
@@ -54,6 +61,9 @@ pub fn service(
     enable_log: bool,
     enable_hide_bl: bool,
     enable_cleanup_residue: bool,
+    redirect_rules: &[RedirectRule],
+    hidden_modules: &[String],
+    mount_prefixes: &[String],
 ) -> String {
     let mut s = String::new();
 
@@ -74,6 +84,9 @@ pub fn service(
         execute_in_post_fs_data,
         uname_value,
         build_time_value,
+        redirect_rules,
+        hidden_modules,
+        mount_prefixes,
     ) {
         if !sus_paths.is_empty() {
             s.push_str("\n# 添加SUS路径\n");
@@ -147,6 +160,54 @@ pub fn service(
                         path.replace('\'', "'\\''")
                     );
                 }
+            }
+            s.push('\n');
+        }
+
+        // open redirects — same stage as sus_paths; the ksud command
+        // reports an unsupported kernel and the script continues.
+        if !redirect_rules.is_empty() {
+            s.push_str("\n# 添加文件重定向\n");
+            for rule in redirect_rules {
+                let _ = writeln!(
+                    s,
+                    "/data/adb/ksud susfs add-open-redirect {} {} {}",
+                    shell_quote(&rule.target),
+                    shell_quote(&rule.destination),
+                    rule.uid_scheme
+                );
+                let _ = writeln!(
+                    s,
+                    "echo \"$(get_current_time): 添加文件重定向: {} -> {}\" >> \"$LOG_FILE\"",
+                    rule.target.replace('\'', "'\\''"),
+                    rule.destination.replace('\'', "'\\''")
+                );
+            }
+            s.push('\n');
+        }
+
+        // LKM hidden modules / mount prefixes — no-ops without the LKM
+        // proc nodes; the ksud command reports the missing node and the
+        // script continues.
+        if !hidden_modules.is_empty() {
+            s.push_str("\n# 隐藏模块名称\n");
+            for name in hidden_modules {
+                let _ = writeln!(
+                    s,
+                    "/data/adb/ksud susfs add-hide-module {}",
+                    shell_quote(name)
+                );
+            }
+            s.push('\n');
+        }
+        if !mount_prefixes.is_empty() {
+            s.push_str("\n# 隐藏挂载前缀\n");
+            for prefix in mount_prefixes {
+                let _ = writeln!(
+                    s,
+                    "/data/adb/ksud susfs add-hide-mount-prefix {}",
+                    shell_quote(prefix)
+                );
             }
             s.push('\n');
         }

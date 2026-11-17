@@ -37,6 +37,9 @@ object SuSFSManager {
     suspend fun saveSusMaps(maps: Set<String>) = SuSFSRepository.saveSusMaps(maps)
     suspend fun saveKstatConfigs(configs: Set<String>) = SuSFSRepository.saveKstatConfigs(configs)
     suspend fun saveAddKstatPaths(paths: Set<String>) = SuSFSRepository.saveAddKstatPaths(paths)
+    suspend fun saveRedirectRules(rules: Set<String>) = SuSFSRepository.saveRedirectRules(rules)
+    suspend fun saveHiddenModules(modules: Set<String>) = SuSFSRepository.saveHiddenModules(modules)
+    suspend fun saveMountPrefixes(prefixes: Set<String>) = SuSFSRepository.saveMountPrefixes(prefixes)
     suspend fun saveSusPathUidFilter(packages: Set<String>) = SuSFSRepository.saveSusPathUidFilter(packages)
 
     suspend fun setEnableLog(context: Context, enabled: Boolean): Boolean = SuSFSRepository.setEnableLog(context, enabled)
@@ -53,6 +56,21 @@ object SuSFSManager {
     suspend fun addSusPath(context: Context, path: String): Boolean = SuSFSPathManager.addSusPath(context, path)
     suspend fun removeSusPath(path: String): Boolean = SuSFSPathManager.removeSusPath(path)
     suspend fun editSusPath(context: Context, oldPath: String, newPath: String): Boolean = SuSFSPathManager.editSusPath(context, oldPath, newPath)
+
+    // --- Open-redirect rules + LKM extensions (M4.4, ported from FinaSU) ---
+
+    suspend fun addRedirectRule(context: Context, rule: RedirectRule): Boolean = SuSFSPathManager.addRedirectRule(context, rule)
+    suspend fun removeRedirectRule(record: String): Boolean = SuSFSPathManager.removeRedirectRule(record)
+    suspend fun editRedirectRule(context: Context, oldRecord: String, rule: RedirectRule): Boolean =
+        SuSFSPathManager.editRedirectRule(context, oldRecord, rule)
+    suspend fun addHiddenModule(context: Context, name: String): Boolean = SuSFSPathManager.addHiddenModule(context, name)
+    suspend fun removeHiddenModule(name: String): Boolean = SuSFSPathManager.removeHiddenModule(name)
+    suspend fun editHiddenModule(context: Context, oldName: String, newName: String): Boolean =
+        SuSFSPathManager.editHiddenModule(context, oldName, newName)
+    suspend fun addMountPrefix(context: Context, path: String): Boolean = SuSFSPathManager.addMountPrefix(context, path)
+    suspend fun removeMountPrefix(path: String): Boolean = SuSFSPathManager.removeMountPrefix(path)
+    suspend fun editMountPrefix(context: Context, oldPath: String, newPath: String): Boolean =
+        SuSFSPathManager.editMountPrefix(context, oldPath, newPath)
     suspend fun addSusLoopPath(context: Context, path: String): Boolean = SuSFSPathManager.addSusLoopPath(context, path)
     suspend fun removeSusLoopPath(path: String): Boolean = SuSFSPathManager.removeSusLoopPath(path)
     suspend fun editSusLoopPath(context: Context, oldPath: String, newPath: String): Boolean = SuSFSPathManager.editSusLoopPath(context, oldPath, newPath)

@@ -60,6 +60,30 @@ data class BackupData(
     }
 }
 
+/**
+ * One persisted open-redirect rule, stored as a "target|destination|uid_scheme"
+ * record (same "|" record style as the static kstat configs). The uid scheme
+ * is one of the verified scopes FinaSU offers: 0 = non-app UIDs, 1 = root
+ * outside the KernelSU domain, 2 = processes outside the KernelSU domain.
+ */
+data class RedirectRule(
+    val target: String,
+    val destination: String,
+    val uidScheme: Int
+) {
+    fun toRecord(): String = "$target|$destination|$uidScheme"
+
+    companion object {
+        fun parse(record: String): RedirectRule? {
+            val parts = record.split("|")
+            if (parts.size != 3) return null
+            val scheme = parts[2].toIntOrNull() ?: return null
+            if (scheme !in 0..2 || parts[0].isEmpty() || parts[1].isEmpty()) return null
+            return RedirectRule(parts[0], parts[1], scheme)
+        }
+    }
+}
+
 data class ModuleConfig(
     val unameValue: String,
     val buildTimeValue: String,
@@ -78,6 +102,9 @@ data class ModuleConfig(
     val autoStartEnabled: Boolean = false,
     val priorityUidFilter: Set<String> = emptySet(),
     val susPathUidFilter: Set<String> = emptySet(),
+    val redirectRules: Set<String> = emptySet(),
+    val hiddenModules: Set<String> = emptySet(),
+    val mountPrefixes: Set<String> = emptySet(),
 ) {
     fun hasAutoStartConfig(): Boolean {
         return unameValue != SuSFSConfig.DEFAULT_UNAME ||
@@ -89,6 +116,9 @@ data class ModuleConfig(
                 susPathUidFilter.isNotEmpty() ||
                 kstatConfigs.isNotEmpty() ||
                 addKstatPaths.isNotEmpty() ||
+                redirectRules.isNotEmpty() ||
+                hiddenModules.isNotEmpty() ||
+                mountPrefixes.isNotEmpty() ||
                 cmdlineOrBootconfigPath.isNotBlank()
     }
 }
@@ -117,5 +147,8 @@ internal fun moduleConfigFromValues(values: Map<String, String>): ModuleConfig {
         enableAvcLogSpoofing = enabled(SuSFSConfig.KEY_ENABLE_AVC_LOG_SPOOFING),
         cmdlineOrBootconfigPath = value(SuSFSConfig.KEY_CMDLINE_OR_BOOTCONFIG_PATH),
         autoStartEnabled = enabled(SuSFSConfig.KEY_AUTO_START_ENABLED),
+        redirectRules = entries(SuSFSConfig.KEY_REDIRECT_RULES, ";;"),
+        hiddenModules = entries(SuSFSConfig.KEY_HIDDEN_MODULES),
+        mountPrefixes = entries(SuSFSConfig.KEY_MOUNT_PREFIXES),
     )
 }

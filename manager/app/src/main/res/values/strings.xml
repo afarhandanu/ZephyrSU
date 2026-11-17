@@ -667,10 +667,47 @@
     <string name="susfs_tab_feature_toggles">Feature toggles</string>
     <string name="susfs_tab_sus_paths">SUS Paths</string>
     <string name="susfs_tab_enabled_features">Enabled Features Status</string>
+    <string name="susfs_tab_redirect_rules">Redirect Rules</string>
+    <string name="susfs_tab_lkm_extensions">LKM Extensions</string>
     <!-- SuSFS Path Management -->
     <string name="susfs_add_sus_path">Add SUS Path</string>
     <string name="susfs_path_label">Path</string>
     <string name="susfs_no_paths_configured">No SUS paths configured</string>
+    <!-- SuSFS Open-redirect rules (M4.4, ported from FinaSU) -->
+    <string name="susfs_add_redirect_rule">Add Redirect Rule</string>
+    <string name="susfs_edit_redirect_rule">Edit Redirect Rule</string>
+    <string name="susfs_redirect_target_label">Target path</string>
+    <string name="susfs_redirect_destination_label">Destination path</string>
+    <string name="susfs_redirect_uid_scheme_label">UID scheme</string>
+    <string name="susfs_redirect_uid_scheme_0">Non-app UIDs</string>
+    <string name="susfs_redirect_uid_scheme_1">Root outside the KernelSU domain</string>
+    <string name="susfs_redirect_uid_scheme_2">Processes outside the KernelSU domain</string>
+    <string name="susfs_no_redirect_rules">No redirect rules configured</string>
+    <string name="susfs_invalid_redirect_rule">Invalid redirect rule: both paths must be valid and different</string>
+    <string name="susfs_add_redirect_failed">Failed to add redirect rule</string>
+    <string name="susfs_edit_redirect_failed">Failed to edit redirect rule</string>
+    <string name="susfs_reset_redirect_rules_title">Reset Redirect Rules</string>
+    <string name="susfs_reset_redirect_rules_message">This will clear all redirect rule configurations. Are you sure you want to continue?</string>
+    <!-- SuSFS LKM extensions (M4.4, ported from FinaSU) -->
+    <string name="susfs_lkm_only_notice">Available only on LKM SuSFS builds (/proc/susfs_hide_modules and /proc/susfs_hide_mounts)</string>
+    <string name="susfs_add_hidden_module">Add Hidden Module</string>
+    <string name="susfs_edit_hidden_module">Edit Hidden Module</string>
+    <string name="susfs_hidden_module_label">Module name</string>
+    <string name="susfs_no_hidden_modules">No hidden modules configured</string>
+    <string name="susfs_invalid_hidden_module">Invalid module name: 1-63 characters, letters, digits, or underscore</string>
+    <string name="susfs_add_hidden_module_failed">Failed to add hidden module</string>
+    <string name="susfs_edit_hidden_module_failed">Failed to edit hidden module</string>
+    <string name="susfs_reset_hidden_modules_title">Reset Hidden Modules</string>
+    <string name="susfs_reset_hidden_modules_message">This will clear all hidden module configurations. Are you sure you want to continue?</string>
+    <string name="susfs_add_mount_prefix">Add Mount Prefix</string>
+    <string name="susfs_edit_mount_prefix">Edit Mount Prefix</string>
+    <string name="susfs_mount_prefix_label">Mount prefix</string>
+    <string name="susfs_no_mount_prefixes">No mount prefixes configured</string>
+    <string name="susfs_invalid_mount_prefix">Invalid mount prefix</string>
+    <string name="susfs_add_mount_prefix_failed">Failed to add mount prefix</string>
+    <string name="susfs_edit_mount_prefix_failed">Failed to edit mount prefix</string>
+    <string name="susfs_reset_mount_prefixes_title">Reset Mount Prefixes</string>
+    <string name="susfs_reset_mount_prefixes_message">This will clear all mount prefix configurations. Are you sure you want to continue?</string>
     <!-- SuSFS Reset Categories -->
     <string name="susfs_reset_paths_title">Reset SUS Paths</string>
     <string name="susfs_reset_paths_message">This will clear all SUS path configurations. Are you sure you want to continue?</string>

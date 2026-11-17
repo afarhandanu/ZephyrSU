@@ -32,7 +32,10 @@ object SuSFSBackupManager {
             SuSFSConfig.KEY_ENABLE_HIDE_BL to getEnableHideBlInternal(),
             SuSFSConfig.KEY_ENABLE_CLEANUP_RESIDUE to getEnableCleanupResidueInternal(),
             SuSFSConfig.KEY_ENABLE_AVC_LOG_SPOOFING to getEnableAvcLogSpoofingInternal(),
-            SuSFSConfig.KEY_CMDLINE_OR_BOOTCONFIG_PATH to getCmdlineOrBootconfigPathInternal()
+            SuSFSConfig.KEY_CMDLINE_OR_BOOTCONFIG_PATH to getCmdlineOrBootconfigPathInternal(),
+            SuSFSConfig.KEY_REDIRECT_RULES to getRedirectRulesInternal(),
+            SuSFSConfig.KEY_HIDDEN_MODULES to getHiddenModulesInternal(),
+            SuSFSConfig.KEY_MOUNT_PREFIXES to getMountPrefixesInternal()
         )
     }
 
@@ -69,6 +72,15 @@ object SuSFSBackupManager {
 
     private suspend fun getAddKstatPathsInternal(): Set<String> =
         SuSFSConfig.getMulti(SuSFSConfig.KEY_ADD_KSTAT_PATHS)
+
+    private suspend fun getRedirectRulesInternal(): Set<String> =
+        SuSFSConfig.getMulti(SuSFSConfig.KEY_REDIRECT_RULES, ";;")
+
+    private suspend fun getHiddenModulesInternal(): Set<String> =
+        SuSFSConfig.getMulti(SuSFSConfig.KEY_HIDDEN_MODULES)
+
+    private suspend fun getMountPrefixesInternal(): Set<String> =
+        SuSFSConfig.getMulti(SuSFSConfig.KEY_MOUNT_PREFIXES)
 
     private suspend fun getHideSusMountsForAllProcsInternal(): Boolean {
         val v = SuSFSConfig.get(SuSFSConfig.KEY_HIDE_SUS_MOUNTS_FOR_ALL_PROCS)
@@ -164,7 +176,14 @@ object SuSFSBackupManager {
                 is Boolean -> SuSFSConfig.set(key, if (value) "true" else "false")
                 is Set<*> -> {
                     val set = value.filterIsInstance<String>().toSet()
-                    val sep = if (key == SuSFSConfig.KEY_KSTAT_CONFIGS) ";;" else ";"
+                    val sep =
+                        if (key == SuSFSConfig.KEY_KSTAT_CONFIGS ||
+                            key == SuSFSConfig.KEY_REDIRECT_RULES
+                        ) {
+                            ";;"
+                        } else {
+                            ";"
+                        }
                     SuSFSConfig.setMulti(key, set, sep)
                 }
             }

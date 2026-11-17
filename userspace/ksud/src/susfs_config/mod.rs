@@ -22,5 +22,5 @@ pub mod keys;
 pub mod module;
 pub mod store;
 
-pub use module::{ModuleConfig, load_module_config};
+pub use module::{ModuleConfig, RedirectRule, load_module_config};
 pub use store::{clear, export_json, get, remove, reset_to_defaults, set};

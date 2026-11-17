@@ -74,6 +74,9 @@ class SuSFSViewModel(
                         susPathUidFilter = config.susPathUidFilter,
                         kstatConfigs = config.kstatConfigs,
                         addKstatPaths = config.addKstatPaths,
+                        redirectRules = config.redirectRules,
+                        hiddenModules = config.hiddenModules,
+                        mountPrefixes = config.mountPrefixes,
                         hideSusMountsForAllProcs = config.hideSusMountsForAllProcs,
                         enableHideBl = config.enableHideBl,
                         enableLog = config.enableLog,
@@ -384,6 +387,62 @@ class SuSFSViewModel(
         }
     }
 
+    // Open-redirect rules + LKM extensions (M4.4, ported from FinaSU)
+
+    fun openAddRedirectDialog(editing: String? = null) {
+        _uiState.update {
+            it.copy(
+                showAddRedirectDialog = true,
+                editingRedirectRule = editing
+            )
+        }
+    }
+
+    fun closeAddRedirectDialog() {
+        _uiState.update {
+            it.copy(
+                showAddRedirectDialog = false,
+                editingRedirectRule = null
+            )
+        }
+    }
+
+    fun openAddHiddenModuleDialog(editing: String? = null) {
+        _uiState.update {
+            it.copy(
+                showAddHiddenModuleDialog = true,
+                editingHiddenModule = editing
+            )
+        }
+    }
+
+    fun closeAddHiddenModuleDialog() {
+        _uiState.update {
+            it.copy(
+                showAddHiddenModuleDialog = false,
+                editingHiddenModule = null
+            )
+        }
+    }
+
+    fun openAddMountPrefixDialog(editing: String? = null) {
+        _uiState.update {
+            it.copy(
+                showAddMountPrefixDialog = true,
+                editingMountPrefix = editing
+            )
+        }
+    }
+
+    fun closeAddMountPrefixDialog() {
+        _uiState.update {
+            it.copy(
+                showAddMountPrefixDialog = false,
+                editingMountPrefix = null
+            )
+        }
+    }
+
     fun toggleResetPathsDialog(show: Boolean) {
         _uiState.update { it.copy(showResetPathsDialog = show) }
     }
@@ -398,6 +457,18 @@ class SuSFSViewModel(
 
     fun toggleResetKstatDialog(show: Boolean) {
         _uiState.update { it.copy(showResetKstatDialog = show) }
+    }
+
+    fun toggleResetRedirectRulesDialog(show: Boolean) {
+        _uiState.update { it.copy(showResetRedirectRulesDialog = show) }
+    }
+
+    fun toggleResetHiddenModulesDialog(show: Boolean) {
+        _uiState.update { it.copy(showResetHiddenModulesDialog = show) }
+    }
+
+    fun toggleResetMountPrefixesDialog(show: Boolean) {
+        _uiState.update { it.copy(showResetMountPrefixesDialog = show) }
     }
 
     private suspend fun report(
@@ -603,6 +674,9 @@ class SuSFSViewModel(
                 susPathUidFilter = config.susPathUidFilter,
                 kstatConfigs = config.kstatConfigs,
                 addKstatPaths = config.addKstatPaths,
+                redirectRules = config.redirectRules,
+                hiddenModules = config.hiddenModules,
+                mountPrefixes = config.mountPrefixes,
                 hideSusMountsForAllProcs = config.hideSusMountsForAllProcs,
                 enableHideBl = config.enableHideBl,
                         enableLog = config.enableLog,

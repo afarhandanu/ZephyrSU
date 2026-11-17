@@ -352,4 +352,188 @@ object SuSFSPathManager {
 
     suspend fun updateKstatFullClone(context: Context, path: String): Boolean =
         SuSFSCommands.executeSusfsCommand(context, "update-sus-kstat-full-clone '$path'")
+
+    // --- Open-redirect rules + LKM extensions (M4.4, ported from FinaSU) ---
+
+    /** Mirror of FinaSU's `SusfsInputs.validPath`: absolute, <256 bytes, no
+     * empty segments, whitespace, or control characters. */
+    private fun isValidSusfsPath(value: String): Boolean =
+        value.startsWith("/") && value != "/" &&
+            value.toByteArray(Charsets.UTF_8).size < 256 && !value.contains("//") &&
+            value.none { it.isWhitespace() || it.isISOControl() } &&
+            value.split('/').none { it == "." || it == ".." }
+
+    /** Mirror of FinaSU's hidden-module name rule: 1-63 chars, [a-zA-Z0-9_]. */
+    private fun isValidHiddenModuleName(value: String): Boolean =
+        value.length in 1..63 && value.all {
+            it in 'a'..'z' || it in 'A'..'Z' || it in '0'..'9' || it == '_'
+        }
+
+    private suspend fun addRedirectRuleInternal(
+        context: Context, rule: RedirectRule, showToast: Boolean = true
+    ): Boolean {
+        if (!isValidSusfsPath(rule.target) || !isValidSusfsPath(rule.destination) ||
+            rule.target == rule.destination || rule.uidScheme !in 0..2
+        ) {
+            if (showToast) showToast(context, context.getString(R.string.susfs_invalid_redirect_rule))
+            return false
+        }
+        val result = SuSFSCommands.executeSusfsCommandWithOutput(
+            "add-open-redirect ${SuSFSConfig.shellQuote(rule.target)} " +
+                "${SuSFSConfig.shellQuote(rule.destination)} ${rule.uidScheme}"
+        )
+        val success = result.isSuccess
+        if (success) {
+            SuSFSRepository.saveRedirectRules(SuSFSRepository.getRedirectRules() + rule.toRecord())
+            if (SuSFSRepository.isAutoStartEnabled()) {
+                check(SuSFSCommands.updateMagiskModule()) { "Failed to update SUSFS boot module" }
+            }
+        } else if (showToast) {
+            showToast(context, result.errorOutput.ifEmpty { context.getString(R.string.susfs_add_redirect_failed) })
+        }
+        return success
+    }
+
+    suspend fun addRedirectRule(context: Context, rule: RedirectRule): Boolean =
+        addRedirectRuleInternal(context, rule, showToast = true)
+
+    /**
+     * Removing a rule only drops it from the persisted config; the live
+     * kernel redirect stays until reboot, same as [removeSusPath].
+     */
+    suspend fun removeRedirectRule(record: String): Boolean {
+        SuSFSRepository.saveRedirectRules(SuSFSRepository.getRedirectRules() - record)
+        if (SuSFSRepository.isAutoStartEnabled()) SuSFSCommands.updateMagiskModule()
+        return true
+    }
+
+    suspend fun editRedirectRule(context: Context, oldRecord: String, rule: RedirectRule): Boolean {
+        return try {
+            val currentRules = SuSFSRepository.getRedirectRules().toMutableSet()
+            if (!currentRules.remove(oldRecord)) return false
+            SuSFSRepository.saveRedirectRules(currentRules)
+            val success = addRedirectRuleInternal(context, rule, showToast = false)
+            if (!success) {
+                currentRules.add(oldRecord)
+                SuSFSRepository.saveRedirectRules(currentRules)
+                if (SuSFSRepository.isAutoStartEnabled()) SuSFSCommands.updateMagiskModule()
+                showToast(context, context.getString(R.string.susfs_edit_redirect_failed))
+            }
+            success
+        } catch (e: Exception) {
+            Log.e("SuSFSPathManager", "Exception editing redirect rule", e)
+            showToast(context, context.getString(R.string.susfs_edit_redirect_failed))
+            false
+        }
+    }
+
+    private suspend fun addHiddenModuleInternal(
+        context: Context, name: String, showToast: Boolean = true
+    ): Boolean {
+        if (!isValidHiddenModuleName(name)) {
+            if (showToast) showToast(context, context.getString(R.string.susfs_invalid_hidden_module))
+            return false
+        }
+        val result = SuSFSCommands.executeSusfsCommandWithOutput(
+            "add-hide-module ${SuSFSConfig.shellQuote(name)}"
+        )
+        val success = result.isSuccess
+        if (success) {
+            SuSFSRepository.saveHiddenModules(SuSFSRepository.getHiddenModules() + name)
+            if (SuSFSRepository.isAutoStartEnabled()) {
+                check(SuSFSCommands.updateMagiskModule()) { "Failed to update SUSFS boot module" }
+            }
+        } else if (showToast) {
+            showToast(context, result.errorOutput.ifEmpty { context.getString(R.string.susfs_add_hidden_module_failed) })
+        }
+        return success
+    }
+
+    suspend fun addHiddenModule(context: Context, name: String): Boolean =
+        addHiddenModuleInternal(context, name, showToast = true)
+
+    /**
+     * Removing a module only drops it from the persisted config; the live
+     * kernel entry stays until reboot, same as [removeSusPath].
+     */
+    suspend fun removeHiddenModule(name: String): Boolean {
+        SuSFSRepository.saveHiddenModules(SuSFSRepository.getHiddenModules() - name)
+        if (SuSFSRepository.isAutoStartEnabled()) SuSFSCommands.updateMagiskModule()
+        return true
+    }
+
+    suspend fun editHiddenModule(context: Context, oldName: String, newName: String): Boolean {
+        return try {
+            val current = SuSFSRepository.getHiddenModules().toMutableSet()
+            if (!current.remove(oldName)) return false
+            SuSFSRepository.saveHiddenModules(current)
+            val success = addHiddenModuleInternal(context, newName, showToast = false)
+            if (!success) {
+                current.add(oldName)
+                SuSFSRepository.saveHiddenModules(current)
+                if (SuSFSRepository.isAutoStartEnabled()) SuSFSCommands.updateMagiskModule()
+                showToast(context, context.getString(R.string.susfs_edit_hidden_module_failed))
+            }
+            success
+        } catch (e: Exception) {
+            Log.e("SuSFSPathManager", "Exception editing hidden module", e)
+            showToast(context, context.getString(R.string.susfs_edit_hidden_module_failed))
+            false
+        }
+    }
+
+    private suspend fun addMountPrefixInternal(
+        context: Context, path: String, showToast: Boolean = true
+    ): Boolean {
+        if (!isValidSusfsPath(path)) {
+            if (showToast) showToast(context, context.getString(R.string.susfs_invalid_mount_prefix))
+            return false
+        }
+        val result = SuSFSCommands.executeSusfsCommandWithOutput(
+            "add-hide-mount-prefix ${SuSFSConfig.shellQuote(path)}"
+        )
+        val success = result.isSuccess
+        if (success) {
+            SuSFSRepository.saveMountPrefixes(SuSFSRepository.getMountPrefixes() + path)
+            if (SuSFSRepository.isAutoStartEnabled()) {
+                check(SuSFSCommands.updateMagiskModule()) { "Failed to update SUSFS boot module" }
+            }
+        } else if (showToast) {
+            showToast(context, result.errorOutput.ifEmpty { context.getString(R.string.susfs_add_mount_prefix_failed) })
+        }
+        return success
+    }
+
+    suspend fun addMountPrefix(context: Context, path: String): Boolean =
+        addMountPrefixInternal(context, path, showToast = true)
+
+    /**
+     * Removing a prefix only drops it from the persisted config; the live
+     * kernel entry stays until reboot, same as [removeSusPath].
+     */
+    suspend fun removeMountPrefix(path: String): Boolean {
+        SuSFSRepository.saveMountPrefixes(SuSFSRepository.getMountPrefixes() - path)
+        if (SuSFSRepository.isAutoStartEnabled()) SuSFSCommands.updateMagiskModule()
+        return true
+    }
+
+    suspend fun editMountPrefix(context: Context, oldPath: String, newPath: String): Boolean {
+        return try {
+            val current = SuSFSRepository.getMountPrefixes().toMutableSet()
+            if (!current.remove(oldPath)) return false
+            SuSFSRepository.saveMountPrefixes(current)
+            val success = addMountPrefixInternal(context, newPath, showToast = false)
+            if (!success) {
+                current.add(oldPath)
+                SuSFSRepository.saveMountPrefixes(current)
+                if (SuSFSRepository.isAutoStartEnabled()) SuSFSCommands.updateMagiskModule()
+                showToast(context, context.getString(R.string.susfs_edit_mount_prefix_failed))
+            }
+            success
+        } catch (e: Exception) {
+            Log.e("SuSFSPathManager", "Exception editing mount prefix", e)
+            showToast(context, context.getString(R.string.susfs_edit_mount_prefix_failed))
+            false
+        }
+    }
 }
