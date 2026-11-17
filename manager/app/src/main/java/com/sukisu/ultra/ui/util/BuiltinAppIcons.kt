@@ -26,6 +26,7 @@ object BuiltinAppIcons {
     const val KERNELSU_ID = "kernelsu"
     const val LOGO_ID = "sukisu_logo"
     const val ZAKO_ID = "zako"
+    const val GEOMETRY_ID = "geometry"
 
     private const val TAG = "BuiltinAppIcons"
     private val mainActivityName = MainActivity::class.java.name
@@ -58,6 +59,13 @@ object BuiltinAppIcons {
             iconRes = R.mipmap.ic_launcher_zako,
             foregroundRes = R.drawable.ic_launcher_foreground_zako,
             aliasClassName = mainActivityName + "AliasZako",
+        ),
+        BuiltinAppIcon(
+            id = GEOMETRY_ID,
+            nameRes = R.string.app_icon_builtin_geometry,
+            iconRes = R.mipmap.ic_launcher_geometry,
+            foregroundRes = R.drawable.ic_launcher_foreground_geometry,
+            aliasClassName = mainActivityName + "AliasGeometry",
         ),
     )
 
@@ -158,6 +166,7 @@ object BuiltinAppIcons {
         KERNELSU_ID -> ""
         LOGO_ID -> "Logo"
         ZAKO_ID -> "Zako"
+        GEOMETRY_ID -> "Geometry"
         else -> "Default"
     }
 

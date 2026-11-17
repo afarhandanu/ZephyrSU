@@ -919,6 +919,7 @@ homePillScale = HomeStatusStyle.coercePillScale(repo.homePillScale),
             BuiltinAppIcons.KERNELSU_ID,
             BuiltinAppIcons.LOGO_ID,
             BuiltinAppIcons.ZAKO_ID,
+            BuiltinAppIcons.GEOMETRY_ID,
         )
         val exportedIconId = if (repo.appIconId in builtinIconIds) {
             repo.appIconId
@@ -1783,6 +1784,7 @@ homePillScale = if (options.homeCardDisplay) source.homePillScale else null,
                 BuiltinAppIcons.KERNELSU_ID,
                 BuiltinAppIcons.LOGO_ID,
                 BuiltinAppIcons.ZAKO_ID,
+                BuiltinAppIcons.GEOMETRY_ID,
             )
             val targetIconId = data.appIconId?.takeIf { it in builtinIconIds }
             if (targetIconId != null) {
