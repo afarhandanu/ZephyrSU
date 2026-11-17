@@ -222,13 +222,13 @@ fn current_epoch() -> Result<StartupEpoch> {
 pub fn advance_epoch() -> Result<()> {
     let boot_id = current_boot_id()?;
     let _lock = lock_file(Path::new(EPOCH_LOCK))?;
-    let previous = match read_epoch(Path::new(EPOCH_STATE))? {
-        Some(epoch) => epoch,
-        None => StartupEpoch {
+    let previous = read_epoch(Path::new(EPOCH_STATE))?.map_or_else(
+        || StartupEpoch {
             boot_id: boot_id.clone(),
             generation: 0,
         },
-    };
+        |epoch| epoch,
+    );
     let epoch = StartupEpoch {
         boot_id,
         generation: next_generation(previous.generation)?,
