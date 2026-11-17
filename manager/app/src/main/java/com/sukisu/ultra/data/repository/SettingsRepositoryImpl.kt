@@ -22,6 +22,7 @@ import com.sukisu.ultra.ui.util.HomeStatusStyle
 import com.sukisu.ultra.ui.util.BuiltinAppIcons
 import com.sukisu.ultra.data.model.SuiApp
 import com.sukisu.ultra.data.model.SuiStatus
+import com.sukisu.ultra.data.model.NomountStatus
 import com.sukisu.ultra.data.themestore.ThemeStoreMode
 import com.sukisu.ultra.data.modulestore.StoreSourceKind
 import com.sukisu.ultra.data.model.HomeLayoutStyle
@@ -31,6 +32,7 @@ import com.sukisu.ultra.ui.util.execKsud
 import com.sukisu.ultra.ui.util.execKsudResult
 import com.sukisu.ultra.ui.util.getSELinuxStatusRaw
 import com.sukisu.ultra.ui.util.setSELinuxEnforcing
+import com.sukisu.ultra.ui.util.shellQuote
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -710,6 +712,72 @@ class SettingsRepositoryImpl : SettingsRepository {
     private fun registerSuiManager() {
         val pkg = "'${ksuApp.packageName.replace("'", "'\\''")}'"
         execKsudResult("sui register-manager --package $pkg")
+    }
+
+    override suspend fun getNomountStatus(): Result<NomountStatus> = withContext(Dispatchers.IO) {
+        runCatching {
+            val result = execKsudResult("nomount status --json")
+            check(result.isSuccess) { "ksud nomount status failed (exit ${result.code})" }
+            val payload = result.out.firstOrNull { it.isNotBlank() }
+                ?: error("ksud nomount status returned no payload")
+            NomountStatus.fromJson(JSONObject(payload))
+        }
+    }
+
+    override suspend fun setNomountIsolated(enabled: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            val state = if (enabled) "on" else "off"
+            check(execKsud("nomount uid isolated $state", true)) {
+                "ksud nomount uid isolated $state failed"
+            }
+        }
+    }
+
+    override suspend fun injectNomountRules(): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            check(execKsud("nomount inject", true)) { "ksud nomount inject failed" }
+        }
+    }
+
+    override suspend fun clearNomountRules(): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            check(execKsud("nomount clear", true)) { "ksud nomount clear failed" }
+        }
+    }
+
+    override suspend fun clearNomountEverything(): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            // Rules first, then the exclusions: if a step fails, the failure is
+            // reported instead of leaving a half-cleared state looking done.
+            check(execKsud("nomount clear", true)) { "ksud nomount clear failed" }
+            check(execKsud("nomount uid set", true)) { "ksud nomount uid set failed" }
+        }
+    }
+
+    override suspend fun setNomountUids(uids: List<Int>): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            // UIDs are integers from the app list; nothing user-typed reaches the shell.
+            val list = uids.distinct().sorted().joinToString(" ")
+            // An empty list clears every exclusion.
+            val command = if (list.isEmpty()) "nomount uid set" else "nomount uid set $list"
+            check(execKsud(command, true)) { "ksud nomount uid set failed" }
+        }
+    }
+
+    override suspend fun hotLoadNomountModule(id: String): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            check(execKsud("nomount hot-load ${id.shellQuote()}", true)) {
+                "ksud nomount hot-load failed"
+            }
+        }
+    }
+
+    override suspend fun hotUnloadNomountModule(id: String): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            check(execKsud("nomount hot-unload ${id.shellQuote()}", true)) {
+                "ksud nomount hot-unload failed"
+            }
+        }
     }
 
     override suspend fun getSuiStatus(): Result<SuiStatus> = withContext(Dispatchers.IO) {

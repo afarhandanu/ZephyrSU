@@ -159,6 +159,8 @@ import com.sukisu.ultra.ui.screen.template.AppProfileTemplateScreen
 import com.sukisu.ultra.ui.screen.templateeditor.TemplateEditorScreen
 import com.sukisu.ultra.ui.screen.umountmanager.UmountManagerScreen
 import com.sukisu.ultra.ui.screen.uts.UtsViewScreen
+import com.sukisu.ultra.ui.screen.nomount.NomountExclusionsScreen
+import com.sukisu.ultra.ui.screen.nomount.NomountScreen
 import com.sukisu.ultra.data.sui.SuiPermissionHost
 import com.sukisu.ultra.ui.screen.builtinzygisk.BuiltinZygiskScreen
 import com.sukisu.ultra.ui.screen.sui.SuiPermissionRequestDialog
@@ -513,6 +515,8 @@ class MainActivity : FragmentActivity() {
                                 entry<Route.Tool>(swipeDismiss = swipeDismiss)  { ToolsScreen() }
                                 entry<Route.UmountManager>(swipeDismiss = swipeDismiss)  { UmountManagerScreen() }
                                 entry<Route.UtsView>(swipeDismiss = swipeDismiss)  { UtsViewScreen() }
+                                entry<Route.Nomount>(swipeDismiss = swipeDismiss)  { NomountScreen() }
+                                entry<Route.NomountExclusions>(swipeDismiss = swipeDismiss)  { NomountExclusionsScreen() }
                                 entry<Route.BackupList>(swipeDismiss = swipeDismiss)  { BackupListScreen() }
                                 entry<Route.KernelModules>(swipeDismiss = swipeDismiss)  { KernelModulesScreen() }
                                 entry<Route.DynamicManagers>(swipeDismiss = swipeDismiss) { DynamicManagersScreen() }

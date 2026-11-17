@@ -57,6 +57,12 @@ mod module;
 #[cfg(target_os = "android")]
 mod module_config;
 #[cfg(target_os = "android")]
+mod mount_guard;
+#[cfg(target_os = "android")]
+mod nomount;
+#[cfg(target_os = "android")]
+mod nomount_plan;
+#[cfg(target_os = "android")]
 mod preinit;
 #[cfg(target_os = "android")]
 mod profile;
@@ -68,6 +74,8 @@ mod restorecon;
 mod sepolicy;
 #[cfg(target_os = "android")]
 mod soft_reboot;
+#[cfg(target_os = "android")]
+mod startup_epoch;
 #[cfg(target_os = "android")]
 mod su;
 #[cfg(target_os = "android")]

@@ -13,8 +13,8 @@ import com.sukisu.ultra.wallpaper.WallpaperConfig
  * Setting) — there is no Plugin page, so `PAGE_PLUGIN` has no pager slot to paint on. It is
  * kept as a constant for `.fpt` import/export compatibility (a theme's plugin background
  * round-trips through the archive), but it never renders. FinaSU-only routes
- * (PluginStore, NetIsolate, Nomount, NomountExclusions, MyThemes, Language,
- * WebDavBrowser, SettingsCategory) are dropped; Nova-only routes (SuSFS, Tool,
+ * (PluginStore, NetIsolate, MyThemes, Language, WebDavBrowser, SettingsCategory)
+ * are dropped; Nova-only routes (SuSFS, Tool,
  * UmountManager, AppearanceOverlay, CustomTexts, FptThemeStore, FptMyThemes) map to
  * their sections.
  */
@@ -40,6 +40,8 @@ private val NavKey.wallpaperPage: Int?
 
         Route.About,
         Route.UtsView,
+        Route.Nomount,
+        Route.NomountExclusions,
         Route.Tool,
         Route.UmountManager,
         Route.SuiPermissions,

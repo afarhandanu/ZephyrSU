@@ -16,6 +16,7 @@ data class ToolsActions(
     val onRestoreAllowlist: () -> Unit = {},
     val onOpenKernelModules: () -> Unit = {},
     val onOpenUtsView: () -> Unit = {},
+    val onOpenNomount: () -> Unit = {},
 )
 
 @Immutable

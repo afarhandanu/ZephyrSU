@@ -78,6 +78,17 @@ mod android {
 
     pub const UMOUNT_CONFIG_PATH: &str = concatcp!(WORKING_DIR, ".umount");
 
+    // NoMount (M6.2): VFS redirection backend state, mirroring FinaSU defs.rs.
+    pub const NOMOUNT_RUNTIME: &str = concatcp!(WORKING_DIR, "nomount_runtime");
+    pub const NOMOUNT_UIDS: &str = concatcp!(WORKING_DIR, "nomount_uids");
+    pub const NOMOUNT_LAST_ACTION: &str = concatcp!(WORKING_DIR, "nomount_last_action");
+    pub const NOMOUNT_LOAD_INFLIGHT: &str = concatcp!(WORKING_DIR, "nomount_load_inflight");
+    pub const NOMOUNT_LOAD_LOCK: &str = concatcp!(WORKING_DIR, "nomount_load.lock");
+    // Shared mount-step journal (Folk Mount, M6.3, reuses these too).
+    pub const MOUNT_INFLIGHT: &str = concatcp!(WORKING_DIR, "mount_inflight");
+    pub const MOUNT_LOG: &str = concatcp!(LOG_DIR, "mount.log");
+    pub const MOUNT_LOG_MAX_BYTES: u64 = 256 * 1024;
+
     pub const BUILTIN_ZYGISK_FLAG: &str = concatcp!(WORKING_DIR, ".builtin_zygisk");
     /// Where ksud stages the built-in Zygisk binaries and its `module.prop`,
     /// the role `$MODDIR` plays for the standalone module.

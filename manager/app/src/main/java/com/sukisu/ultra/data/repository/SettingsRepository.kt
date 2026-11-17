@@ -4,6 +4,7 @@ package com.sukisu.ultra.data.repository
 
 import com.sukisu.ultra.data.model.SuiApp
 import com.sukisu.ultra.data.model.SuiStatus
+import com.sukisu.ultra.data.model.NomountStatus
 import com.sukisu.ultra.data.modulestore.StoreSourceKind
 
 import com.sukisu.ultra.ui.util.HomeCardSticker
@@ -205,6 +206,15 @@ interface SettingsRepository {
     fun isLkmMode(): Boolean
 
     fun execKsudFeatureSave()
+
+    suspend fun getNomountStatus(): Result<NomountStatus>
+    suspend fun setNomountIsolated(enabled: Boolean): Result<Unit>
+    suspend fun injectNomountRules(): Result<Unit>
+    suspend fun clearNomountRules(): Result<Unit>
+    suspend fun clearNomountEverything(): Result<Unit>
+    suspend fun setNomountUids(uids: List<Int>): Result<Unit>
+    suspend fun hotLoadNomountModule(id: String): Result<Unit>
+    suspend fun hotUnloadNomountModule(id: String): Result<Unit>
 
     suspend fun getSuiStatus(): Result<SuiStatus>
     suspend fun setSuiEnabled(enabled: Boolean): Result<Unit>

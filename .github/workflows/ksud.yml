@@ -32,7 +32,20 @@ jobs:
       if: ${{ inputs.pack_lkm }}
       run: |
         cp aarch64-android*-lkm/*_kernelsu.ko ./userspace/ksud/bin/aarch64/
+        cp aarch64-android*-lkm/*_nomount.ko ./userspace/ksud/bin/aarch64/
         cp x86_64-android*-lkm/*_kernelsu.ko ./userspace/ksud/bin/x86_64/
+        cp x86_64-android*-lkm/*_nomount.ko ./userspace/ksud/bin/x86_64/
+
+        # Every architecture that ships modules needs one of each kind. Check it
+        # here: a missing artifact otherwise ships silently and only shows up as a
+        # dead NoMount page on the affected devices.
+        for bindir in aarch64 x86_64; do
+          kernelsu=$(find "userspace/ksud/bin/$bindir" -name '*_kernelsu.ko' | wc -l)
+          nomount=$(find "userspace/ksud/bin/$bindir" -name '*_nomount.ko' | wc -l)
+          echo "$bindir: $kernelsu kernelsu.ko, $nomount nomount.ko"
+          test "$kernelsu" -gt 0
+          test "$kernelsu" -eq "$nomount"
+        done
     
     - name: Prepare ksuinit
       if: ${{ inputs.pack_ksuinit }}

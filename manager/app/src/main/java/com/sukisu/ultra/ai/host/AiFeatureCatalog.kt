@@ -458,6 +458,15 @@ object AiFeatureCatalog : AiFeatureService {
                 solution = rootSolution(a, manager),
             ),
             entry(
+                id = "nomount",
+                title = "NoMount",
+                summary = "Redirect module files for selected apps without mounting anything.",
+                target = ManagerAiTarget.Push(Route.Nomount),
+                supported = kernelReady,
+                reason = rootReason(a, manager),
+                solution = rootSolution(a, manager),
+            ),
+            entry(
                 id = "backup",
                 title = "Backup",
                 summary = "Back up the superuser list, installed modules and boot images to Download/ZephyrSU, restore or delete them, and snapshot before flashing.",

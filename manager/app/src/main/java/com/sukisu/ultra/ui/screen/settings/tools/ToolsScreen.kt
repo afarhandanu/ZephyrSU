@@ -106,6 +106,9 @@ fun ToolsScreen() {
         onOpenUtsView = {
             navigator.push(Route.UtsView)
         },
+        onOpenNomount = {
+            navigator.push(Route.Nomount)
+        },
     )
 
     val state = ToolsUiState(
