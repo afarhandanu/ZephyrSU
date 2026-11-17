@@ -938,12 +938,12 @@ fun ModuleItem(
     val updateTint = colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
     val hasUpdate = updateUrl.isNotEmpty()
     val textDecoration = if (module.remove) TextDecoration.LineThrough else null
-    val hasDescription = module.description.isNotBlank()
+    val visual = rememberModuleCardVisual(module.id, module.bannerPath)
+    val displayDescription = module.displayDescription(visual.customInfo)
+    val hasDescription = displayDescription.isNotBlank()
     val maxLinesLimit = LocalModuleDescriptionMaxLines.current
     var expanded by rememberSaveable(module.id) { mutableStateOf(false) }
     val dragHandleInteractionSource = remember { MutableInteractionSource() }
-    val banner = rememberModuleBanner(module.id, module.bannerPath)
-
     AppCard(
         modifier = Modifier
             .padding(horizontal = 12.dp)
@@ -959,7 +959,7 @@ fun ModuleItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .alpha(if (module.enabled || module.remove) 1f else 0.6f)
-                .moduleBanner(banner, colorScheme.surfaceContainer)
+                .moduleBanner(visual.banner, colorScheme.surfaceContainer, alpha = bannerAlpha())
                 .padding(16.dp)
         ) {
             Row(
@@ -1030,7 +1030,7 @@ fun ModuleItem(
                         val nameMax = (constraints.maxWidth - reserved).coerceAtLeast(0)
                         val namePlaceable = subcompose("name") {
                             Text(
-                                text = module.name,
+                                text = module.displayName(visual.customInfo),
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight(550),
                                 color = colorScheme.onSurface,
@@ -1052,7 +1052,7 @@ fun ModuleItem(
                         }
                     }
                     Text(
-                        text = "${module.version}, ${module.author}",
+                        text = "${module.displayVersion(visual.customInfo)}, ${module.displayAuthor(visual.customInfo)}",
                         fontSize = 12.sp,
                         modifier = Modifier.padding(top = 2.dp, bottom = 1.dp),
                         fontFamily = FontFamily.Monospace,
@@ -1102,7 +1102,7 @@ fun ModuleItem(
 
             if (hasDescription) {
                 ExpandableDescriptionText(
-                    text = module.description,
+                    text = displayDescription,
                     expanded = expanded,
                     maxLinesLimit = maxLinesLimit,
                     modifier = Modifier

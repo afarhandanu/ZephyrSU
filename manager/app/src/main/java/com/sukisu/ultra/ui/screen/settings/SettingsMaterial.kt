@@ -623,6 +623,8 @@ fun SettingPagerMaterial(
                 ) {
                     suiStatusItems(uiState, actions)
                 }
+
+                ModuleBannerSettingsSection()
                 }
             }
 

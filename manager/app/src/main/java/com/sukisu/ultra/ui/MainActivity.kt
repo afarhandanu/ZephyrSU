@@ -97,6 +97,7 @@ import com.sukisu.ultra.ui.navigation3.Navigator
 import com.sukisu.ultra.ui.navigation3.Route
 import com.sukisu.ultra.ui.navigation3.rememberNavigator
 import com.sukisu.ultra.ui.screen.about.AboutScreen
+import com.sukisu.ultra.ui.screen.bannerapi.ApiMarketplaceScreen
 import com.sukisu.ultra.ai.api.AiFeatureBridge
 import com.sukisu.ultra.ai.host.ManagerAiTarget
 import com.sukisu.ultra.ui.screen.appicon.AppIconScreen
@@ -210,6 +211,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         FontConfig.load(this)
         ProfileConfig.load(this)
+        com.sukisu.ultra.data.modulebanner.ModuleBannerConfig.loadOnce()
         MusicConfig.load(this)
         SoundEffectConfig.load(this)
         VibrationConfig.load(this)
@@ -423,6 +425,7 @@ class MainActivity : FragmentActivity() {
                             entry<Route.TemplateEditor>(swipeDismiss = swipeDismiss) { key -> TemplateEditorScreen(key.template, key.readOnly) }
                             entry<Route.AppProfile>(swipeDismiss = swipeDismiss) { key -> AppProfileScreen(key.uid) }
                             entry<Route.ModuleRepo>(swipeDismiss = swipeDismiss) { ModuleRepoScreen() }
+                            entry<Route.ApiMarketplace>(swipeDismiss = swipeDismiss) { ApiMarketplaceScreen() }
                             entry<Route.ModuleRepoDetail>(swipeDismiss = swipeDismiss) { key -> ModuleRepoDetailScreen(key.module) }
                             entry<Route.Install>(swipeDismiss = swipeDismiss) { key -> InstallScreen(preselectedKernelUri = key.preselectedKernelUri) }
                             entry<Route.Flash>(swipeDismiss = if (flashBackEnabled) swipeDismiss else NavSwipeDirection.None) { key ->
