@@ -57,6 +57,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.automirrored.rounded.MenuOpen
 import androidx.compose.material.icons.automirrored.rounded.Notes
@@ -1950,6 +1951,14 @@ fun ColorPaletteScreenMaterial(
                     }
                     item(visible = true) {
                         SegmentedListItem(
+                            onClick = actions.onOpenFptThemeStore,
+                            headlineContent = { Text(stringResource(id = R.string.fpt_theme_store_title)) },
+                            supportingContent = { Text(stringResource(id = R.string.fpt_theme_store_summary)) },
+                            leadingContent = { IconTile(Icons.Rounded.Archive, stringResource(id = R.string.fpt_theme_store_title)) },
+                        )
+                    }
+                    item(visible = true) {
+                        SegmentedListItem(
                             onClick = {
                                 importThemeLauncher.launch(
                                     arrayOf(
@@ -1974,6 +1983,14 @@ fun ColorPaletteScreenMaterial(
                             headlineContent = { Text(stringResource(id = R.string.theme_export)) },
                             supportingContent = { Text(stringResource(id = R.string.theme_export_summary)) },
                             leadingContent = { IconTile(Icons.Rounded.FileUpload, stringResource(id = R.string.theme_export)) },
+                        )
+                    }
+                    item(visible = true) {
+                        SegmentedListItem(
+                            onClick = actions.onExportFptTheme,
+                            headlineContent = { Text(stringResource(id = R.string.fpt_export_title)) },
+                            supportingContent = { Text(stringResource(id = R.string.fpt_export_summary)) },
+                            leadingContent = { IconTile(Icons.Rounded.FileUpload, stringResource(id = R.string.fpt_export_title)) },
                         )
                     }
                     item(visible = true) {

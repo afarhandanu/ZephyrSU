@@ -1,12 +1,14 @@
 package com.sukisu.ultra.ui.screen.colorpalette
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
@@ -15,7 +17,9 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import com.sukisu.ultra.KernelSUApplication
+import com.sukisu.ultra.R
 import com.sukisu.ultra.ui.LocalUiMode
 import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
@@ -23,6 +27,9 @@ import com.sukisu.ultra.ui.navigation3.Route
 import com.sukisu.ultra.ui.util.ImageStorage
 import com.sukisu.ultra.ui.viewmodel.SettingsViewModel
 import com.sukisu.ultra.ui.component.themeimport.ThemeImportDialog
+import com.sukisu.ultra.ui.component.themeimport.ThemeMetadataEditor
+import com.sukisu.ultra.wallpaper.ThemeExportService
+import com.sukisu.ultra.wallpaper.ThemeMetadata
 
 /** Which custom support-link field a text dialog is editing, if any. */
 internal enum class SupportLinksCustomField { TITLE, SUBTITLE, URL }
@@ -37,6 +44,8 @@ fun ColorPaletteScreen(section: String? = null, importUri: String? = null) {
     val state by viewModel.colorPaletteState.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var consumedImportUri by rememberSaveable { mutableStateOf<String?>(null) }
+    var showFptExportDialog by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     // A package opened from another app is forwarded through the route so the dialog is shown
     // by the destination's own view model instead of the activity-scoped dispatcher one.
@@ -151,6 +160,8 @@ fun ColorPaletteScreen(section: String? = null, importUri: String? = null) {
             viewModel.clearPendingThemeUploadOptions()
             navigator.push(Route.ThemeStore())
         },
+        onOpenFptThemeStore = { navigator.push(Route.FptThemeStore) },
+        onExportFptTheme = { showFptExportDialog = true },
         onOpenAdaptiveThemeBuilder = { navigator.push(Route.AdaptiveThemeBuilder) },
         onResetBackgroundAppearance = viewModel::resetBackgroundAppearance,
         onClearAllAppearance = viewModel::clearAllAppearance,
@@ -171,6 +182,30 @@ fun ColorPaletteScreen(section: String? = null, importUri: String? = null) {
             viewModel.confirmImportTheme(context, options)
         }
     )
+
+    // Export the current theme as a FinaSU `.fpt` file into Downloads/ZephyrSU/Themes.
+    if (showFptExportDialog) {
+        ThemeMetadataEditor(
+            initial = ThemeMetadata.current(context),
+            onDismiss = { showFptExportDialog = false },
+            onExport = { metadata ->
+                showFptExportDialog = false
+                scope.launch {
+                    val result = ThemeExportService.exportToDownloads(
+                        context,
+                        metadata,
+                        "${metadata.name.ifBlank { "theme" }}.fpt",
+                    )
+                    Toast.makeText(
+                        context,
+                        if (result.isSuccess) context.getString(R.string.fpt_export_done)
+                        else context.getString(R.string.fpt_export_failed),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            },
+        )
+    }
 
     // The first frame would otherwise render the preview from placeholder defaults.
     if (state.loading) return

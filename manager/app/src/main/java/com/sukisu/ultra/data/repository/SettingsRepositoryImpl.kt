@@ -22,6 +22,7 @@ import com.sukisu.ultra.ui.util.HomeStatusStyle
 import com.sukisu.ultra.ui.util.BuiltinAppIcons
 import com.sukisu.ultra.data.model.SuiApp
 import com.sukisu.ultra.data.model.SuiStatus
+import com.sukisu.ultra.data.themestore.ThemeStoreMode
 import com.sukisu.ultra.data.modulestore.StoreSourceKind
 import com.sukisu.ultra.data.model.SupportLinksStyle
 import com.sukisu.ultra.data.sui.SuiBridge
@@ -223,6 +224,10 @@ class SettingsRepositoryImpl : SettingsRepository {
     override var themeStoreBaseUrl: String
         get() = prefs.getString("theme_store_base_url", "") ?: ""
         set(value) = prefs.edit { putString("theme_store_base_url", value.trim()) }
+
+    override var themeStoreMode: String
+        get() = prefs.getString("theme_store_mode", ThemeStoreMode.UNSET) ?: ThemeStoreMode.UNSET
+        set(value) = prefs.edit { putString("theme_store_mode", value) }
 
     override var themeStoreToken: String
         get() = themeAccessSetting("theme_store_token") ?: ""

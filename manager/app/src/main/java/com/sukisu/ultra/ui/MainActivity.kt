@@ -103,6 +103,8 @@ import com.sukisu.ultra.ai.host.ManagerAiTarget
 import com.sukisu.ultra.ui.screen.appicon.AppIconScreen
 import com.sukisu.ultra.ui.screen.customtext.CustomTextScreen
 import com.sukisu.ultra.ui.screen.account.AccountScreen
+import com.sukisu.ultra.ui.screen.fptstore.FptMyThemesScreen
+import com.sukisu.ultra.ui.screen.fptstore.FptThemeStoreScreen
 import com.sukisu.ultra.ui.screen.themestore.ThemeStoreScreen
 import com.sukisu.ultra.ui.screen.themestore.ThemeStoreSourcesScreen
 import com.sukisu.ultra.ui.util.LocalCustomTexts
@@ -413,6 +415,8 @@ class MainActivity : FragmentActivity() {
                             entry<Route.ThemeStoreSources>(swipeDismiss = swipeDismiss) {
                                 MaterialExpressivePalette { ThemeStoreSourcesScreen() }
                             }
+                            entry<Route.FptThemeStore>(swipeDismiss = swipeDismiss) { FptThemeStoreScreen() }
+                            entry<Route.FptMyThemes>(swipeDismiss = swipeDismiss) { FptMyThemesScreen() }
                             entry<Route.ThemeAccount>(swipeDismiss = swipeDismiss) {
                                 MaterialExpressivePalette { AccountScreen() }
                             }
