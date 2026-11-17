@@ -454,4 +454,3 @@ impl<F: PlanFs> Walker<'_, F> {
         Ok(())
     }
 }
-
