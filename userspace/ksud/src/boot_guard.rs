@@ -101,7 +101,9 @@ impl BootGuard {
     }
 
     fn handled_this_cycle(&self, epoch: &StartupEpoch) -> bool {
-        self.boot_id == epoch.boot_id && self.attempted_generation == epoch.generation
+        let same_boot = self.boot_id == epoch.boot_id;
+        let same_generation = self.attempted_generation == epoch.generation;
+        same_boot && same_generation
     }
 
     fn mark_attempt(
@@ -201,11 +203,11 @@ fn current_epoch() -> Result<StartupEpoch> {
     let epoch = match read_epoch(Path::new(EPOCH_STATE))? {
         Some(epoch) if epoch.boot_id == boot_id && epoch.generation > 0 => epoch,
         Some(epoch) => StartupEpoch {
-            boot_id: boot_id.clone(),
+            boot_id,
             generation: next_generation(epoch.generation)?,
         },
         None => StartupEpoch {
-            boot_id: boot_id.clone(),
+            boot_id,
             generation: 1,
         },
     };
@@ -220,10 +222,13 @@ fn current_epoch() -> Result<StartupEpoch> {
 pub fn advance_epoch() -> Result<()> {
     let boot_id = current_boot_id()?;
     let _lock = lock_file(Path::new(EPOCH_LOCK))?;
-    let previous = read_epoch(Path::new(EPOCH_STATE))?.unwrap_or(StartupEpoch {
-        boot_id: boot_id.clone(),
-        generation: 0,
-    });
+    let previous = match read_epoch(Path::new(EPOCH_STATE))? {
+        Some(epoch) => epoch,
+        None => StartupEpoch {
+            boot_id: boot_id.clone(),
+            generation: 0,
+        },
+    };
     let epoch = StartupEpoch {
         boot_id,
         generation: next_generation(previous.generation)?,
@@ -313,7 +318,7 @@ pub fn status() -> Result<GuardStatus> {
 /// Whether the latch currently refuses a start. Swallows I/O errors: a guard
 /// that cannot be read never blocks startup.
 pub fn is_blocked() -> bool {
-    status().map_or(false, |status| status.blocked)
+    status().is_ok_and(|status| status.blocked)
 }
 
 /// Refuse a fresh monitor start while latched. The caller decides what a
@@ -407,12 +412,7 @@ pub fn on_boot_completed() -> Result<()> {
         crate::builtin_zygisk::is_daemon_active(),
         crate::builtin_zygisk::is_zygote_injected(),
     );
-    guard.record_issue(
-        &epoch,
-        StartupIssueCode::InjectionUnconfirmed,
-        detail,
-        true,
-    );
+    guard.record_issue(&epoch, StartupIssueCode::InjectionUnconfirmed, detail, true);
     if let Err(error) = write_json(Path::new(BOOT_GUARD), &guard) {
         warn!("Could not persist built-in Zygisk boot-completion diagnostic: {error:#}");
     }
@@ -445,8 +445,9 @@ pub fn recover() -> Result<()> {
     guard.mark_handled(&epoch);
     write_json(Path::new(BOOT_GUARD), &guard)
         .context("Built-in Zygisk recovery could not reserve the current userspace boot")?;
-    crate::builtin_zygisk::enable()
-        .context("Built-in Zygisk could not be enabled; the current userspace boot remains protected")?;
+    crate::builtin_zygisk::enable().context(
+        "Built-in Zygisk could not be enabled; the current userspace boot remains protected",
+    )?;
     guard.clear_failures(&epoch);
     write_json(Path::new(BOOT_GUARD), &guard).context(
         "Built-in Zygisk was enabled and the current boot remains protected, but the startup latch could not be cleared",
