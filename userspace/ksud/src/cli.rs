@@ -182,6 +182,12 @@ enum Commands {
         command: crate::uts_view::Command,
     },
 
+    /// Manage built-in module mounting (Folk Mount)
+    Mount {
+        #[command(subcommand)]
+        command: Mount,
+    },
+
     /// Manage the built-in NoMount VFS redirection driver
     Nomount {
         #[command(subcommand)]
@@ -447,6 +453,15 @@ enum Module {
     Disable {
         // module id
         id: String,
+    },
+
+    /// keep a module enabled but stop injecting its files
+    Skip {
+        /// module id
+        id: String,
+        /// remove the skip mark instead of setting it
+        #[arg(long)]
+        off: bool,
     },
 
     /// run action for module <id>
@@ -799,6 +814,31 @@ enum Umount {
 }
 
 #[derive(clap::Subcommand, Debug)]
+enum Mount {
+    /// Print current provider, mode, and metamodule presence
+    Status {
+        /// Emit a single JSON object instead of key=value lines
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Set mount mode: auto | builtin | metamodule | nomount | off
+    SetMode {
+        /// one of: auto, builtin, metamodule, nomount, off
+        mode: String,
+    },
+
+    /// Arm or disarm the capture of a boot that never finishes (on|off|dump)
+    Capture {
+        /// one of: on, off, dump
+        action: String,
+        /// seconds to wait before dumping, for `on`
+        #[arg(default_value_t = 150)]
+        seconds: u64,
+    },
+}
+
+#[derive(clap::Subcommand, Debug)]
 enum Nomount {
     /// Print driver state, rule counts, and UID exclusions
     Status {
@@ -1148,6 +1188,7 @@ pub fn run() -> Result<()> {
                 Module::Uninstall { id } => module::uninstall_module(&id),
                 Module::Enable { id } => module::enable_module(&id),
                 Module::Disable { id } => module::disable_module(&id),
+                Module::Skip { id, off } => module::set_skip_mount(&id, !off),
                 Module::Action { id } => module::run_action(&id),
                 #[cfg(all(target_os = "android", target_arch = "aarch64"))]
                 Module::Lua { id, function } => {
@@ -1687,6 +1728,11 @@ pub fn run() -> Result<()> {
             }
         },
         Commands::UtsView { command } => crate::uts_view::run(&command),
+        Commands::Mount { command } => match command {
+            Mount::Status { json } => crate::magic_mount::print_status(json),
+            Mount::SetMode { mode } => crate::magic_mount::set_mode(&mode),
+            Mount::Capture { action, seconds } => crate::mount_capture::command(&action, seconds),
+        },
         Commands::Nomount { command } => match command {
             Nomount::Status { json } => {
                 let status = crate::nomount::Status::collect()?;

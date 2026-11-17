@@ -190,7 +190,7 @@ fun HomePagerMaterial(
             if (layout != HomeLayoutStyle.GRID) {
                 StatsRow(state = state, actions = actions)
             }
-            InfoCard(systemInfo = state.systemInfo, showFullStatus = state.showFullStatus)
+            InfoCard(systemInfo = state.systemInfo, showFullStatus = state.showFullStatus, mount = state.mount)
             SupportLinks(onOpenUrl = actions.onOpenUrl)
             Spacer(
                 Modifier.height(
@@ -755,6 +755,7 @@ private fun InfoCard(
     systemInfo: SystemInfo,
     modifier: Modifier = Modifier,
     showFullStatus: Boolean = true,
+    mount: HomeMount = HomeMount(),
 ) {
     val selinuxDisplay = when (systemInfo.selinuxStatus) {
         "Enforcing" -> stringResource(R.string.selinux_status_enforcing)
@@ -792,6 +793,9 @@ private fun InfoCard(
             }
             if (!systemInfo.zygiskImplementation.isNullOrBlank()) {
                 add(customText(CustomTextKey.HOME_INFO_ZYGISK) to systemInfo.zygiskImplementation)
+            }
+            homeMountValue(mount)?.let { value ->
+                add(stringResource(R.string.home_mount_implementation) to value)
             }
         }
         add(customText(CustomTextKey.HOME_INFO_DEVICE_MODEL) to systemInfo.deviceModel)

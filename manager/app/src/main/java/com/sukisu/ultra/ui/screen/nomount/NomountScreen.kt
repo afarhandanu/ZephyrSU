@@ -23,6 +23,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -30,9 +31,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import com.sukisu.ultra.R
+import com.sukisu.ultra.data.model.FolkMountMode
 import com.sukisu.ultra.data.model.NomountDriverState
 import com.sukisu.ultra.data.model.NomountStatus
+import com.sukisu.ultra.ui.component.dialog.ConfirmResult
+import com.sukisu.ultra.ui.component.dialog.rememberConfirmDialog
+import com.sukisu.ultra.ui.component.folkMountWarningText
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
 import com.sukisu.ultra.ui.component.material.SegmentedListItem
@@ -43,6 +49,7 @@ import com.sukisu.ultra.ui.navigation3.LocalNavigator
 import com.sukisu.ultra.ui.navigation3.Route
 import com.sukisu.ultra.ui.viewmodel.NomountUiState
 import com.sukisu.ultra.ui.viewmodel.NomountViewModel
+import com.sukisu.ultra.ui.viewmodel.shouldShowNomountSetup
 
 /**
  * NoMount driver, injection and visibility state.
@@ -50,10 +57,6 @@ import com.sukisu.ultra.ui.viewmodel.NomountViewModel
  * Every row that can look healthy is gated on the driver actually answering:
  * an unusable driver disables the controls instead of offering actions that
  * would silently do nothing.
- *
- * Adapted from FinaSU (M6.2): the Folk Mount setup section is dropped — there is
- * no mount-mode selection yet (Folk Mount arrives in M6.3), so there is nothing
- * to enable here; `driverSummary` no longer consults the mount mode either.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,10 +96,55 @@ fun NomountScreen() {
                 .padding(PaddingValues(16.dp)),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            SetupSection(state, viewModel)
             DriverSection(state, viewModel)
             InjectionSection(state, viewModel)
             ModulesSection(state, viewModel)
             VisibilitySection(state, viewModel)
+        }
+    }
+}
+
+@Composable
+private fun SetupSection(state: NomountUiState, viewModel: NomountViewModel) {
+    if (!shouldShowNomountSetup(state.status, state.folkMountStatus)) return
+    val mount = state.folkMountStatus ?: return
+    val confirm = rememberConfirmDialog()
+    val scope = rememberCoroutineScope()
+    val title = stringResource(R.string.settings_folk_mount_mode_nomount)
+    val confirmContent = stringResource(R.string.settings_folk_mount_nomount_confirm)
+    val confirmAction = stringResource(R.string.settings_folk_mount_nomount_confirm_ok)
+    val warning = folkMountWarningText(mount)
+        .takeIf { mount.configuredMode == FolkMountMode.NOMOUNT }
+    val summary = listOfNotNull(
+        warning ?: stringResource(R.string.settings_folk_mount_mode_nomount_summary),
+        stringResource(R.string.settings_folk_mount_reboot_hint),
+        stringResource(R.string.nomount_action_failed_summary).takeIf { state.actionError },
+    ).joinToString("\n")
+
+    SegmentedColumn(title = stringResource(R.string.settings_folk_mount)) {
+        item {
+            SegmentedListItem(
+                headlineContent = {
+                    Text(title)
+                },
+                supportingContent = { Text(summary) },
+                leadingContent = { Icon(Icons.Filled.Layers, null) },
+                enabled = !state.isWriting,
+                onClick = {
+                    scope.launch {
+                        val result = confirm.awaitConfirm(
+                            title = title,
+                            content = confirmContent,
+                            confirm = confirmAction,
+                        )
+                        if (result is ConfirmResult.Confirmed) viewModel.enableNomount()
+                    }
+                },
+                trailingContent = {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null)
+                },
+            )
         }
     }
 }
@@ -151,11 +199,19 @@ private fun driverSummary(state: NomountUiState): String {
         "module" -> stringResource(R.string.nomount_driver_kind_module)
         else -> null
     }
+    val reason = if (
+        status.unavailableCode == "not_loaded" &&
+        state.folkMountStatus?.configuredMode != FolkMountMode.NOMOUNT
+    ) {
+        stringResource(R.string.settings_folk_mount_mode_nomount_summary)
+    } else {
+        nomountUnavailableReason(status)
+    }
     return listOfNotNull(
         label,
         version?.takeIf { it.isNotEmpty() }?.let { "($it)" },
         kind,
-        nomountUnavailableReason(status),
+        reason,
     ).joinToString(" ")
 }
 

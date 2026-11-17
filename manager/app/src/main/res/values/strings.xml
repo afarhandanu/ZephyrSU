@@ -497,6 +497,9 @@
     <string name="inline_hook">Inline Hook</string>
     <string name="tracepoint_hook">Tracepoint Hook</string>
     <string name="home_susfs_version">SuSFS Version</string>
+    <string name="home_mount_implementation">Module mounting</string>
+    <string name="home_mount_builtin_magic">Built-in (Magic Mount)</string>
+    <string name="home_mount_builtin_vfs">Built-in (VFS)</string>
     <string name="settings_language">Language</string>
     <string name="settings_language_summary">Choose the app display language</string>
     <string name="settings_language_system">Follow system</string>

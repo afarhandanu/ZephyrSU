@@ -4,6 +4,8 @@ package com.sukisu.ultra.data.repository
 
 import com.sukisu.ultra.data.model.SuiApp
 import com.sukisu.ultra.data.model.SuiStatus
+import com.sukisu.ultra.data.model.FolkMountMode
+import com.sukisu.ultra.data.model.FolkMountStatus
 import com.sukisu.ultra.data.model.NomountStatus
 import com.sukisu.ultra.data.modulestore.StoreSourceKind
 
@@ -215,6 +217,9 @@ interface SettingsRepository {
     suspend fun setNomountUids(uids: List<Int>): Result<Unit>
     suspend fun hotLoadNomountModule(id: String): Result<Unit>
     suspend fun hotUnloadNomountModule(id: String): Result<Unit>
+    suspend fun getFolkMountStatus(): Result<FolkMountStatus>
+    suspend fun setFolkMountMode(mode: FolkMountMode): Result<Unit>
+    suspend fun setModuleSkip(id: String, skip: Boolean): Result<Unit>
 
     suspend fun getSuiStatus(): Result<SuiStatus>
     suspend fun setSuiEnabled(enabled: Boolean): Result<Unit>

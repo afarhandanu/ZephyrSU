@@ -1866,6 +1866,29 @@ fn installed_driver_module_at(path: &Path) -> Option<String> {
     }
 }
 
+/// True when the built-in backend is the one injecting right now.
+///
+/// Used to block installing a metamodule that would inject on its own while
+/// this backend is active: two injectors would fight over the same paths.
+///
+/// # Errors
+/// Returns an error when the mount mode cannot be read.
+#[cfg(target_os = "android")]
+pub fn owns_injection() -> Result<bool> {
+    if !matches!(
+        crate::magic_mount::read_mount_mode()?,
+        crate::magic_mount::MountMode::Nomount
+    ) {
+        return Ok(false);
+    }
+    // An installed module that drives the same driver wins: we are not the
+    // injector even though the mode says NoMount.
+    if installed_driver_module().is_some() {
+        return Ok(false);
+    }
+    Ok(Driver::kernel().probe().ready())
+}
+
 /// Load the embedded NoMount module for the running KMI.
 ///
 /// The loader rewrites vermagic and relocates symbols, so a successful load is
@@ -1974,8 +1997,6 @@ fn clear_legacy_load_record() -> Result<()> {
 }
 
 #[cfg(target_os = "android")]
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
-#[allow(dead_code)]
 pub fn preserve_legacy_load_guard() -> Result<()> {
     preserve_legacy_load_guard_at(
         Path::new(crate::defs::MOUNT_INFLIGHT),
@@ -1985,8 +2006,6 @@ pub fn preserve_legacy_load_guard() -> Result<()> {
 }
 
 #[cfg(any(target_os = "android", test))]
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
-#[allow(dead_code)]
 fn preserve_legacy_load_guard_at(legacy: &Path, attempt: &Path, lock_path: &Path) -> Result<()> {
     if !mount_guard::read(legacy).is_some_and(|record| record.stage == mount_guard::Stage::Load)
         || mount_guard::read(attempt).is_some()
@@ -2026,8 +2045,6 @@ fn load_lock() -> Result<std::fs::File> {
 /// Selecting NoMount again is the retry both guards are waiting for, so the
 /// record has to go before the next load or injection can run.
 #[cfg(target_os = "android")]
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
-#[allow(dead_code)]
 pub fn forget_inflight() -> Result<()> {
     forget_inflight_at(
         load_attempt_path(),
@@ -2037,8 +2054,6 @@ pub fn forget_inflight() -> Result<()> {
 }
 
 #[cfg(any(target_os = "android", test))]
-// M6.3 Folk Mount infrastructure - not yet called in ZephyrSU.
-#[allow(dead_code)]
 fn forget_inflight_at(attempt: &Path, legacy: &Path, lock_path: &Path) -> Result<()> {
     let _lock = load_lock_at(lock_path)?;
     mount_guard::try_clear(attempt).context("nomount: cannot clear the load guard")?;

@@ -14,6 +14,7 @@ import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.sukisu.ultra.Natives
 import com.sukisu.ultra.R
+import com.sukisu.ultra.data.model.FolkMountMode
 import com.sukisu.ultra.data.model.HomeLayoutStyle
 import com.sukisu.ultra.data.model.SuiStatus
 import com.sukisu.ultra.data.model.SupportLinksStyle
@@ -159,6 +160,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             val suiGen = suiGeneration
             val suiJob = async { repo.getSuiStatus() }
+            val folkMountJob = async { repo.getFolkMountStatus() }
             val bootHideJob = async { repo.getBootHideStatus() }
             val selinuxJob = async { repo.getSELinuxMode() }
             val appIconId = repo.appIconId
@@ -242,6 +244,7 @@ class SettingsViewModel(
             val systemWallpaperPath = ImageStorage.systemWallpaperFile(ksuApp)
                 .takeIf { it.isFile }?.absolutePath.orEmpty()
             val suiResult = suiJob.await()
+            val folkMountResult = folkMountJob.await()
             val isBootHideEnabled = bootHideJob.await() == "enabled"
             val selinuxMode = selinuxJob.await()
             val suiManagement = if (suiResult.getOrNull()?.state == SuiStatus.STATE_ENABLED) {
@@ -347,6 +350,9 @@ homePillScale = HomeStatusStyle.coercePillScale(repo.homePillScale),
                     suiReadError = if (suiGen == suiGeneration) suiResult.isFailure else it.suiReadError,
                     isSuiLoading = if (suiGen == suiGeneration) false else it.isSuiLoading,
                     suiManagementAvailable = if (suiGen == suiGeneration) suiManagement else it.suiManagementAvailable,
+                    folkMountStatus = folkMountResult.getOrNull(),
+                    folkMountReadError = folkMountResult.isFailure,
+                    isFolkMountLoading = false,
                     isLateLoadMode = isLateLoadMode,
                     isBootHideEnabled = isBootHideEnabled,
                     selinuxMode = selinuxMode,
@@ -3120,6 +3126,42 @@ homePillScale = repo.homePillScale,
                 else -> R.string.sui_disable_done
             }
             Toast.makeText(ksuApp, message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun setFolkMountMode(mode: FolkMountMode) {
+        val state = _uiState.value
+        // Ignore taps while unavailable, while loading, or while a write is in flight.
+        val status = state.folkMountStatus
+            ?: return
+        if (state.folkMountReadError || state.isFolkMountLoading || state.isFolkMountWriting) return
+        if (!status.shouldWrite(mode)) return
+
+        _uiState.update { it.copy(isFolkMountWriting = true) }
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = repo.setFolkMountMode(mode)
+            if (result.isSuccess) {
+                // Re-read on success; on a failed re-read keep the old status.
+                val refreshed = repo.getFolkMountStatus()
+                _uiState.update {
+                    it.copy(
+                        folkMountStatus = refreshed.getOrNull() ?: it.folkMountStatus,
+                        folkMountReadError = refreshed.isFailure,
+                        isFolkMountWriting = false,
+                    )
+                }
+            } else {
+                // Keep the previous selection and surface the failure.
+                _uiState.update { it.copy(isFolkMountWriting = false) }
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        ksuApp,
+                        result.exceptionOrNull()?.message
+                            ?: ksuApp.getString(R.string.settings_folk_mount_write_failed),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
         }
     }
 

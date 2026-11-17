@@ -4,6 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.saveable.listSaver
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
+import com.sukisu.ultra.data.model.FolkMountMode
+import com.sukisu.ultra.data.model.FolkMountStatus
 import com.sukisu.ultra.data.model.SuiStatus
 import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.navigation3.Route
@@ -104,6 +106,11 @@ data class SettingsUiState(
     val isSuiLoading: Boolean = true,
     val isSuiWriting: Boolean = false,
     val suiManagementAvailable: Boolean? = null,
+    // Folk Mount
+    val folkMountStatus: FolkMountStatus? = null,
+    val isFolkMountLoading: Boolean = true,
+    val isFolkMountWriting: Boolean = false,
+    val folkMountReadError: Boolean = false,
     val isBootHideEnabled: Boolean = false,
     val selinuxMode: String = "",
     val isSELinuxModeWriting: Boolean = false,
@@ -291,6 +298,7 @@ data class SettingsScreenActions(
     val onOpenExtensions: () -> Unit,
     val onOpenBuiltinZygisk: () -> Unit,
     val onSetSuiEnabled: (Boolean) -> Unit = {},
+    val onSetFolkMountMode: (FolkMountMode) -> Unit = {},
     val onRepairSui: () -> Unit = {},
     val onManageSuiPermissions: () -> Unit = {},
     val onSetBootHideEnabled: (Boolean) -> Unit = {},

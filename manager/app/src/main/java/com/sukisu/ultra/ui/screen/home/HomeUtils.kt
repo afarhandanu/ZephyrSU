@@ -3,9 +3,12 @@ package com.sukisu.ultra.ui.screen.home
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.pm.PackageInfoCompat
 import com.sukisu.ultra.Natives
 import com.sukisu.ultra.Natives.isManager
+import com.sukisu.ultra.R
+import com.sukisu.ultra.data.model.FolkMountProvider
 import com.sukisu.ultra.ui.util.ZygiskImplementationInfo
 import com.sukisu.ultra.ui.util.getSuSFSStatus
 import com.sukisu.ultra.ui.util.getSuSFSVersion
@@ -117,4 +120,19 @@ fun rememberHookTypeLabel(
             else -> rawType.ifBlank { unknownHookText }
         }
     }
+}
+
+/** The provider that really mounted modules this boot, or null when it cannot be named. */
+@Composable
+internal fun homeMountValue(mount: HomeMount): String? = when (mount.provider) {
+    FolkMountProvider.METAMODULE -> listOfNotNull(
+        stringResource(R.string.settings_folk_mount_provider_metamodule),
+        mount.metamodule?.name?.takeIf { it.isNotBlank() } ?: mount.metamoduleId,
+        mount.metamodule?.version?.takeIf { it.isNotBlank() && it != "Unknown" },
+    ).joinToString(" · ")
+
+    FolkMountProvider.BUILTIN -> stringResource(R.string.home_mount_builtin_magic)
+    FolkMountProvider.NOMOUNT -> stringResource(R.string.home_mount_builtin_vfs)
+    FolkMountProvider.NONE -> stringResource(R.string.settings_folk_mount_mode_off)
+    null -> null
 }

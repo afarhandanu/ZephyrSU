@@ -809,6 +809,19 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
             aliases = listOf("sui", "shizuku", "adbd"),
         )
     )
+    // Folk Mount (built-in module mounting), in the Module behaviour section
+    add(
+        sectionRow(
+            groupKey = SettingsSection.MODULE_BEHAVIOUR,
+            groupTitleRes = R.string.settings_search_section_module_behaviour,
+            id = "module_behaviour.folk_mount",
+            titleRes = R.string.settings_folk_mount,
+            summaryRes = R.string.settings_folk_mount_summary,
+            icon = Icons.Filled.Layers,
+            anchor = SettingsSection.MODULE_BEHAVIOUR,
+            aliases = listOf("mount", "metamodule", "overlay", "builtin", "nomount", "folk mount"),
+        )
+    )
     add(
         pageRow(
             groupKey = SettingsSection.MODULE_BEHAVIOUR,
