@@ -159,6 +159,8 @@ data class ColorPaletteScreenActions(
     val onResetAllCustomTexts: () -> Unit = {},
     val onOpenCustomTexts: () -> Unit = {},
     val onOpenThemeStore: () -> Unit = {},
+    val onOpenFptThemeStore: () -> Unit = {},
+    val onExportFptTheme: () -> Unit = {},
     val onOpenAdaptiveThemeBuilder: () -> Unit = {},
     val onResetBackgroundAppearance: () -> Unit = {},
     val onClearAllAppearance: () -> Unit = {},

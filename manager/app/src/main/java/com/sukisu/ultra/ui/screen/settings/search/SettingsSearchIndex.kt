@@ -395,6 +395,18 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
             aliases = listOf("theme", "store", "fpt", "import", "toko"),
         )
     )
+    add(
+        pageRow(
+            groupKey = SettingsSection.GENERAL,
+            groupTitleRes = R.string.settings_search_section_general,
+            id = "general.fpt_theme_store",
+            titleRes = R.string.fpt_theme_store_title,
+            summaryRes = R.string.fpt_theme_store_summary,
+            icon = Icons.Filled.Storefront,
+            route = Route.FptThemeStore,
+            aliases = listOf("fpt", "theme", "store", "toko", "finasu", "fpt theme"),
+        )
+    )
 
     // Profile templates
     add(

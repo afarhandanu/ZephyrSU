@@ -44,6 +44,9 @@ interface SettingsRepository {
     var supportLinksCustomUrl: String
     
     var themeStoreBaseUrl: String
+
+    /** FinaSU (`.fpt`) theme store mode: "", "builtin" or "compat" — see ThemeStoreMode (M5.1). */
+    var themeStoreMode: String
     
     var themeStoreToken: String
     

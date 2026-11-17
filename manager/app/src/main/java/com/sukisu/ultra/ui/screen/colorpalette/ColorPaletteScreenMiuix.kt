@@ -51,6 +51,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.automirrored.rounded.MenuOpen
 import androidx.compose.material.icons.automirrored.rounded.Notes
@@ -1972,6 +1973,19 @@ fun ColorPaletteScreenMiuix(
                                     onClick = actions.onOpenThemeStore,
                                 )
                                 BasicComponent(
+                                    title = stringResource(id = R.string.fpt_theme_store_title),
+                                    summary = stringResource(id = R.string.fpt_theme_store_summary),
+                                    startAction = {
+                                        Icon(
+                                            Icons.Rounded.Archive,
+                                            modifier = Modifier.padding(end = 6.dp),
+                                            contentDescription = stringResource(id = R.string.fpt_theme_store_title),
+                                            tint = colorScheme.onBackground
+                                        )
+                                    },
+                                    onClick = actions.onOpenFptThemeStore,
+                                )
+                                BasicComponent(
                                     title = stringResource(id = R.string.theme_import),
                                     summary = stringResource(id = R.string.theme_import_summary),
                                     startAction = {
@@ -2008,6 +2022,19 @@ fun ColorPaletteScreenMiuix(
                                     onClick = {
                                         showExportDialog = true
                                     },
+                                )
+                                BasicComponent(
+                                    title = stringResource(id = R.string.fpt_export_title),
+                                    summary = stringResource(id = R.string.fpt_export_summary),
+                                    startAction = {
+                                        Icon(
+                                            Icons.Rounded.FileUpload,
+                                            modifier = Modifier.padding(end = 6.dp),
+                                            contentDescription = stringResource(id = R.string.fpt_export_title),
+                                            tint = colorScheme.onBackground
+                                        )
+                                    },
+                                    onClick = actions.onExportFptTheme,
                                 )
                                 BasicComponent(
                                     title = stringResource(id = R.string.theme_adaptive_builder_title),

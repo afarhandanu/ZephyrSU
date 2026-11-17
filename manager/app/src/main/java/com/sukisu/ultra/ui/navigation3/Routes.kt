@@ -88,6 +88,16 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object ThemeStoreSources : Route
 
+    /** FinaSU (`.fpt`) theme store (M5.1) — a second store next to Nova's ThemeStore. */
+    @Parcelize
+    @Serializable
+    data object FptThemeStore : Route
+
+    /** Local `.fpt` theme library (M5.1). */
+    @Parcelize
+    @Serializable
+    data object FptMyThemes : Route
+
     
     @Parcelize
     @Serializable
