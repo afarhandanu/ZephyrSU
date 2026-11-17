@@ -150,4 +150,3 @@ pub fn arm(boot_id: &str, generation: u64, lock_fd: std::os::fd::RawFd) {
     }
     unsafe { libc::_exit(0) };
 }
-
