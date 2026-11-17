@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.PhonelinkLock
@@ -51,6 +52,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.Vibration
@@ -149,6 +152,7 @@ private const val GROUP_MULTIMEDIA = "multimedia"
 val settingsSearchGroupOrder: List<String> = listOf(
     SettingsSection.TOP,
     SettingsSection.GENERAL,
+    SettingsSection.NAVIGATION,
     SettingsSection.PROFILE_TEMPLATES,
     SettingsSection.EXTENSIONS,
     SettingsSection.TOOLS,
@@ -176,6 +180,11 @@ val settingsSearchSections: List<SettingsSearchSectionMeta> = listOf(
         SettingsSection.GENERAL,
         R.string.settings_search_section_general,
         Icons.Filled.Settings,
+    ),
+    SettingsSearchSectionMeta(
+        SettingsSection.NAVIGATION,
+        R.string.settings_search_section_navigation,
+        Icons.Filled.Navigation,
     ),
     SettingsSearchSectionMeta(
         SettingsSection.PROFILE_TEMPLATES,
@@ -444,6 +453,56 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
             icon = Icons.Filled.GridView,
             anchor = SettingsSection.GENERAL,
             aliases = listOf("home", "layout", "grid", "gridui", "circle", "tampilan", "beranda"),
+        )
+    )
+
+    // Navigation (M5.4): bottom-bar destination visibility + floating-bar hide behaviour.
+    add(
+        sectionRow(
+            groupKey = SettingsSection.NAVIGATION,
+            groupTitleRes = R.string.settings_search_section_navigation,
+            id = "navigation.show_superuser",
+            titleRes = R.string.settings_nav_show_superuser,
+            summaryRes = R.string.settings_nav_show_superuser_summary,
+            icon = Icons.Filled.Shield,
+            anchor = SettingsSection.NAVIGATION,
+            aliases = listOf("superuser", "tab", "show", "hide", "sembunyi", "tampilkan"),
+        )
+    )
+    add(
+        sectionRow(
+            groupKey = SettingsSection.NAVIGATION,
+            groupTitleRes = R.string.settings_search_section_navigation,
+            id = "navigation.show_module",
+            titleRes = R.string.settings_nav_show_module,
+            summaryRes = R.string.settings_nav_show_module_summary,
+            icon = Icons.Filled.Extension,
+            anchor = SettingsSection.NAVIGATION,
+            aliases = listOf("module", "tab", "show", "hide", "sembunyi", "tampilkan"),
+        )
+    )
+    add(
+        sectionRow(
+            groupKey = SettingsSection.NAVIGATION,
+            groupTitleRes = R.string.settings_search_section_navigation,
+            id = "navigation.floating_auto_hide",
+            titleRes = R.string.settings_floating_auto_hide,
+            summaryRes = R.string.settings_floating_auto_hide_summary,
+            icon = Icons.Filled.Timer,
+            anchor = SettingsSection.NAVIGATION,
+            aliases = listOf("floating", "auto", "hide", "bar", "sembunyi", "otomatis"),
+        )
+    )
+    add(
+        sectionRow(
+            groupKey = SettingsSection.NAVIGATION,
+            groupTitleRes = R.string.settings_search_section_navigation,
+            id = "navigation.floating_swipe_hide",
+            titleRes = R.string.settings_floating_swipe_hide,
+            summaryRes = R.string.settings_floating_swipe_hide_summary,
+            icon = Icons.Filled.SwapVert,
+            anchor = SettingsSection.NAVIGATION,
+            aliases = listOf("floating", "scroll", "hide", "bar", "sembunyi", "gulir"),
         )
     )
 

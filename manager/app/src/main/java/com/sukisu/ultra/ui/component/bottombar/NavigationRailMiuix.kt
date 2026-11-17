@@ -27,7 +27,7 @@ fun NavigationRailMiuix(
 
     val mainState = LocalMainPagerState.current
 
-    val items = BottomBarDestination.entries.map { destination ->
+    val items = mainState.destinations.map { destination ->
         Pair(customText(destination.textKey), destination.icon)
     }
     val settingsRepo = remember { SettingsRepositoryImpl() }
@@ -50,6 +50,8 @@ fun NavigationRailMiuix(
         collapseContentDescription = stringResource(R.string.nav_rail_collapse),
     ) {
         items.forEachIndexed { index, (label, icon) ->
+            // Badges key off the destination, not the visible index.
+            val destination = mainState.destinations.getOrNull(index)
             NavigationRailItem(
                 selected = mainState.selectedPage == index,
                 onClick = {
@@ -57,7 +59,7 @@ fun NavigationRailMiuix(
                 },
                 icon = icon,
                 label = label,
-                badge = navigationBadgeFor(index, navigationBadge),
+                badge = destination?.let { navigationBadgeFor(it.ordinal, navigationBadge) },
             )
         }
     }

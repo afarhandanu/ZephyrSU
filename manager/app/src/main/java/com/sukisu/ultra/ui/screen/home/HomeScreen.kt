@@ -134,8 +134,8 @@ fun HomePager(
     )
     val actions = HomeActions(
         onInstallClick = { navigator.push(Route.Install()) },
-        onSuperuserClick = { mainPagerState.animateToPage(BottomBarDestination.SuperUser.ordinal) },
-        onModuleClick = { mainPagerState.animateToPage(BottomBarDestination.Module.ordinal) },
+        onSuperuserClick = { mainPagerState.animateToDestination(BottomBarDestination.SuperUser) },
+        onModuleClick = { mainPagerState.animateToDestination(BottomBarDestination.Module) },
         onOpenUrl = uriHandler::openUri,
         onCiUpdateClick = { startUpdate(true) },
         onReleaseUpdateClick = { startUpdate(false) },

@@ -157,6 +157,17 @@ val LocalEnableFloatingBottomBarBlur = staticCompositionLocalOf { false }
 
 val LocalEnableNavigationBadge = staticCompositionLocalOf { true }
 
+/** M5.4: show the SuperUser / Module tabs in the bottom bar / rail (Home and Setting always stay). */
+val LocalShowNavSuperuser = staticCompositionLocalOf { true }
+
+val LocalShowNavModule = staticCompositionLocalOf { true }
+
+/** M5.4: hide the floating bar automatically after 3 s idle. */
+val LocalFloatingAutoHide = staticCompositionLocalOf { true }
+
+/** M5.4: hide the floating bar while scrolling down, show it while scrolling up. */
+val LocalFloatingSwipeHide = staticCompositionLocalOf { true }
+
 val LocalModuleDescriptionMaxLines = staticCompositionLocalOf { 4 }
 
 val LocalBackgroundImagePath = staticCompositionLocalOf { "" }

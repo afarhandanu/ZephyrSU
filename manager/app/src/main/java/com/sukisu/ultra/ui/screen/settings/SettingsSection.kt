@@ -8,6 +8,7 @@ package com.sukisu.ultra.ui.screen.settings
 object SettingsSection {
 
     const val GENERAL = "general"
+    const val NAVIGATION = "navigation"
     const val TOP = "top"
     const val PROFILE_TEMPLATES = "profile_templates"
     const val EXTENSIONS = "extensions"
@@ -43,7 +44,7 @@ object SettingsSection {
 
     
     val ALL: Set<String> = setOf(
-        GENERAL, TOP, PROFILE_TEMPLATES, EXTENSIONS, TOOLS, TEMPORARY_ROOT, SECURITY,
+        GENERAL, NAVIGATION, TOP, PROFILE_TEMPLATES, EXTENSIONS, TOOLS, TEMPORARY_ROOT, SECURITY,
         MODULE_BEHAVIOUR, BACKUP, UNINSTALL, DIAGNOSTICS,
         SU_COMPAT, KERNEL_UMOUNT, SELINUX_HIDE, AVC_SPOOF, MOUNT_HIDE, SULOG,
         ADB_ROOT, SHELL_SU_ADB_ONLY, SOFT_REBOOT,
@@ -56,6 +57,7 @@ object SettingsSection {
     fun cardFor(anchor: String): String = when (anchor.trim().lowercase().replace('-', '_')) {
         TOP -> TOP
         UI_MODE, LANGUAGE, THEME -> GENERAL
+        NAVIGATION -> NAVIGATION
         PROFILE_TEMPLATES -> PROFILE_TEMPLATES
         EXTENSIONS -> EXTENSIONS
         TOOLS -> TOOLS

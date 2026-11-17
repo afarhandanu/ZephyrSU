@@ -69,7 +69,9 @@ fun BottomBarMiuix(
     val progressiveBlur = LocalEnableProgressiveBlur.current && isRuntimeShaderSupported()
 
     val bottomBarIcons = rememberBottomBarIconPaths()
-    val items = BottomBarDestination.entries.map { destination ->
+    // Items follow the visible destinations (M5.4): hiding SuperUser or Module in Settings
+    // drops that tab from the bar and the pager.
+    val items = mainState.destinations.map { destination ->
         Triple(
             destination,
             customText(destination.textKey),
@@ -93,7 +95,8 @@ fun BottomBarMiuix(
                                 onClick = {
                                     mainState.animateToPage(index)
                                 },
-                                badge = navigationBadgeFor(index, navigationBadge),
+                                // Badges key off the destination, not the visible index.
+                                badge = navigationBadgeFor(destination.ordinal, navigationBadge),
                             )
                         } else {
                             MiuixCustomNavigationBarItem(
@@ -102,7 +105,7 @@ fun BottomBarMiuix(
                                 icon = destination.icon,
                                 iconPath = iconPath,
                                 label = label,
-                                badge = navigationBadgeFor(index, navigationBadge),
+                                badge = navigationBadgeFor(destination.ordinal, navigationBadge),
                             )
                         }
                     }
@@ -135,13 +138,15 @@ fun BottomBarMiuix(
                 ) {
                     // Icon and label take LocalContentColor so the FloatingBottomBar backdrop copy
                     // can recolor them to the accent tone inside the indicator pill.
-                    val badge = navigationBadgeFor(index, navigationBadge, floating = true)
+                    // Badges key off the destination, not the visible index.
+                    val badge = navigationBadgeFor(destination.ordinal, navigationBadge, floating = true)
                     val icon: @Composable () -> Unit = {
                         BottomBarIconContent(
                             icon = destination.icon,
                             iconPath = iconPath,
                             contentDescription = label,
                             tint = MiuixLocalContentColor.current,
+                            selected = mainState.selectedPage == index,
                         )
                     }
                     if (badge != null) {
@@ -199,6 +204,7 @@ private fun androidx.compose.foundation.layout.RowScope.MiuixCustomNavigationBar
                         contentDescription = null,
                         tint = tint,
                         size = NavigationBarDefaults.IconSize,
+                        selected = selected,
                     )
                 }
             } else {
@@ -208,6 +214,7 @@ private fun androidx.compose.foundation.layout.RowScope.MiuixCustomNavigationBar
                     contentDescription = null,
                     tint = tint,
                     size = NavigationBarDefaults.IconSize,
+                    selected = selected,
                 )
             }
         }

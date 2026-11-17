@@ -160,6 +160,10 @@ class MainActivityViewModel(
             customTexts = settingRepo.customTexts,
             supportLinksStyle = settingRepo.supportLinksStyle,
             homeLayoutStyle = settingRepo.homeLayoutStyle,
+            showNavSuperuser = settingRepo.showNavSuperuser,
+            showNavModule = settingRepo.showNavModule,
+            floatingAutoHide = settingRepo.floatingAutoHide,
+            floatingSwipeHide = settingRepo.floatingSwipeHide,
             supportLinksCustomTitle = settingRepo.supportLinksCustomTitle,
             supportLinksCustomSubtitle = settingRepo.supportLinksCustomSubtitle,
             supportLinksCustomUrl = settingRepo.supportLinksCustomUrl,
@@ -200,6 +204,10 @@ class MainActivityViewModel(
             "custom_texts",
             "support_links_style",
             "home_layout_style",
+            "show_nav_superuser",
+            "show_nav_apm",
+            "floating_auto_hide",
+            "floating_swipe_hide",
             "support_links_custom_title",
             "support_links_custom_subtitle",
             "support_links_custom_url",
@@ -227,6 +235,11 @@ private const val PAGE_REQUEST_KEY = "main_page_request"
 private class MainPageState(
     private val savedStateHandle: SavedStateHandle,
 ) {
+    /**
+     * The selected page, persisted as a [BottomBarDestination] ordinal (M5.4) — NOT a pager
+     * slot: hiding a tab shifts every pager index after it, so only the destination survives
+     * a visibility change. MainScreen maps it onto the visible index on launch.
+     */
     val selectedPage: StateFlow<Int> = savedStateHandle.getStateFlow(SELECTED_MAIN_PAGE_KEY, 0)
 
     fun updateSelectedPage(page: Int) {
@@ -235,8 +248,10 @@ private class MainPageState(
 }
 
 object MainPagerConfig {
+    /** Number of destinations in the main pager (Home, SuperUser, Module, Setting). */
     const val PAGE_COUNT = 4
     const val LAST_PAGE_INDEX = PAGE_COUNT - 1
 
+    /** Coerce a persisted destination ordinal into range (M5.4: ordinals, not pager slots). */
     fun coercePage(page: Int): Int = page.coerceIn(0, LAST_PAGE_INDEX)
 }

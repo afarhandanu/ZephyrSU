@@ -478,6 +478,22 @@ class SettingsRepositoryImpl : SettingsRepository {
         get() = prefs.getBoolean("enable_navigation_badge", true)
         set(value) = prefs.edit { putBoolean("enable_navigation_badge", value) }
 
+    override var showNavSuperuser: Boolean
+        get() = prefs.getBoolean("show_nav_superuser", true)
+        set(value) = prefs.edit { putBoolean("show_nav_superuser", value) }
+
+    override var showNavModule: Boolean
+        get() = prefs.getBoolean("show_nav_apm", true)
+        set(value) = prefs.edit { putBoolean("show_nav_apm", value) }
+
+    override var floatingAutoHide: Boolean
+        get() = prefs.getBoolean("floating_auto_hide", true)
+        set(value) = prefs.edit { putBoolean("floating_auto_hide", value) }
+
+    override var floatingSwipeHide: Boolean
+        get() = prefs.getBoolean("floating_swipe_hide", true)
+        set(value) = prefs.edit { putBoolean("floating_swipe_hide", value) }
+
     override var navigationRailExpanded: Boolean
         get() = prefs.getBoolean("nav_rail_expanded", false)
         set(value) = prefs.edit { putBoolean("nav_rail_expanded", value) }
