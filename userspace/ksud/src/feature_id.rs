@@ -81,9 +81,7 @@ impl FeatureId {
             Self::ShellSuAdbOnly => {
                 "Shell SU ADB Only - when shell is granted root, additionally require the process to be spawned by adbd or a KernelSU root process (ksu domain)"
             }
-            Self::UtsView => {
-                "UTS View - per-app kernel identity (uname) spoofing"
-            }
+            Self::UtsView => "UTS View - per-app kernel identity (uname) spoofing",
             Self::MountHide => {
                 "Mount Hide - filter module mounts from /proc mount views of isolated and app processes"
             }

@@ -1,10 +1,10 @@
 use crate::feature_id::FeatureId;
 use crate::ksu_uapi;
+use crate::ksucalls;
 use crate::uts_view_config::{
     ConfigFile, ConfigSnapshot, FIELD_VALID_MASK, MAX_CONFIG_BYTES, MAX_TARGETS, UtsMode,
     parse_snapshot, write_snapshot_at,
 };
-use crate::ksucalls;
 use anyhow::{Context, Result, bail};
 use log::{info, warn};
 use std::fs::{File, OpenOptions};
@@ -65,7 +65,7 @@ impl UnameProviderState {
         self.applied
     }
 
-    const fn needs_boot_resolution(self) -> bool {
+    const fn needs_boot_resolution() -> bool {
         false
     }
 }
@@ -492,9 +492,9 @@ fn enable_takeover(config: &ConfigFile) -> Result<()> {
     Ok(())
 }
 
-fn provider_state() -> Result<UnameProviderState> {
+fn provider_state() -> UnameProviderState {
     // No SUSFS uname state exists to query in Nova; see UnameProviderState.
-    Ok(UnameProviderState::default())
+    UnameProviderState::default()
 }
 
 fn reject_provider_for_enable(provider: UnameProviderState) -> Result<()> {
@@ -510,7 +510,7 @@ fn reject_provider_for_enable(provider: UnameProviderState) -> Result<()> {
 fn commit_locked(config: Option<&ConfigFile>, old_file: Option<&ConfigSnapshot>) -> Result<()> {
     require_supported()?;
     if config.is_some_and(|candidate| candidate.enabled) {
-        reject_provider_for_enable(provider_state()?)?;
+        reject_provider_for_enable(provider_state())?;
     }
     let old_kernel = snapshot_kernel()?;
 
@@ -659,13 +659,8 @@ fn status() {
     };
     let config_error = read_error.or(parse_error);
     let supported = supported().unwrap_or(false);
-    let (provider, provider_error) = match provider_state() {
-        Ok(provider) => (provider, None),
-        Err(error) => (
-            UnameProviderState::default(),
-            Some(format!("{error:#}")),
-        ),
-    };
+    let provider = provider_state();
+    let provider_error = None;
     let provider_error = provider_error.or_else(|| {
         provider
             .uncertain
@@ -707,7 +702,7 @@ fn status() {
     };
     let targets = file
         .as_ref()
-        .map(|config| {
+        .map_or_default(|config| {
             config
                 .targets
                 .iter()
@@ -718,8 +713,7 @@ fn status() {
                     })
                 })
                 .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
+        });
     let target_count = targets.len();
     let state = if !supported {
         "unsupported"
@@ -852,7 +846,7 @@ fn take_over() -> Result<()> {
 const fn boot_action(configured: bool, provider: UnameProviderState) -> BootAction {
     if !configured || provider.blocks_uts() {
         BootAction::Disable
-    } else if provider.needs_boot_resolution() {
+    } else if UnameProviderState::needs_boot_resolution() {
         BootAction::ResolveBeforeEnable
     } else {
         BootAction::Enable
@@ -873,7 +867,7 @@ pub fn boot_apply() {
             return Ok(());
         }
         let _lock = acquire_lock()?;
-            let config = match read_config_file() {
+        let config = match read_config_file() {
             Ok(Some(config)) => config,
             Ok(None) => ConfigFile::empty(false),
             Err(error) => {
@@ -882,16 +876,7 @@ pub fn boot_apply() {
             }
         };
         let configured = config.enabled && config.field_mask != 0 && !crate::utils::is_safe_mode();
-        let provider = match provider_state() {
-            Ok(provider) => provider,
-            Err(error) => {
-                warn!("uts-view: event=provider-check result=failed error={error:#}");
-                UnameProviderState {
-                    scheduled: configured,
-                    ..UnameProviderState::default()
-                }
-            }
-        };
+        let provider = provider_state();
         let enabled = match boot_action(configured, provider) {
             BootAction::Enable => true,
             BootAction::ResolveBeforeEnable => {
