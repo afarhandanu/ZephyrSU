@@ -12,15 +12,18 @@ import androidx.activity.enableEdgeToEdge
 import androidx.fragment.app.FragmentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import com.sukisu.ultra.ui.component.onboarding.FirstRunGuide
 import com.sukisu.ultra.ui.component.splash.SplashScreen
@@ -85,11 +88,17 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import com.sukisu.ultra.Natives
 import com.sukisu.ultra.ui.component.bottombar.BottomBar
+import com.sukisu.ultra.ui.component.bottombar.BottomBarDestination
+import com.sukisu.ultra.ui.component.bottombar.LocalFloatingBarReservedHeight
+import com.sukisu.ultra.ui.component.bottombar.LocalFloatingBarVisible
+import com.sukisu.ultra.ui.component.bottombar.LocalIsFloatingNavMode
 import com.sukisu.ultra.ui.component.bottombar.MainPagerState
 import com.sukisu.ultra.ui.component.bottombar.NavigationBadgeState
 import com.sukisu.ultra.ui.component.bottombar.SideRail
+import com.sukisu.ultra.ui.component.bottombar.rememberFloatingBarVisibilityState
 import com.sukisu.ultra.ui.component.bottombar.rememberMainPagerState
 import com.sukisu.ultra.ui.component.bottombar.useNavigationRail
+import com.sukisu.ultra.ui.component.bottombar.visibleDestinations
 import com.sukisu.ultra.ui.kernelFlash.KernelFlashScreen
 import com.sukisu.ultra.ui.navigation3.IntentDispatcher
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
@@ -177,6 +186,10 @@ import com.sukisu.ultra.ui.theme.LocalEnableFloatingBottomBar
 import com.sukisu.ultra.ui.theme.LocalEnableFloatingBottomBarBlur
 import com.sukisu.ultra.ui.theme.LocalEnableNavigationBadge
 import com.sukisu.ultra.ui.theme.LocalEnableProgressiveBlur
+import com.sukisu.ultra.ui.theme.LocalFloatingAutoHide
+import com.sukisu.ultra.ui.theme.LocalFloatingSwipeHide
+import com.sukisu.ultra.ui.theme.LocalShowNavModule
+import com.sukisu.ultra.ui.theme.LocalShowNavSuperuser
 import com.sukisu.ultra.ui.theme.LocalModuleDescriptionMaxLines
 import com.sukisu.ultra.ui.util.BackgroundNavTransition
 import com.sukisu.ultra.ui.util.ImageStorage
@@ -187,7 +200,6 @@ import com.sukisu.ultra.ui.util.install
 import com.sukisu.ultra.ui.util.rememberBlurBackdrop
 import com.sukisu.ultra.ui.util.rememberContentReady
 import com.sukisu.ultra.ui.viewmodel.MainActivityViewModel
-import com.sukisu.ultra.ui.viewmodel.MainPagerConfig
 import com.sukisu.ultra.ui.viewmodel.ModuleViewModel
 import com.sukisu.ultra.ui.viewmodel.SettingsViewModel
 import com.sukisu.ultra.ui.viewmodel.SuperUserViewModel
@@ -336,6 +348,10 @@ class MainActivity : FragmentActivity() {
                 LocalEnableFloatingBottomBar provides uiState.enableFloatingBottomBar,
                 LocalEnableFloatingBottomBarBlur provides uiState.enableFloatingBottomBarBlur,
                 LocalEnableNavigationBadge provides uiState.enableNavigationBadge,
+                LocalShowNavSuperuser provides uiState.showNavSuperuser,
+                LocalShowNavModule provides uiState.showNavModule,
+                LocalFloatingAutoHide provides uiState.floatingAutoHide,
+                LocalFloatingSwipeHide provides uiState.floatingSwipeHide,
                 LocalModuleDescriptionMaxLines provides uiState.moduleDescriptionMaxLines,
                 LocalBackgroundImagePath provides uiState.customBackgroundUri,
                 LocalWallpaperPage provides wallpaperPage,
@@ -700,17 +716,30 @@ fun MainScreen(
     val enableFloatingBottomBar = LocalEnableFloatingBottomBar.current
     val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
     val useNavigationRail = useNavigationRail(enableFloatingBottomBar)
-    val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { MainPagerConfig.PAGE_COUNT })
+    // M5.4: the visible destinations, from the visibility prefs. Home and Setting always
+    // stay; SuperUser and Module can be hidden in Settings. The pager holds only these, so
+    // hiding a tab shifts the pager indices — the persisted page is a destination ordinal,
+    // not a slot, and is mapped onto the visible index here.
+    val destinations = remember(LocalShowNavSuperuser.current, LocalShowNavModule.current) {
+        visibleDestinations(LocalShowNavSuperuser.current, LocalShowNavModule.current)
+    }
+    val initialDestination = BottomBarDestination.entries.getOrElse(initialPage) { BottomBarDestination.Home }
+    val initialVisiblePage = destinations.indexOf(initialDestination).coerceAtLeast(0)
+    val pagerState = rememberPagerState(initialPage = initialVisiblePage, pageCount = { destinations.size })
     val mainPagerState = rememberMainPagerState(
         pagerState = pagerState,
+        destinations = destinations,
         animatePageChanges = !useNavigationRail,
     )
     // The AI assistant can request a tab from outside MainScreen; follow the
     // selected page when it changes without a pager gesture.
     LaunchedEffect(initialPage) {
-        if (pagerState.currentPage != initialPage) {
-            mainPagerState.animateToPage(initialPage)
-        }
+        mainPagerState.animateToDestination(initialDestination)
+    }
+    // Follow a change of the visible destinations: the selected destination keeps its place,
+    // and only a destination that was itself hidden falls back to home.
+    LaunchedEffect(destinations) {
+        mainPagerState.syncToDestinations()
     }
     val isFullFeatured = Natives.isFullFeatured()
     val pagerMode = PagerInterceptionMode.entries.getOrElse(pagerInterceptionMode) {
@@ -775,6 +804,37 @@ fun MainScreen(
     }
     val uiMode = LocalUiMode.current
     val hasCustomBackground = LocalBackgroundImagePath.current.isNotEmpty()
+    // M5.4: the floating bar hides itself while the user scrolls down or after 3 s idle
+    // (auto-hide / swipe-hide from Settings → Navigation), and reappears on any interaction.
+    // Rail layouts show no bottom bar at all, so the state stays idle there. The bar is
+    // hidden with a graphics-layer slide+fade, NOT by removing it from the Scaffold slot:
+    // the slot keeps its size, so the pager content never jumps when the bar hides.
+    val isFloatingBar = !useNavigationRail &&
+        (uiMode == UiMode.Material || enableFloatingBottomBar)
+    val floatingAutoHide = LocalFloatingAutoHide.current
+    val floatingSwipeHide = LocalFloatingSwipeHide.current
+    val floatingVisibility = rememberFloatingBarVisibilityState(
+        enabled = isFloatingBar,
+        autoHide = floatingAutoHide,
+        swipeHide = floatingSwipeHide,
+    )
+    val floatingBarVisible = when {
+        !floatingAutoHide && !floatingSwipeHide -> true
+        !floatingAutoHide -> !floatingVisibility.isScrollingDown
+        !floatingSwipeHide -> floatingVisibility.visible
+        else -> floatingVisibility.visible && !floatingVisibility.isScrollingDown
+    }
+    val floatingBarAlpha by animateFloatAsState(
+        targetValue = if (floatingBarVisible) 1f else 0f,
+        label = "floatingBarAlpha",
+    )
+    // Slide the hidden bar below the screen edge (64 dp pill + padding); the slot keeps its
+    // size, so the translated bar can no longer be tapped while hidden.
+    val floatingBarHiddenOffsetPx = with(LocalDensity.current) { 96.dp.toPx() }
+    val floatingBarOffsetYPx by animateFloatAsState(
+        targetValue = if (floatingBarVisible) 0f else floatingBarHiddenOffsetPx,
+        label = "floatingBarOffsetY",
+    )
     val cardAlpha = LocalCardBackgroundAlpha.current
     val surfaceColor = when (uiMode) {
         UiMode.Material -> MaterialTheme.colorScheme.surfaceContainer // Matches the Material page background behind the glass bar
@@ -806,7 +866,8 @@ fun MainScreen(
 
     val settledPage = mainPagerState.pagerState.settledPage
     LaunchedEffect(settledPage) {
-        onPageChanged(settledPage)
+        // Persist the destination, not the pager slot: hiding a tab shifts the indices.
+        onPageChanged(destinations.getOrNull(settledPage)?.ordinal ?: BottomBarDestination.Home.ordinal)
     }
 
     val currentPage = mainPagerState.pagerState.currentPage
@@ -817,11 +878,22 @@ fun MainScreen(
     MainScreenBackHandler(mainPagerState, navController)
 
     CompositionLocalProvider(
-        LocalMainPagerState provides mainPagerState
+        LocalMainPagerState provides mainPagerState,
+        // M5.4: navigation-mode signals for page content (e.g. the module FAB reads them to
+        // ride with the floating bar). The reserved height is the 64 dp pill + 32 dp of
+        // breathing room, matching FinaSU's formula for its 64 dp drawer form; no screen
+        // consumes it yet.
+        LocalIsFloatingNavMode provides isFloatingBar,
+        LocalFloatingBarVisible provides floatingBarVisible,
+        LocalFloatingBarReservedHeight provides if (isFloatingBar) 96.dp else 0.dp,
     ) {
         val contentReady = rememberContentReady()
         val pagerContent = @Composable { bottomInnerPadding: Dp ->
-            Box(modifier = if (blurBackdrop != null) Modifier.layerBackdrop(blurBackdrop) else Modifier) {
+            Box(
+                modifier = (if (blurBackdrop != null) Modifier.layerBackdrop(blurBackdrop) else Modifier)
+                    // M5.4: the floating bar's auto-hide/swipe-hide watches content scrolling.
+                    .then(if (isFloatingBar) Modifier.nestedScroll(floatingVisibility.connection) else Modifier)
+            ) {
                 HorizontalPager(
                     modifier = Modifier
                         .pagerGestureOverride(
@@ -849,11 +921,12 @@ fun MainScreen(
                     ),
                 ) { page ->
                     val isCurrentPage = page == settledPage
-                    when (page) {
-                        0 -> if (contentReady || isCurrentPage) HomePager(navController, bottomInnerPadding, isCurrentPage)
-                        1 -> if (contentReady || isCurrentPage) SuperUserPager(navController, bottomInnerPadding, isCurrentPage)
-                        2 -> if (contentReady || isCurrentPage) ModulePager(bottomInnerPadding, isCurrentPage)
-                        3 -> if (contentReady || isCurrentPage) SettingPager(navController, bottomInnerPadding, isCurrentPage)
+                    when (destinations.getOrNull(page)) {
+                        BottomBarDestination.Home -> if (contentReady || isCurrentPage) HomePager(navController, bottomInnerPadding, isCurrentPage)
+                        BottomBarDestination.SuperUser -> if (contentReady || isCurrentPage) SuperUserPager(navController, bottomInnerPadding, isCurrentPage)
+                        BottomBarDestination.Module -> if (contentReady || isCurrentPage) ModulePager(bottomInnerPadding, isCurrentPage)
+                        BottomBarDestination.Setting -> if (contentReady || isCurrentPage) SettingPager(navController, bottomInnerPadding, isCurrentPage)
+                        null -> Unit
                     }
                 }
             }
@@ -898,7 +971,20 @@ fun MainScreen(
         } else {
             val bottomBar = @Composable {
                 Box(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // M5.4: slide+fade the floating bar out (slot keeps its size, so the
+                        // pager never jumps). Only when a hide behaviour is actually on.
+                        .then(
+                            if (isFloatingBar && (floatingAutoHide || floatingSwipeHide)) {
+                                Modifier.graphicsLayer {
+                                    alpha = floatingBarAlpha
+                                    translationY = floatingBarOffsetYPx
+                                }
+                            } else {
+                                Modifier
+                            }
+                        )
                 ) {
                     BottomBar(
                         blurBackdrop = blurBackdrop,
@@ -935,7 +1021,7 @@ private fun MainScreenBackHandler(
 ) {
     val isPagerBackHandlerEnabled by remember {
         derivedStateOf {
-            navController.current() is Route.Main && navController.backStackSize() == 1 && mainState.selectedPage != 0
+            navController.current() is Route.Main && navController.backStackSize() == 1 && mainState.selectedDestination != BottomBarDestination.Home
         }
     }
 
@@ -945,7 +1031,7 @@ private fun MainScreenBackHandler(
         state = navEventState,
         isBackEnabled = isPagerBackHandlerEnabled,
         onBackCompleted = {
-            mainState.animateToPage(0)
+            mainState.animateToDestination(BottomBarDestination.Home)
         }
     )
 }

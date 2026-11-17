@@ -45,6 +45,8 @@ import com.sukisu.ultra.Natives
 import com.sukisu.ultra.R
 import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.ui.LocalMainPagerState
+import com.sukisu.ultra.ui.component.material.ChromeEdge
+import com.sukisu.ultra.ui.component.material.WallpaperChromeZone
 import com.sukisu.ultra.ui.util.CustomTextKey
 import com.sukisu.ultra.ui.util.customText
 
@@ -58,12 +60,16 @@ fun NavigationRailMaterial(
 
     val mainPagerState = LocalMainPagerState.current
 
-    val items = listOf(
-        Triple(CustomTextKey.PAGE_HOME, Icons.Filled.Home, Icons.Outlined.Home),
-        Triple(CustomTextKey.PAGE_SUPERUSER, Icons.Filled.Shield, Icons.Outlined.Shield),
-        Triple(CustomTextKey.PAGE_MODULES, Icons.Filled.Extension, Icons.Outlined.Extension),
-        Triple(CustomTextKey.PAGE_SETTINGS, Icons.Filled.Settings, Icons.Outlined.Settings)
-    )
+    // Items follow the visible destinations (M5.4): hiding SuperUser or Module in Settings
+    // drops that tab from the rail and the pager.
+    val items = mainPagerState.destinations.map { destination ->
+        when (destination) {
+            BottomBarDestination.Home -> Triple(CustomTextKey.PAGE_HOME, Icons.Filled.Home, Icons.Outlined.Home)
+            BottomBarDestination.SuperUser -> Triple(CustomTextKey.PAGE_SUPERUSER, Icons.Filled.Shield, Icons.Outlined.Shield)
+            BottomBarDestination.Module -> Triple(CustomTextKey.PAGE_MODULES, Icons.Filled.Extension, Icons.Outlined.Extension)
+            BottomBarDestination.Setting -> Triple(CustomTextKey.PAGE_SETTINGS, Icons.Filled.Settings, Icons.Outlined.Settings)
+        }
+    }
 
     val settingsRepo = remember { SettingsRepositoryImpl() }
     val state = rememberWideNavigationRailState(
@@ -81,11 +87,21 @@ fun NavigationRailMaterial(
     }
 
     val hasCustomBackground = LocalBackgroundImagePath.current.isNotEmpty()
+    // Wallpaper-aware rail surface (M5.4): transparent + chrome scrim in M5.2 wallpaper mode,
+    // opaque otherwise. The M1 custom background keeps its own transparent rule. The
+    // BottomBarControl indicator rule (transparent in wallpaper mode) is NOT applied here: the
+    // rail's selected colors assume an opaque primary pill.
+    val railStyle = BottomBarControl.style(BottomBarLayout.Rail)
+    val railContainerColor = if (hasCustomBackground) Color.Transparent else railStyle.containerColor
+    WallpaperChromeZone(
+        edge = ChromeEdge.Start,
+        material = railStyle.scrim,
+    ) {
     WideNavigationRail(
         modifier = modifier.fillMaxHeight(),
         state = state,
         colors = WideNavigationRailDefaults.colors().copy(
-            containerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
+            containerColor = railContainerColor,
             contentColor = MaterialTheme.colorScheme.onSurface,
         ),
         windowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout).only(
@@ -112,6 +128,8 @@ fun NavigationRailMaterial(
     ) {
         items.forEachIndexed { index, (label, selectedIcon, unselectedIcon) ->
             val selected = mainPagerState.selectedPage == index
+            // Badges key off the destination, not the visible index.
+            val destination = mainPagerState.destinations.getOrNull(index)
             WideNavigationRailItem(
                 railExpanded = expanded,
                 selected = selected,
@@ -124,7 +142,8 @@ fun NavigationRailMaterial(
                     NavigationIconWithBadge(
                         icon = if (selected) selectedIcon else unselectedIcon,
                         contentDescription = customText(label),
-                        badge = badgeFor(index, navigationBadge),
+                        badge = destination?.let { badgeFor(it.ordinal, navigationBadge) },
+                        selected = selected,
                     )
                 },
                 label = {
@@ -143,5 +162,6 @@ fun NavigationRailMaterial(
                 ),
             )
         }
+    }
     }
 }

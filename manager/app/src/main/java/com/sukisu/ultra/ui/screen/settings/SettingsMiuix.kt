@@ -47,6 +47,8 @@ import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Policy
 import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.SwapVert
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.VerifiedUser
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.runtime.Composable
@@ -529,6 +531,52 @@ fun SettingPagerMiuix(
                             }
                         )
 
+                    }
+
+                    // M5.4: bottom-bar destination visibility + floating-bar hide behaviour.
+                    AppCard(
+                        modifier = Modifier
+                            .bringIntoViewRequester(requester(SettingsSection.NAVIGATION))
+                            .padding(top = 12.dp)
+                            .fillMaxWidth(),
+                        colors = backgroundAwareCardColors(),
+                    ) {
+                        SwitchPreference(
+                            title = stringResource(R.string.settings_nav_show_superuser),
+                            summary = stringResource(R.string.settings_nav_show_superuser_summary),
+                            startAction = {
+                                Icon(Icons.Rounded.Security, modifier = Modifier.padding(end = 6.dp), contentDescription = stringResource(R.string.settings_nav_show_superuser), tint = colorScheme.onBackground)
+                            },
+                            checked = uiState.showNavSuperuser,
+                            onCheckedChange = actions.onSetShowNavSuperuser,
+                        )
+                        SwitchPreference(
+                            title = stringResource(R.string.settings_nav_show_module),
+                            summary = stringResource(R.string.settings_nav_show_module_summary),
+                            startAction = {
+                                Icon(Icons.Rounded.Extension, modifier = Modifier.padding(end = 6.dp), contentDescription = stringResource(R.string.settings_nav_show_module), tint = colorScheme.onBackground)
+                            },
+                            checked = uiState.showNavModule,
+                            onCheckedChange = actions.onSetShowNavModule,
+                        )
+                        SwitchPreference(
+                            title = stringResource(R.string.settings_floating_auto_hide),
+                            summary = stringResource(R.string.settings_floating_auto_hide_summary),
+                            startAction = {
+                                Icon(Icons.Rounded.Timer, modifier = Modifier.padding(end = 6.dp), contentDescription = stringResource(R.string.settings_floating_auto_hide), tint = colorScheme.onBackground)
+                            },
+                            checked = uiState.floatingAutoHide,
+                            onCheckedChange = actions.onSetFloatingAutoHide,
+                        )
+                        SwitchPreference(
+                            title = stringResource(R.string.settings_floating_swipe_hide),
+                            summary = stringResource(R.string.settings_floating_swipe_hide_summary),
+                            startAction = {
+                                Icon(Icons.Rounded.SwapVert, modifier = Modifier.padding(end = 6.dp), contentDescription = stringResource(R.string.settings_floating_swipe_hide), tint = colorScheme.onBackground)
+                            },
+                            checked = uiState.floatingSwipeHide,
+                            onCheckedChange = actions.onSetFloatingSwipeHide,
+                        )
                     }
 
                     KsuIsValid {

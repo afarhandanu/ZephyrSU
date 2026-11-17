@@ -38,6 +38,12 @@ data class SettingsUiState(
     val enableFloatingBottomBar: Boolean = false,
     val enableFloatingBottomBarBlur: Boolean = false,
     val enableNavigationBadge: Boolean = true,
+    /** M5.4: show the SuperUser / Module tabs in the bottom bar / rail. */
+    val showNavSuperuser: Boolean = true,
+    val showNavModule: Boolean = true,
+    /** M5.4: floating-bar auto-hide after 3 s idle / hide while scrolling down. */
+    val floatingAutoHide: Boolean = true,
+    val floatingSwipeHide: Boolean = true,
     val pageScale: Float = 1.0f,
     val moduleDescriptionMaxLines: Int = 4,
     val enableWebDebugging: Boolean = false,
@@ -259,6 +265,10 @@ data class SettingsScreenActions(
     val onOpenWallpaperGallery: () -> Unit = {},
     val onSetUiModeIndex: (Int) -> Unit,
     val onSetHomeLayoutStyle: (String) -> Unit = {},
+    val onSetShowNavSuperuser: (Boolean) -> Unit = {},
+    val onSetShowNavModule: (Boolean) -> Unit = {},
+    val onSetFloatingAutoHide: (Boolean) -> Unit = {},
+    val onSetFloatingSwipeHide: (Boolean) -> Unit = {},
     val onOpenProfileTemplate: () -> Unit,
     val onSetLanguage: (String) -> Unit,
     val onSetSuCompatMode: (Int) -> Unit,

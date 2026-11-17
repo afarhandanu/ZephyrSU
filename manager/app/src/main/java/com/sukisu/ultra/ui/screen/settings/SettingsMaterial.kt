@@ -41,6 +41,8 @@ import com.sukisu.ultra.ui.component.Storefront
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.Wallpaper
@@ -437,6 +439,51 @@ fun SettingPagerMaterial(
                         )
                     }
 
+                }
+            )
+            }
+
+            // M5.4: bottom-bar destination visibility + floating-bar hide behaviour.
+            SettingsAnchor(SettingsSection.NAVIGATION, anchorRequesters) {
+            SegmentedColumn(
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
+                content = buildList {
+                    add {
+                        SegmentedSwitchItem(
+                            icon = Icons.Filled.Shield,
+                            title = stringResource(id = R.string.settings_nav_show_superuser),
+                            summary = stringResource(id = R.string.settings_nav_show_superuser_summary),
+                            checked = uiState.showNavSuperuser,
+                            onCheckedChange = actions.onSetShowNavSuperuser,
+                        )
+                    }
+                    add {
+                        SegmentedSwitchItem(
+                            icon = Icons.Filled.Extension,
+                            title = stringResource(id = R.string.settings_nav_show_module),
+                            summary = stringResource(id = R.string.settings_nav_show_module_summary),
+                            checked = uiState.showNavModule,
+                            onCheckedChange = actions.onSetShowNavModule,
+                        )
+                    }
+                    add {
+                        SegmentedSwitchItem(
+                            icon = Icons.Filled.Timer,
+                            title = stringResource(id = R.string.settings_floating_auto_hide),
+                            summary = stringResource(id = R.string.settings_floating_auto_hide_summary),
+                            checked = uiState.floatingAutoHide,
+                            onCheckedChange = actions.onSetFloatingAutoHide,
+                        )
+                    }
+                    add {
+                        SegmentedSwitchItem(
+                            icon = Icons.Filled.SwapVert,
+                            title = stringResource(id = R.string.settings_floating_swipe_hide),
+                            summary = stringResource(id = R.string.settings_floating_swipe_hide_summary),
+                            checked = uiState.floatingSwipeHide,
+                            onCheckedChange = actions.onSetFloatingSwipeHide,
+                        )
+                    }
                 }
             )
             }

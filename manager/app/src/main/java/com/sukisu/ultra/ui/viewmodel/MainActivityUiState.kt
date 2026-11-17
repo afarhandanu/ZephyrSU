@@ -26,6 +26,12 @@ data class MainActivityUiState(
     val supportLinksStyle: String = "",
     /** Active home layout token, see HomeLayoutStyle (M5.3). */
     val homeLayoutStyle: String = com.sukisu.ultra.data.model.HomeLayoutStyle.DEFAULT,
+    /** M5.4: show the SuperUser / Module tabs in the bottom bar / rail. */
+    val showNavSuperuser: Boolean = true,
+    val showNavModule: Boolean = true,
+    /** M5.4: floating-bar auto-hide after 3 s idle / hide while scrolling down. */
+    val floatingAutoHide: Boolean = true,
+    val floatingSwipeHide: Boolean = true,
     val supportLinksCustomTitle: String = "",
     val supportLinksCustomSubtitle: String = "",
     val supportLinksCustomUrl: String = "",

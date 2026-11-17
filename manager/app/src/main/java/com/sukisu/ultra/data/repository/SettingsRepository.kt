@@ -121,6 +121,14 @@ interface SettingsRepository {
     var enableFloatingBottomBar: Boolean
     var enableFloatingBottomBarBlur: Boolean
     var enableNavigationBadge: Boolean
+    /** M5.4: show the SuperUser tab in the bottom bar / rail (Home and Setting always stay). */
+    var showNavSuperuser: Boolean
+    /** M5.4: show the Module tab in the bottom bar / rail (Home and Setting always stay). */
+    var showNavModule: Boolean
+    /** M5.4: hide the floating bar automatically after 3 s idle. */
+    var floatingAutoHide: Boolean
+    /** M5.4: hide the floating bar while scrolling down, show it while scrolling up. */
+    var floatingSwipeHide: Boolean
     var navigationRailExpanded: Boolean
     var pageScale: Float
     var moduleDescriptionMaxLines: Int

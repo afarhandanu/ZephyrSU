@@ -174,6 +174,10 @@ class SettingsViewModel(
             val enableFloatingBottomBar = repo.enableFloatingBottomBar
             val enableFloatingBottomBarBlur = repo.enableFloatingBottomBarBlur
             val enableNavigationBadge = repo.enableNavigationBadge
+            val showNavSuperuser = repo.showNavSuperuser
+            val showNavModule = repo.showNavModule
+            val floatingAutoHide = repo.floatingAutoHide
+            val floatingSwipeHide = repo.floatingSwipeHide
             val pageScale = repo.pageScale
             val bottomBarIcons = repo.bottomBarIcons
             val moduleDescriptionMaxLines = repo.moduleDescriptionMaxLines
@@ -303,6 +307,10 @@ homePillScale = HomeStatusStyle.coercePillScale(repo.homePillScale),
                     enableFloatingBottomBar = enableFloatingBottomBar,
                     enableFloatingBottomBarBlur = enableFloatingBottomBarBlur,
                     enableNavigationBadge = enableNavigationBadge,
+                    showNavSuperuser = showNavSuperuser,
+                    showNavModule = showNavModule,
+                    floatingAutoHide = floatingAutoHide,
+                    floatingSwipeHide = floatingSwipeHide,
                     pageScale = pageScale,
                     moduleDescriptionMaxLines = moduleDescriptionMaxLines,
                     enableWebDebugging = enableWebDebugging,
@@ -2912,6 +2920,27 @@ homePillScale = repo.homePillScale,
     fun setEnableNavigationBadge(enabled: Boolean) {
         repo.enableNavigationBadge = enabled
         _uiState.update { it.copy(enableNavigationBadge = enabled) }
+    }
+
+    /** M5.4: bottom-bar destination visibility + floating-bar hide behaviour. */
+    fun setShowNavSuperuser(enabled: Boolean) {
+        repo.showNavSuperuser = enabled
+        _uiState.update { it.copy(showNavSuperuser = enabled) }
+    }
+
+    fun setShowNavModule(enabled: Boolean) {
+        repo.showNavModule = enabled
+        _uiState.update { it.copy(showNavModule = enabled) }
+    }
+
+    fun setFloatingAutoHide(enabled: Boolean) {
+        repo.floatingAutoHide = enabled
+        _uiState.update { it.copy(floatingAutoHide = enabled) }
+    }
+
+    fun setFloatingSwipeHide(enabled: Boolean) {
+        repo.floatingSwipeHide = enabled
+        _uiState.update { it.copy(floatingSwipeHide = enabled) }
     }
 
     fun setPageScale(scale: Float) {

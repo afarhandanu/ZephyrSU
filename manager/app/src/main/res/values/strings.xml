@@ -322,6 +322,7 @@
     <string name="settings_search_section_tools">Tools</string>
     <string name="settings_search_section_temporary_root">Temporary Root</string>
     <string name="settings_search_section_security">Security</string>
+    <string name="settings_search_section_navigation">Navigation</string>
     <string name="settings_search_section_module_behaviour">Module Behaviour</string>
     <string name="settings_search_section_backup">Backup</string>
     <string name="settings_search_section_uninstall">Uninstall</string>
@@ -340,6 +341,15 @@
     <string name="settings_section_icon_text_summary">Launcher icon and custom page text</string>
     <string name="settings_section_bottom_bar">Bottom bar &amp; navigation</string>
     <string name="settings_section_bottom_bar_summary">Custom tab icons, floating bar, glass and badges</string>
+    <string name="settings_section_navigation">Navigation</string>
+    <string name="settings_nav_show_superuser">Show SuperUser tab</string>
+    <string name="settings_nav_show_superuser_summary">Show the SuperUser tab in the bottom bar or navigation rail</string>
+    <string name="settings_nav_show_module">Show Module tab</string>
+    <string name="settings_nav_show_module_summary">Show the Module tab in the bottom bar or navigation rail</string>
+    <string name="settings_floating_auto_hide">Auto-hide floating bar</string>
+    <string name="settings_floating_auto_hide_summary">Hide the floating bar automatically after 3 seconds idle</string>
+    <string name="settings_floating_swipe_hide">Hide floating bar on scroll</string>
+    <string name="settings_floating_swipe_hide_summary">Hide the floating bar while scrolling down, show it while scrolling up</string>
     <string name="settings_section_interaction">Interaction &amp; gestures</string>
     <string name="settings_section_interaction_summary">Predictive back, swipe dismiss, pager gestures and page scale</string>
     <string name="settings_section_details">Interface details</string>

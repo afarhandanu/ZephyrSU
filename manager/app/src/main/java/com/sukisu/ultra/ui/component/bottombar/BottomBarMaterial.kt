@@ -87,12 +87,16 @@ fun BottomBarMaterial(
     val bottomBarIcons = rememberBottomBarIconPaths()
     val progressiveBlur = LocalEnableProgressiveBlur.current && isRuntimeShaderSupported()
 
-    val items = listOf(
-        MaterialNavItem(CustomTextKey.PAGE_HOME, Icons.Filled.Home, Icons.Outlined.Home, bottomBarIcons["home"]),
-        MaterialNavItem(CustomTextKey.PAGE_SUPERUSER, Icons.Filled.Shield, Icons.Outlined.Shield, bottomBarIcons["superuser"]),
-        MaterialNavItem(CustomTextKey.PAGE_MODULES, Icons.Filled.Extension, Icons.Outlined.Extension, bottomBarIcons["module"]),
-        MaterialNavItem(CustomTextKey.PAGE_SETTINGS, Icons.Filled.Settings, Icons.Outlined.Settings, bottomBarIcons["setting"])
-    )
+    // Items follow the visible destinations (M5.4): hiding SuperUser or Module in Settings
+    // drops that tab from the bar and the pager.
+    val items = mainPagerState.destinations.map { destination ->
+        when (destination) {
+            BottomBarDestination.Home -> MaterialNavItem(CustomTextKey.PAGE_HOME, Icons.Filled.Home, Icons.Outlined.Home, bottomBarIcons["home"])
+            BottomBarDestination.SuperUser -> MaterialNavItem(CustomTextKey.PAGE_SUPERUSER, Icons.Filled.Shield, Icons.Outlined.Shield, bottomBarIcons["superuser"])
+            BottomBarDestination.Module -> MaterialNavItem(CustomTextKey.PAGE_MODULES, Icons.Filled.Extension, Icons.Outlined.Extension, bottomBarIcons["module"])
+            BottomBarDestination.Setting -> MaterialNavItem(CustomTextKey.PAGE_SETTINGS, Icons.Filled.Settings, Icons.Outlined.Settings, bottomBarIcons["setting"])
+        }
+    }
 
     if (LocalEnableFloatingBottomBarBlur.current && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         LiquidBottomBarMaterial(
@@ -148,12 +152,15 @@ fun BottomBarMaterial(
             ) {
                 items.forEachIndexed { index, item ->
                     val selected = mainPagerState.selectedPage == index
+                    // Badges key off the destination, not the visible index: hiding a tab
+                    // shifts every index after it.
+                    val destination = mainPagerState.destinations.getOrNull(index)
                     FloatingNavItem(
                         selected = selected,
                         label = customText(item.label),
                         icon = if (selected) item.selectedIcon else item.unselectedIcon,
                         iconPath = item.iconPath,
-                        badge = badgeFor(index, navigationBadge),
+                        badge = destination?.let { badgeFor(it.ordinal, navigationBadge) },
                         progressiveBlur = progressiveBlur,
                         onClick = {
                             if (!selected) {
@@ -199,6 +206,7 @@ private fun LiquidBottomBarMaterial(
     ) { activateTab ->
         items.forEachIndexed { index, item ->
             val selected = mainPagerState.selectedPage == index
+            val destination = mainPagerState.destinations.getOrNull(index)
             FloatingBottomBarItem(
                 selected = selected,
                 onClick = { activateTab(index) },
@@ -210,7 +218,8 @@ private fun LiquidBottomBarMaterial(
                         icon = if (selected) item.selectedIcon else item.unselectedIcon,
                         iconPath = item.iconPath,
                         contentDescription = customText(item.label),
-                        badge = badgeFor(index, navigationBadge),
+                        badge = destination?.let { badgeFor(it.ordinal, navigationBadge) },
+                        selected = selected,
                     )
                     Text(
                         text = customText(item.label),
@@ -275,6 +284,7 @@ private fun FloatingNavItem(
                 iconPath = iconPath,
                 contentDescription = if (selected) null else label,
                 badge = badge,
+                selected = selected,
             )
             AnimatedVisibility(
                 visible = selected,
@@ -299,6 +309,7 @@ internal fun NavigationIconWithBadge(
     contentDescription: String?,
     badge: NavBadge?,
     iconPath: String? = null,
+    selected: Boolean = false,
 ) {
     if (badge != null) {
         BadgedBox(
@@ -322,6 +333,7 @@ internal fun NavigationIconWithBadge(
                 iconPath = iconPath,
                 contentDescription = contentDescription,
                 tint = LocalContentColor.current,
+                selected = selected,
             )
         }
     } else {
@@ -330,6 +342,7 @@ internal fun NavigationIconWithBadge(
             iconPath = iconPath,
             contentDescription = contentDescription,
             tint = LocalContentColor.current,
+            selected = selected,
         )
     }
 }

@@ -72,6 +72,10 @@ fun SettingPager(
             viewModel.setUiMode(if (index == 0) UiMode.Miuix.value else UiMode.Material.value)
         },
         onSetHomeLayoutStyle = viewModel::setHomeLayoutStyle,
+        onSetShowNavSuperuser = viewModel::setShowNavSuperuser,
+        onSetShowNavModule = viewModel::setShowNavModule,
+        onSetFloatingAutoHide = viewModel::setFloatingAutoHide,
+        onSetFloatingSwipeHide = viewModel::setFloatingSwipeHide,
         onOpenProfileTemplate = { navigator.push(Route.AppProfileTemplate) },
         onSetLanguage = { tag -> viewModel.setLanguage(context, tag) },
         onSetSuCompatMode = viewModel::setSuCompatMode,
