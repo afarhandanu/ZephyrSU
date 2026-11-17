@@ -31,6 +31,7 @@ import androidx.compose.material.icons.automirrored.rounded.Rule
 import androidx.compose.material.icons.rounded.Adb
 import androidx.compose.material.icons.rounded.AdminPanelSettings
 import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.DeveloperMode
@@ -47,6 +48,7 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Policy
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.VerifiedUser
+import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -466,6 +468,33 @@ fun SettingPagerMiuix(
                                 )
                             },
                             onClick = actions.onOpenThemeStore
+                        )
+
+                        ArrowPreference(
+                            title = stringResource(id = R.string.wallpaper_title),
+                            summary = stringResource(id = R.string.settings_wallpaper_summary),
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.Wallpaper,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(id = R.string.wallpaper_title),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            onClick = actions.onOpenWallpaper
+                        )
+                        ArrowPreference(
+                            title = stringResource(id = R.string.settings_wallpaper_gallery),
+                            summary = stringResource(id = R.string.settings_wallpaper_gallery_summary),
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.Collections,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(id = R.string.settings_wallpaper_gallery),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            onClick = actions.onOpenWallpaperGallery
                         )
 
                     }

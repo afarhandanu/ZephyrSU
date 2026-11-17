@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.Rule
 import androidx.compose.material.icons.filled.Adb
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DeveloperMode
@@ -41,6 +42,7 @@ import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHostState
@@ -369,6 +371,34 @@ fun SettingPagerMaterial(
                             headlineContent = { Text(themeStoreTitle) },
                             supportingContent = { Text(stringResource(id = R.string.theme_store_summary)) },
                             leadingContent = { IconTile(Icons.Filled.Storefront, themeStoreTitle) },
+                            trailingContent = {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    null
+                                )
+                            }
+                        )
+                    }
+                    add {
+                        SegmentedListItem(
+                            onClick = actions.onOpenWallpaper,
+                            headlineContent = { Text(stringResource(id = R.string.wallpaper_title)) },
+                            supportingContent = { Text(stringResource(id = R.string.settings_wallpaper_summary)) },
+                            leadingContent = { IconTile(Icons.Filled.Wallpaper, stringResource(id = R.string.wallpaper_title)) },
+                            trailingContent = {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    null
+                                )
+                            }
+                        )
+                    }
+                    add {
+                        SegmentedListItem(
+                            onClick = actions.onOpenWallpaperGallery,
+                            headlineContent = { Text(stringResource(id = R.string.settings_wallpaper_gallery)) },
+                            supportingContent = { Text(stringResource(id = R.string.settings_wallpaper_gallery_summary)) },
+                            leadingContent = { IconTile(Icons.Filled.Collections, stringResource(id = R.string.settings_wallpaper_gallery)) },
                             trailingContent = {
                                 Icon(
                                     Icons.AutoMirrored.Filled.KeyboardArrowRight,

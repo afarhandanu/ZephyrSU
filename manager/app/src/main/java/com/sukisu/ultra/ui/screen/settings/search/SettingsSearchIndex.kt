@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DesignServices
@@ -405,6 +406,31 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
             icon = Icons.Filled.Storefront,
             route = Route.FptThemeStore,
             aliases = listOf("fpt", "theme", "store", "toko", "finasu", "fpt theme"),
+        )
+    )
+
+    add(
+        pageRow(
+            groupKey = SettingsSection.GENERAL,
+            groupTitleRes = R.string.settings_search_section_general,
+            id = "general.wallpaper",
+            titleRes = R.string.wallpaper_title,
+            summaryRes = R.string.settings_wallpaper_summary,
+            icon = Icons.Filled.Wallpaper,
+            route = Route.Wallpaper,
+            aliases = listOf("wallpaper", "background", "video", "wallpaper latar"),
+        )
+    )
+    add(
+        pageRow(
+            groupKey = SettingsSection.GENERAL,
+            groupTitleRes = R.string.settings_search_section_general,
+            id = "general.wallpaper_gallery",
+            titleRes = R.string.settings_wallpaper_gallery,
+            summaryRes = R.string.settings_wallpaper_gallery_summary,
+            icon = Icons.Filled.Collections,
+            route = Route.WallpaperGallery,
+            aliases = listOf("wallpaper", "gallery", "photo", "galeri"),
         )
     )
 

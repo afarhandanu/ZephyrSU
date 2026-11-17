@@ -1,5 +1,9 @@
 package com.sukisu.ultra.wallpaper
 
+import com.sukisu.ultra.wallpaper.surface.SurfaceField
+import com.sukisu.ultra.wallpaper.surface.SurfaceRegistry
+import com.sukisu.ultra.wallpaper.surface.SurfaceStore
+import com.sukisu.ultra.wallpaper.surface.isToggle
 import org.json.JSONObject
 import java.io.File
 import java.util.Locale
@@ -7,10 +11,10 @@ import java.util.Locale
 /**
  * Normalize optional settings like FP's opt accessors; container safety is checked separately.
  *
- * Adapted from FinaSU: the wallpaper-surface validation loop is dropped — ZephyrSU has no
- * surface registry yet (M5.2). Navigation-icon keys are checked against the four bottom-bar
- * slots Nova actually has (Home/SuperUser/AModule/Settings); the KModule key has no Nova
- * counterpart and is retained for re-export.
+ * M5.2 restores the wallpaper-surface validation loops M5.1 had to drop. Navigation-icon
+ * keys are checked against the four bottom-bar slots Nova actually has
+ * (Home/SuperUser/AModule/Settings); the KModule key has no Nova counterpart and is
+ * retained for re-export.
  */
 internal object ThemeValidation {
     internal fun validateBackground(json: JSONObject, names: Set<String>): Boolean {
@@ -45,6 +49,15 @@ internal object ThemeValidation {
             ThemeSettingsMapping.KEY_COLOR to Int.MIN_VALUE.toDouble()..Int.MAX_VALUE.toDouble(),
             ThemeSettingsMapping.LEGACY_KEY_COLOR to Int.MIN_VALUE.toDouble()..Int.MAX_VALUE.toDouble(),
         )
+        SurfaceRegistry.themeSlots().forEach { slot ->
+            slot.fields.filter { it != SurfaceField.Image }.forEach { field ->
+                val keys = listOfNotNull(SurfaceStore.key(slot.id, field), slot.legacyThemeFields[field])
+                if (field.isToggle) booleans.addAll(keys) else keys.forEach { numbers[it] = 0.0..1.0 }
+            }
+            booleans.addAll(slot.legacyThemeFields.filterKeys { it == SurfaceField.Image }.values)
+            slot.flags.forEach { booleans += SurfaceStore.key(slot.id, it) }
+            booleans.addAll(slot.legacyThemeFlags.values)
+        }
         booleans.filter(json::has).forEach { key ->
             val value = json.opt(key)
             when {
@@ -127,6 +140,13 @@ internal object ThemeValidation {
         if ((json.optString("fontMode") == "custom" || json.optBoolean("isFontEnabled")) &&
             ThemeResourcePolicy.select("font", files) == null) {
             warnings += "Custom font is missing; the app font is used"
+        }
+        SurfaceRegistry.themeSlots().forEach { slot ->
+            if (SurfaceField.Image in slot.fields) {
+                val enableKey = slot.legacyThemeFields[SurfaceField.Enabled] ?: slot.legacyThemeFields[SurfaceField.Image]
+                if (enableKey != null) requireAsset(enableKey, slot.themeBase ?: slot.id.value)
+                if (SurfaceField.Enabled in slot.fields) requireAsset(SurfaceStore.key(slot.id, SurfaceField.Enabled), slot.themeBase ?: slot.id.value)
+            }
         }
         listOf("isMusicEnabled" to "musicFilename", "isSoundEffectEnabled" to "soundEffectFilename").forEach { (enabled, key) ->
             if (json.has(key)) json.put(key, json.optString(key))

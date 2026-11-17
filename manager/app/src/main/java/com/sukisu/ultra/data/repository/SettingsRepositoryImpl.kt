@@ -154,6 +154,14 @@ class SettingsRepositoryImpl : SettingsRepository {
         get() = prefs.getBoolean("background_appearance_expanded", true)
         set(value) = prefs.edit { putBoolean("background_appearance_expanded", value) }
 
+    override var statsTopLayout: String
+        get() = prefs.getString("stats_top_layout", "list") ?: "list"
+        set(value) = prefs.edit { putString("stats_top_layout", value) }
+
+    override var listWorkingCardModeHidden: Boolean
+        get() = prefs.getBoolean("list_working_card_mode_hidden", false)
+        set(value) = prefs.edit { putBoolean("list_working_card_mode_hidden", value) }
+
     override var backgroundSectionExpanded: Boolean
         get() = prefs.getBoolean("background_section_expanded", true)
         set(value) = prefs.edit { putBoolean("background_section_expanded", value) }
