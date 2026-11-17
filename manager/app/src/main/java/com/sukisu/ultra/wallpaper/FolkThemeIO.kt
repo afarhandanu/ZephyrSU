@@ -5,23 +5,32 @@ import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.sukisu.ultra.ui.util.LocaleHelper
+import com.sukisu.ultra.wallpaper.surface.SurfaceRegistry
 import org.json.JSONObject
 import java.io.File
 
 /**
  * Asset registry and compatibility facade. Container, validation and transactions are separate.
  *
- * Adapted from FinaSU for what ZephyrSU can apply today (M5.1): the main background maps
- * onto Nova's custom background, the font onto the M1 custom font, nav icons onto Nova's
- * bottom-bar icon slots, music/sound onto the M1 media configs. Page backgrounds, wallpaper
- * surfaces, video/title visuals and the home layout need the wallpaper system (M5.2) and the
- * home layouts (M5.3); their files stay in the archive and in passthrough for re-export,
- * but they are not offered as applyable parts.
+ * M5.2 completes the registry: the main background, video/title visuals, one asset per
+ * wallpaper surface slot, and the five page backgrounds now apply alongside the font,
+ * nav icons, music and sound from M5.1. Only the home layout is still missing — its
+ * asset needs the `homeLayoutStyle` preference and the home layouts (M5.3); its files
+ * stay in the archive and in passthrough for re-export, but it is not offered as an
+ * applyable part.
  */
 object FolkThemeIO {
     const val FILE_NAME = "wallpaper.fpt"
     internal val assets: List<ThemedAsset> = buildList {
         add(MainWallpaperAsset)
+        add(VisualMediaThemeAsset(true))
+        add(VisualMediaThemeAsset(false))
+        addAll(SurfaceRegistry.themeSlots().map { SurfaceBackgroundAsset(it) })
+        add(HomeBackgroundAsset)
+        add(PluginBackgroundAsset)
+        add(SuperuserBackgroundAsset)
+        add(ModuleBackgroundAsset)
+        add(SettingsBackgroundAsset)
         add(FontAsset)
     }
     internal val groups = listOf(NavIconsAsset, MusicThemeAsset, SoundThemeAsset)

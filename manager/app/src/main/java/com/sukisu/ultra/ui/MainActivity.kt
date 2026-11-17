@@ -96,6 +96,17 @@ import com.sukisu.ultra.ui.navigation3.LocalNavigator
 import com.sukisu.ultra.ui.navigation3.Navigator
 import com.sukisu.ultra.ui.navigation3.Route
 import com.sukisu.ultra.ui.navigation3.rememberNavigator
+import com.sukisu.ultra.data.model.HomeLayoutStyle
+import com.sukisu.ultra.media.VisualMediaConfig
+import com.sukisu.ultra.ui.component.material.SliderTrackConfig
+import com.sukisu.ultra.ui.navigation3.mainPageToWallpaperPage
+import com.sukisu.ultra.ui.navigation3.wallpaperPageFor
+import com.sukisu.ultra.ui.screen.home.LocalHomeLayoutStyle
+import com.sukisu.ultra.ui.screen.wallpaper.WallpaperGalleryScreen
+import com.sukisu.ultra.ui.screen.wallpaper.WallpaperScreen
+import com.sukisu.ultra.wallpaper.LocalWallpaperPage
+import com.sukisu.ultra.wallpaper.WallpaperBackgroundLayer
+import com.sukisu.ultra.wallpaper.WallpaperConfig
 import com.sukisu.ultra.ui.screen.about.AboutScreen
 import com.sukisu.ultra.ui.screen.bannerapi.ApiMarketplaceScreen
 import com.sukisu.ultra.ai.api.AiFeatureBridge
@@ -218,6 +229,9 @@ class MainActivity : FragmentActivity() {
         com.sukisu.ultra.data.modulebanner.ModuleBannerConfig.loadOnce()
         MusicConfig.load(this)
         SoundEffectConfig.load(this)
+        WallpaperConfig.load(this)
+        VisualMediaConfig.load(this)
+        SliderTrackConfig.load(this)
         VibrationConfig.load(this)
         MusicManager.init(this)
         SoundEffectManager.playStartup(this)
@@ -276,6 +290,13 @@ class MainActivity : FragmentActivity() {
             }
 
             val navigator = rememberNavigator(Route.Main)
+            // FinaSU wallpaper (M5.2): the page whose background paints, from the nav
+            // back stack with the visible main pager page as the fallback. Nova's
+            // pager has four pages; mainPageToWallpaperPage maps them onto FinaSU's
+            // five page slots (there is no Plugin page in Nova).
+            val wallpaperPage = wallpaperPageFor(navigator.backStack, mainPageToWallpaperPage(selectedMainPage))
+            val videoActive = VisualMediaConfig.videoEnabled && VisualMediaConfig.videoFilename != null
+            val wallpaperActive = WallpaperConfig.enabled && WallpaperConfig.isPageActive(wallpaperPage, videoActive)
             // App Lock session (ported from FinaSU, Milestone 2).
             val authenticationSession = rememberAuthenticationSession(this@MainActivity, ksuApp.securityRepository)
             val context = LocalContext.current
@@ -290,7 +311,7 @@ class MainActivity : FragmentActivity() {
             val appBackgroundBackdrop = rememberLayerBackdrop()
             // The progressive blur covers both shells and works regardless of the plain bar blur.
             val progressiveBlurActive = uiState.enableProgressiveBlur && isRuntimeShaderSupported()
-            val captureAppBackground = uiState.customBackgroundUri.isNotEmpty() &&
+            val captureAppBackground = (uiState.customBackgroundUri.isNotEmpty() || wallpaperActive) &&
                 ((uiMode == UiMode.Miuix && uiState.enableBlur) || progressiveBlurActive)
 
             val themedAppSettings = remember(appSettings, uiState.keyColorOverride) {
@@ -318,6 +339,8 @@ class MainActivity : FragmentActivity() {
                 LocalEnableNavigationBadge provides uiState.enableNavigationBadge,
                 LocalModuleDescriptionMaxLines provides uiState.moduleDescriptionMaxLines,
                 LocalBackgroundImagePath provides uiState.customBackgroundUri,
+                LocalWallpaperPage provides wallpaperPage,
+                LocalHomeLayoutStyle provides HomeLayoutStyle.DEFAULT,
                 LocalAppBackgroundBackdrop provides appBackgroundBackdrop.takeIf { captureAppBackground },
                 LocalCardBackgroundAlpha provides (uiState.cardBackgroundAlphaPercent / 100f),
                 LocalUiMode provides uiMode,
@@ -417,6 +440,8 @@ class MainActivity : FragmentActivity() {
                             }
                             entry<Route.FptThemeStore>(swipeDismiss = swipeDismiss) { FptThemeStoreScreen() }
                             entry<Route.FptMyThemes>(swipeDismiss = swipeDismiss) { FptMyThemesScreen() }
+                            entry<Route.Wallpaper>(swipeDismiss = swipeDismiss) { WallpaperScreen() }
+                            entry<Route.WallpaperGallery>(swipeDismiss = swipeDismiss) { WallpaperGalleryScreen() }
                             entry<Route.ThemeAccount>(swipeDismiss = swipeDismiss) {
                                 MaterialExpressivePalette { AccountScreen() }
                             }
@@ -539,6 +564,17 @@ class MainActivity : FragmentActivity() {
                         modifier = Modifier.fillMaxSize()
                     ) {
                         val hasCustomBackground = uiState.customBackgroundUri.isNotEmpty()
+                        // FinaSU wallpaper (M5.2) paints instead of Nova's background when
+                        // active for this page; Nova's background stays the fallback.
+                        if (wallpaperActive) {
+                            WallpaperBackgroundLayer(
+                                modifier = if (captureAppBackground) {
+                                    Modifier.layerBackdrop(appBackgroundBackdrop)
+                                } else {
+                                    Modifier
+                                },
+                            )
+                        } else {
                         val backgroundBlurRadius = (
                             ImageStorage.BACKGROUND_BLUR_MAX_RADIUS_DP * uiState.customBackgroundBlurPercent / 100f
                         ).dp
@@ -595,14 +631,15 @@ class MainActivity : FragmentActivity() {
                                 }
                             }
                         }
+                        }
 
                         when (uiMode) {
                             UiMode.Material -> androidx.compose.material3.Scaffold(
-                                containerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer
+                                containerColor = if (hasCustomBackground || wallpaperActive) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer
                             ) { navDisplay() }
 
                             UiMode.Miuix -> Scaffold(
-                                containerColor = if (hasCustomBackground) Color.Transparent else MiuixTheme.colorScheme.surface
+                                containerColor = if (hasCustomBackground || wallpaperActive) Color.Transparent else MiuixTheme.colorScheme.surface
                             ) { navDisplay() }
                         }
 

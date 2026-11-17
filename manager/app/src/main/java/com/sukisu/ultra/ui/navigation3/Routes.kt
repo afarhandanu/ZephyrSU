@@ -98,6 +98,16 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object FptMyThemes : Route
 
+    /** FinaSU wallpaper settings (M5.2): background, per-page backgrounds, video, surfaces. */
+    @Parcelize
+    @Serializable
+    data object Wallpaper : Route
+
+    /** FinaSU wallpaper gallery (M5.2): download wallpapers from the LoliAPI providers. */
+    @Parcelize
+    @Serializable
+    data object WallpaperGallery : Route
+
     
     @Parcelize
     @Serializable

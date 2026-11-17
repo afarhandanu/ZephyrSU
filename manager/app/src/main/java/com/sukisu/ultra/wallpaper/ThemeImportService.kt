@@ -29,13 +29,14 @@ class PreparedTheme internal constructor(
 }
 
 /**
- * The parts of a `.fpt` package ZephyrSU can actually apply in M5.1. Page backgrounds,
- * surfaces and the home layout need the wallpaper system (M5.2) and home layouts (M5.3);
- * their files stay in the archive and in passthrough for re-export, but they are not
- * offered in the import dialog.
+ * The parts of a `.fpt` package ZephyrSU can actually apply in M5.2. Page backgrounds
+ * and surfaces are now applyable (the wallpaper system landed); only the home layout
+ * still needs the home layouts (M5.3). Its files stay in the archive and in passthrough
+ * for re-export, but it is not offered in the import dialog.
  */
 private val ApplicableParts = setOf(
-    ThemePart.MAIN_BACKGROUND, ThemePart.FONT, ThemePart.NAV_ICONS, ThemePart.MUSIC,
+    ThemePart.MAIN_BACKGROUND, ThemePart.PAGE_BACKGROUNDS, ThemePart.SURFACES,
+    ThemePart.FONT, ThemePart.NAV_ICONS, ThemePart.MUSIC,
     ThemePart.SOUND, ThemePart.COLORS, ThemePart.INTERFACE, ThemePart.LANGUAGE,
 )
 

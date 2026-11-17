@@ -1,29 +1,38 @@
 package com.sukisu.ultra.wallpaper
 
 import android.content.Context
-import com.sukisu.ultra.data.repository.SettingsRepository
+import android.net.Uri
 import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.ui.theme.FontConfig
 import com.sukisu.ultra.ui.theme.FontMode
-import com.sukisu.ultra.ui.util.ImageStorage
+import com.sukisu.ultra.wallpaper.surface.SurfaceDescriptor
+import com.sukisu.ultra.wallpaper.surface.SurfaceField
+import com.sukisu.ultra.wallpaper.surface.SurfaceRegistry
+import com.sukisu.ultra.wallpaper.surface.SurfaceStore
+import com.sukisu.ultra.wallpaper.surface.isToggle
 import org.json.JSONObject
 import java.io.File
-import java.util.UUID
 
 /**
  * The user's main background wallpaper and its opacity/blur/scrim settings.
  *
- * Adapted from FinaSU: Nova has no wallpaper config of its own, so the `.fpt` main
- * background maps onto Nova's custom background (`ImageStorage` + `customBackgroundUri`).
- * Blur maps to `customBackgroundBlurPercent`, dim to `customBackgroundScrimPercent`,
- * `wallpaper_use_color` to `extractColorFromBackground`. Opacity, dual/day/night dim and
- * the multi-background switch have no Nova equivalent and are preserved in passthrough
- * for re-export instead of being applied.
+ * FinaSU verbatim, with one Nova bridge: users who only ever set Nova's custom
+ * background (no FinaSU wallpaper yet) still export it — [currentFile] falls back to
+ * Nova's `customBackgroundUri` file when WallpaperConfig has no file, and [writeConfig]
+ * falls back to Nova's values (enabled, blur/dim percents, `wallpaper_use_color`) when
+ * WallpaperConfig is untouched. [apply] is verbatim: it writes to WallpaperConfig and
+ * enables it. [reset] is verbatim too ([WallpaperManager.clear] only); Nova's background
+ * is untouched, so if the user later disables the FinaSU wallpaper, Nova's old
+ * background reappears.
  */
 internal object MainWallpaperAsset : ThemedAsset {
     override val base = "background"
 
-    override fun currentFile(context: Context): File? {
+    override fun currentFile(context: Context): File? =
+        WallpaperManager.currentFile(context) ?: novaBackgroundFile()
+
+    /** Nova's custom background file, or null when the user never set one. */
+    private fun novaBackgroundFile(): File? {
         val uri = SettingsRepositoryImpl().customBackgroundUri
         if (uri.isBlank()) return null
         val file = File(uri)
@@ -32,46 +41,263 @@ internal object MainWallpaperAsset : ThemedAsset {
 
     override fun writeConfig(json: JSONObject) {
         val repo = SettingsRepositoryImpl()
-        json.put("isBackgroundEnabled", repo.customBackgroundUri.isNotBlank() && !repo.useSystemWallpaper)
-        json.put("backgroundBlur", repo.customBackgroundBlurPercent.toDouble())
-        json.put("backgroundDim", repo.customBackgroundScrimPercent / 100.0)
-        json.put("wallpaper_use_color", repo.extractColorFromBackground)
+        // No folk wallpaper at all (never enabled, no file): export Nova's background
+        // values instead, so a Nova-only user still gets a background in the .fpt.
+        val hasFolkWallpaper = WallpaperConfig.enabled || WallpaperConfig.uri != null
+        if (!hasFolkWallpaper && repo.customBackgroundUri.isNotBlank() && !repo.useSystemWallpaper) {
+            json.put("isBackgroundEnabled", true)
+            json.put("backgroundOpacity", 1.0)
+            json.put("backgroundBlur", repo.customBackgroundBlurPercent.toDouble())
+            json.put("backgroundDim", repo.customBackgroundScrimPercent / 100.0)
+            json.put("isDualBackgroundDimEnabled", false)
+            json.put("backgroundDayDim", repo.customBackgroundScrimPercent / 100.0)
+            json.put("backgroundNightDim", repo.customBackgroundScrimPercent / 100.0)
+            json.put("isMultiBackgroundEnabled", false)
+            json.put("wallpaper_use_color", repo.extractColorFromBackground)
+            return
+        }
+        json.put("isBackgroundEnabled", WallpaperConfig.enabled)
+        json.put("backgroundOpacity", WallpaperConfig.opacity.toDouble())
+        json.put("backgroundBlur", WallpaperConfig.blur.toDouble())
+        json.put("backgroundDim", WallpaperConfig.dim.toDouble())
+        json.put("isDualBackgroundDimEnabled", WallpaperConfig.dualDimEnabled)
+        json.put("backgroundDayDim", WallpaperConfig.dayDim.toDouble())
+        json.put("backgroundNightDim", WallpaperConfig.nightDim.toDouble())
+        json.put("isMultiBackgroundEnabled", WallpaperConfig.multiBackgroundEnabled)
+        json.put("wallpaper_use_color", WallpaperConfig.useWallpaperColor)
     }
 
     override suspend fun apply(context: Context, json: JSONObject, file: File?) {
-        val repo: SettingsRepository = SettingsRepositoryImpl()
         val enabled = json.optBoolean("isBackgroundEnabled", false)
         if (enabled && file != null) {
-            // ImageStorage.replace moves its source (renameTo), so hand it a throwaway copy:
-            // the staged file must survive for the passthrough copy later in the import.
-            val temp = File(context.cacheDir, "fpt-bg-${UUID.randomUUID()}")
-            try {
-                file.copyTo(temp, overwrite = true)
-                val path = ImageStorage.replace(context, temp)
-                if (path != null) {
-                    repo.customBackgroundUri = path
-                    repo.useSystemWallpaper = false
-                    repo.customBackgroundUpdatedAt = System.currentTimeMillis()
-                }
-            } finally {
-                temp.delete()
-            }
-        } else if (!enabled) {
-            ImageStorage.clear(context)
-            repo.customBackgroundUri = ""
+            val extension = WallpaperManager.resolveExtension(context, Uri.fromFile(file))
+            val target = WallpaperManager.replaceFile(context, file, extension)
+            WallpaperManager.applyFile(context, target)
         }
-        repo.customBackgroundBlurPercent =
-            json.optDouble("backgroundBlur", repo.customBackgroundBlurPercent.toDouble())
-                .toFloat().toInt().coerceIn(0, 100)
-        repo.customBackgroundScrimPercent =
-            (json.optDouble("backgroundDim", repo.customBackgroundScrimPercent / 100.0) * 100.0)
-                .toFloat().toInt().coerceIn(0, 100)
-        repo.extractColorFromBackground = json.optBoolean("wallpaper_use_color", repo.extractColorFromBackground)
+        WallpaperConfig.updateEnabled(enabled)
+        // Per-page asset restoration must preserve these explicit switches, including master off.
+        WallpaperConfig.updateMultiBackgroundEnabled(
+            json.optBoolean("isMultiBackgroundEnabled", false)
+        )
+        WallpaperConfig.updateOpacity(
+            json.optDouble("backgroundOpacity", 0.5).toFloat()
+        )
+        WallpaperConfig.updateBlur(
+            json.optDouble("backgroundBlur", 0.0).toFloat()
+        )
+        WallpaperConfig.updateDim(
+            json.optDouble("backgroundDim", 0.2).toFloat()
+        )
+        WallpaperConfig.updateDualDimEnabled(
+            json.optBoolean("isDualBackgroundDimEnabled", false)
+        )
+        WallpaperConfig.updateDayDim(
+            json.optDouble("backgroundDayDim", WallpaperConfig.dim.toDouble()).toFloat()
+        )
+        WallpaperConfig.updateNightDim(
+            json.optDouble("backgroundNightDim", WallpaperConfig.dim.toDouble()).toFloat()
+        )
+        WallpaperConfig.updateUseWallpaperColor(
+            json.optBoolean("wallpaper_use_color", false)
+        )
     }
 
     override suspend fun reset(context: Context) {
-        ImageStorage.clear(context)
-        SettingsRepositoryImpl().customBackgroundUri = ""
+        WallpaperManager.clear(context)
+    }
+}
+
+/**
+ * A slot's own background image and its opacity/dim/hide settings.
+ *
+ * It round-trips the registry keys (`surface.<id>.<field>`) so a surface theme reloads under the
+ * same names the store uses, plus the wider-ecosystem legacy aliases the descriptor declares so a
+ * theme exported elsewhere still imports here (and vice versa).
+ */
+internal class SurfaceBackgroundAsset(private val descriptor: SurfaceDescriptor) : ThemedAsset {
+    private val id = descriptor.id
+
+    /** Whether this surface stores a background file at all (the focus parent does not). */
+    private val ownsImage = SurfaceField.Image in descriptor.fields
+
+    /** Whether the surface has a per-surface enable flag, as opposed to a bare image slot. */
+    private val hasEnabledField = SurfaceField.Enabled in descriptor.fields
+
+    override val base: String = descriptor.themeBase ?: id.value
+
+    override fun currentFile(context: Context): File? =
+        if (ownsImage) WallpaperManager.currentSurfaceFile(context, id) else null
+
+    override fun writeConfig(json: JSONObject) {
+        val surface = SurfaceStore.config(id)
+        descriptor.fields.forEach { field ->
+            if (field == SurfaceField.Image) return@forEach
+            val key = SurfaceStore.key(id, field)
+            if (field.isToggle) json.put(key, surface.toggle(field))
+            else json.put(key, surface.scalar(field).toDouble())
+        }
+        descriptor.flags.forEach { flag ->
+            json.put(SurfaceStore.key(id, flag), surface.hasFlag(flag))
+        }
+        descriptor.legacyThemeFields.forEach { (field, legacyKey) ->
+            when {
+                field == SurfaceField.Image -> json.put(legacyKey, !surface.imageUri.isNullOrEmpty())
+                field.isToggle -> json.put(legacyKey, surface.toggle(field))
+                else -> json.put(legacyKey, surface.scalar(field).toDouble())
+            }
+        }
+        descriptor.legacyThemeFlags.forEach { (flag, legacyKey) ->
+            json.put(legacyKey, surface.hasFlag(flag))
+        }
+    }
+
+    override suspend fun apply(context: Context, json: JSONObject, file: File?) {
+        val parsed = ThemeSurfaceMapping.read(descriptor, json)
+        if (ownsImage) {
+            // Dashboard's presence flag is independent of its enable switch. Focus children use
+            // their enable field as presence; grid has only an enable switch and retains old files.
+            val presenceKey = ThemeSurfaceMapping.presenceKey(descriptor)
+            val wantsImage = ThemeSurfaceMapping.wantsImage(descriptor, json, parsed, file != null)
+            if (wantsImage && file != null) {
+                // Import must not flip a group parent on as a side effect; the parent's own bit is
+                // restored below from the theme (or inferred from the children).
+                check(WallpaperManager.saveSurfaceImage(context, id, Uri.fromFile(file), enableParent = false, validateImage = false))
+            } else if (presenceKey != null) {
+                WallpaperManager.clearSurfaceImage(context, id)
+            }
+        }
+        // Focus children follow installed-file presence; top-level surfaces keep their independent
+        // feature switch even when an optional image is absent.
+        SurfaceStore.update(id) { s ->
+            s.copy(
+                enabled = if (descriptor.parentId != null) s.enabled else if (hasEnabledField) parsed.enabled else s.enabled,
+                opacity = parsed.opacity,
+                dim = parsed.dim,
+                dualOpacity = parsed.dualOpacity,
+                dayOpacity = parsed.dayOpacity,
+                nightOpacity = parsed.nightOpacity,
+                dualDim = parsed.dualDim,
+                dayDim = parsed.dayDim,
+                nightDim = parsed.nightDim,
+                flags = parsed.flags,
+            )
+        }
+    }
+
+    override suspend fun reset(context: Context) {
+        if (ownsImage) WallpaperManager.clearSurfaceImage(context, id)
+    }
+}
+
+/**
+ * The stored file for a page background, or null when multi mode is off or the page is unset.
+ *
+ * The page assets below carry only a zip entry each: the shared theme format stores no per-page
+ * numbers, and their base names are shared with the wider theme ecosystem for interop.
+ */
+private fun currentPageFile(uri: String?): File? {
+    if (!WallpaperConfig.multiBackgroundEnabled) return null
+    val path = uri?.let { Uri.parse(it).path } ?: return null
+    val file = File(path)
+    return if (file.exists() && file.length() > 0L) file else null
+}
+
+/** Restores a page background from [file], or clears that page when the theme has none. */
+private suspend fun applyPageBackground(context: Context, page: Int, file: File?) {
+    if (file != null) {
+        check(WallpaperManager.savePageBackground(context, page, Uri.fromFile(file), activate = false))
+    } else {
+        WallpaperManager.clearPageBackground(context, page)
+    }
+}
+
+internal object HomeBackgroundAsset : ThemedAsset {
+    override val base = "background_home"
+
+    override fun currentFile(context: Context): File? =
+        currentPageFile(WallpaperConfig.homeBackgroundUri)
+
+    override fun writeConfig(json: JSONObject) = Unit
+
+    override suspend fun apply(context: Context, json: JSONObject, file: File?) {
+        if (!json.optBoolean("isMultiBackgroundEnabled")) return
+        applyPageBackground(context, WallpaperConfig.PAGE_HOME, file)
+    }
+
+    override suspend fun reset(context: Context) {
+        WallpaperManager.clearPageBackground(context, WallpaperConfig.PAGE_HOME)
+    }
+}
+
+internal object PluginBackgroundAsset : ThemedAsset {
+    override val base = "background_kernel"
+
+    override fun currentFile(context: Context): File? =
+        currentPageFile(WallpaperConfig.pluginBackgroundUri)
+
+    override fun writeConfig(json: JSONObject) = Unit
+
+    override suspend fun apply(context: Context, json: JSONObject, file: File?) {
+        if (!json.optBoolean("isMultiBackgroundEnabled")) return
+        applyPageBackground(context, WallpaperConfig.PAGE_PLUGIN, file)
+    }
+
+    override suspend fun reset(context: Context) {
+        WallpaperManager.clearPageBackground(context, WallpaperConfig.PAGE_PLUGIN)
+    }
+}
+
+internal object SuperuserBackgroundAsset : ThemedAsset {
+    override val base = "background_superuser"
+
+    override fun currentFile(context: Context): File? =
+        currentPageFile(WallpaperConfig.superuserBackgroundUri)
+
+    override fun writeConfig(json: JSONObject) = Unit
+
+    override suspend fun apply(context: Context, json: JSONObject, file: File?) {
+        if (!json.optBoolean("isMultiBackgroundEnabled")) return
+        applyPageBackground(context, WallpaperConfig.PAGE_SUPERUSER, file)
+    }
+
+    override suspend fun reset(context: Context) {
+        WallpaperManager.clearPageBackground(context, WallpaperConfig.PAGE_SUPERUSER)
+    }
+}
+
+internal object ModuleBackgroundAsset : ThemedAsset {
+    override val base = "background_system_module"
+
+    override fun currentFile(context: Context): File? =
+        currentPageFile(WallpaperConfig.moduleBackgroundUri)
+
+    override fun writeConfig(json: JSONObject) = Unit
+
+    override suspend fun apply(context: Context, json: JSONObject, file: File?) {
+        if (!json.optBoolean("isMultiBackgroundEnabled")) return
+        applyPageBackground(context, WallpaperConfig.PAGE_MODULE, file)
+    }
+
+    override suspend fun reset(context: Context) {
+        WallpaperManager.clearPageBackground(context, WallpaperConfig.PAGE_MODULE)
+    }
+}
+
+internal object SettingsBackgroundAsset : ThemedAsset {
+    override val base = "background_settings"
+
+    override fun currentFile(context: Context): File? =
+        currentPageFile(WallpaperConfig.settingsBackgroundUri)
+
+    override fun writeConfig(json: JSONObject) = Unit
+
+    override suspend fun apply(context: Context, json: JSONObject, file: File?) {
+        if (!json.optBoolean("isMultiBackgroundEnabled")) return
+        applyPageBackground(context, WallpaperConfig.PAGE_SETTINGS, file)
+    }
+
+    override suspend fun reset(context: Context) {
+        WallpaperManager.clearPageBackground(context, WallpaperConfig.PAGE_SETTINGS)
     }
 }
 
@@ -115,6 +341,15 @@ internal object FontAsset : ThemedAsset {
         FontConfig.clearFont(context)
     }
 }
+
+/**
+ * The home layout style — SKIPPED in M5.2, belongs to M5.3.
+ *
+ * It needs the `homeLayoutStyle` preference and the home layouts themselves; FinaSU's
+ * HomeLayoutAsset reads/writes `SettingsRepositoryImpl().homeLayoutStyle`, which does not
+ * exist in ZephyrSU yet. The `.fpt` home-layout part stays filtered out of the import
+ * dialog until M5.3 ports it.
+ */
 
 /** The file-name stem of a zip entry: `nav_icon_Home.png` -> `nav_icon_Home`. */
 internal fun zipStem(entryName: String): String =

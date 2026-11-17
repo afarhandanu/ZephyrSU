@@ -23,6 +23,10 @@ interface SettingsRepository {
     var customBackgroundBlurPercent: Int
     var customBackgroundScrimPercent: Int
     var backgroundAppearanceExpanded: Boolean
+    /** Top stats layout on the home screen: "list" or "grid" (FinaSU wallpaper system, M5.2). */
+    var statsTopLayout: String
+    /** Hide the working-card mode switch on the home screen (M5.2). */
+    var listWorkingCardModeHidden: Boolean
     
     var backgroundSectionExpanded: Boolean
     var themePackageSectionExpanded: Boolean

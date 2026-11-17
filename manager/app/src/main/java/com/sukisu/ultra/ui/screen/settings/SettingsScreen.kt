@@ -66,6 +66,8 @@ fun SettingPager(
         onSetAutoDeleteUpdateApk = viewModel::setAutoDeleteUpdateApk,
         onOpenTheme = { navigator.push(Route.ColorPalette()) },
         onOpenThemeStore = { navigator.push(Route.ThemeStore()) },
+        onOpenWallpaper = { navigator.push(Route.Wallpaper) },
+        onOpenWallpaperGallery = { navigator.push(Route.WallpaperGallery) },
         onSetUiModeIndex = { index ->
             viewModel.setUiMode(if (index == 0) UiMode.Miuix.value else UiMode.Material.value)
         },
