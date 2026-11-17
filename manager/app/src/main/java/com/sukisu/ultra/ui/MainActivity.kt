@@ -18,7 +18,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.graphicsLayer
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
@@ -720,8 +720,10 @@ fun MainScreen(
     // stay; SuperUser and Module can be hidden in Settings. The pager holds only these, so
     // hiding a tab shifts the pager indices — the persisted page is a destination ordinal,
     // not a slot, and is mapped onto the visible index here.
-    val destinations = remember(LocalShowNavSuperuser.current, LocalShowNavModule.current) {
-        visibleDestinations(LocalShowNavSuperuser.current, LocalShowNavModule.current)
+    val showNavSuperuser = LocalShowNavSuperuser.current
+    val showNavModule = LocalShowNavModule.current
+    val destinations = remember(showNavSuperuser, showNavModule) {
+        visibleDestinations(showNavSuperuser, showNavModule)
     }
     val initialDestination = BottomBarDestination.entries.getOrElse(initialPage) { BottomBarDestination.Home }
     val initialVisiblePage = destinations.indexOf(initialDestination).coerceAtLeast(0)
