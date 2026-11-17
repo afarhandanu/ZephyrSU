@@ -250,7 +250,7 @@ impl SigchldBlock {
             }
             let timeout = libc::timespec {
                 tv_sec: remaining.as_secs() as libc::time_t,
-                tv_nsec: remaining.subsec_nanos() as i32, // subsec_nanos < 1e9, cannot overflow i32 (armv7 tv_nsec is i32)
+                tv_nsec: remaining.subsec_nanos() as libc::c_long, // subsec_nanos < 1e9, cannot overflow; c_long is i32 on armv7, i64 elsewhere, matching tv_nsec on every target
             };
             // SIGCHLD stays blocked between waitpid and sigtimedwait to avoid lost wakeups.
             if unsafe {
