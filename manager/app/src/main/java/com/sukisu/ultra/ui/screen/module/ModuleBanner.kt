@@ -76,8 +76,13 @@ private fun readBanner(moduleId: String, banner: String): ByteArray? {
     return SuFileInputStream.open(file).use { it.readBytes() }
 }
 
-private fun loadModuleBanner(moduleId: String, banner: String): ImageBitmap? = runCatching {
+private fun loadModuleBanner(moduleId: String, banner: String): ImageBitmap? {
     val bytes = readBanner(moduleId, banner) ?: return null
+    return decodeBannerBytes(bytes, "$moduleId:$banner")
+}
+
+/** Decode banner bytes to a bitmap no larger than [BANNER_DECODE_PX] on its longest side. */
+internal fun decodeBannerBytes(bytes: ByteArray, cacheKey: String): ImageBitmap? = runCatching {
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
     if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
@@ -85,22 +90,40 @@ private fun loadModuleBanner(moduleId: String, banner: String): ImageBitmap? = r
     while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= BANNER_DECODE_PX) sample *= 2
     BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })
         ?.asImageBitmap()
-}.onFailure { Log.w(TAG, "load banner for $moduleId failed: $banner", it) }
-    .getOrNull()?.also { bannerCache.put("$moduleId:$banner", it) }
+}.onFailure { Log.w(TAG, "decode banner failed: $cacheKey", it) }
+    .getOrNull()?.also { bannerCache.put(cacheKey, it) }
+
+/** A banner file shipped inside the module directory, without a `banner=` line in module.prop. */
+private val BannerFileNames = listOf("banner", "banner.png", "banner.jpg", "banner.jpeg", "banner.webp")
+
+private fun loadModuleFileBanner(moduleId: String): ImageBitmap? {
+    val shell = getRootShell()
+    for (root in listOf(MODULE_DIR, MODULE_UPDATE_DIR)) {
+        for (name in BannerFileNames) {
+            val file = SuFile("$root$moduleId/$name").apply { this.shell = shell }
+            if (!file.isFile || file.length() > MAX_BANNER_BYTES) continue
+            val bytes = runCatching { SuFileInputStream.open(file).use { it.readBytes() } }
+                .getOrNull()?.takeIf { it.isNotEmpty() } ?: continue
+            return decodeBannerBytes(bytes, "$moduleId:<file>")
+        }
+    }
+    return null
+}
 
 @Composable
 fun rememberModuleBanner(moduleId: String, banner: String?): ImageBitmap? {
-    if (banner == null) return null
-    val key = "$moduleId:$banner"
+    val key = if (banner == null) "$moduleId:<file>" else "$moduleId:$banner"
     val revision = bannerRevision.intValue
     val bitmap by produceState(bannerCache.get(key), key, revision) {
-        if (value == null) value = withContext(Dispatchers.IO) { loadModuleBanner(moduleId, banner) }
+        if (value == null) value = withContext(Dispatchers.IO) {
+            if (banner != null) loadModuleBanner(moduleId, banner) else loadModuleFileBanner(moduleId)
+        }
     }
     return bitmap
 }
 
-fun Modifier.moduleBanner(banner: ImageBitmap?, scrim: Color): Modifier {
-    if (banner == null) return this
+fun Modifier.moduleBanner(banner: ImageBitmap?, scrim: Color, alpha: Float = 1f): Modifier {
+    if (banner == null || alpha <= 0f) return this
     return drawWithCache {
         val scale = maxOf(size.width / banner.width, size.height / banner.height)
         val srcW = (size.width / scale).roundToInt().coerceIn(1, banner.width)
@@ -112,7 +135,7 @@ fun Modifier.moduleBanner(banner: ImageBitmap?, scrim: Color): Modifier {
             listOf(scrim.copy(alpha = 0.92f), scrim.copy(alpha = 0.78f), scrim.copy(alpha = 0.45f))
         )
         onDrawBehind {
-            drawImage(image = banner, srcOffset = srcOffset, srcSize = srcSize, dstSize = dstSize)
+            drawImage(image = banner, srcOffset = srcOffset, srcSize = srcSize, dstSize = dstSize, alpha = alpha)
             drawRect(gradient)
         }
     }

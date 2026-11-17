@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -64,9 +65,19 @@ fun ModuleInfoDialogMaterial(
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
-    val rows = remember(module, updateInfo, resources) { moduleInfoRows(resources, module, updateInfo) }
-    val banner = rememberModuleBanner(module.id, module.bannerPath)
+    val visual = rememberModuleCardVisual(module.id, module.bannerPath)
+    val banner = visual.banner
+    val displayModule = remember(module, visual.customInfo) {
+        module.copy(
+            name = module.displayName(visual.customInfo),
+            version = module.displayVersion(visual.customInfo),
+            author = module.displayAuthor(visual.customInfo),
+            description = module.displayDescription(visual.customInfo),
+        )
+    }
+    val rows = remember(displayModule, updateInfo, resources) { moduleInfoRows(resources, displayModule, updateInfo) }
     val bannerState = rememberModuleInfoBannerState(module, onBannerChanged)
+    val customInfoState = rememberModuleCustomInfoEditorState(module, onBannerChanged)
     val pickBanner = rememberModuleBannerPicker(bannerState)
     val copied = stringResource(R.string.module_info_copied)
 
@@ -74,7 +85,7 @@ fun ModuleInfoDialogMaterial(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = module.name,
+                text = displayModule.name,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -97,7 +108,7 @@ fun ModuleInfoDialogMaterial(
                 Spacer(Modifier.height(12.dp))
 
                 ModuleInfoBannerHeaderMaterial(
-                    module = module,
+                    module = displayModule,
                     banner = banner,
                 )
 
@@ -165,6 +176,73 @@ fun ModuleInfoDialogMaterial(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    text = stringResource(R.string.module_banner_custom_info),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = customInfoState.name,
+                    onValueChange = customInfoState::updateName,
+                    label = { Text(stringResource(R.string.module_banner_name)) },
+                    singleLine = true,
+                    enabled = !customInfoState.busy,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = customInfoState.version,
+                    onValueChange = customInfoState::updateVersion,
+                    label = { Text(stringResource(R.string.module_banner_version)) },
+                    singleLine = true,
+                    enabled = !customInfoState.busy,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = customInfoState.author,
+                    onValueChange = customInfoState::updateAuthor,
+                    label = { Text(stringResource(R.string.module_banner_author)) },
+                    singleLine = true,
+                    enabled = !customInfoState.busy,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = customInfoState.description,
+                    onValueChange = customInfoState::updateDescription,
+                    label = { Text(stringResource(R.string.module_banner_description)) },
+                    minLines = 2,
+                    enabled = !customInfoState.busy,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    TextButton(
+                        onClick = customInfoState::reset,
+                        enabled = (customInfoState.hasChanges || customInfoState.hasSavedInfo) && !customInfoState.busy,
+                    ) {
+                        Text(stringResource(R.string.module_banner_reset))
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    FilledTonalButton(
+                        onClick = customInfoState::save,
+                        enabled = customInfoState.hasChanges && !customInfoState.busy,
+                    ) {
+                        Text(stringResource(R.string.module_banner_save))
+                    }
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

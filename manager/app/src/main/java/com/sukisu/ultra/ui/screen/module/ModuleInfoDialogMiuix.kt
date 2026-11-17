@@ -43,6 +43,7 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Copy
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
@@ -62,22 +63,32 @@ fun ModuleInfoDialogMiuix(
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
-    val rows = remember(module, updateInfo, resources) { moduleInfoRows(resources, module, updateInfo) }
-    val banner = rememberModuleBanner(module.id, module.bannerPath)
+    val visual = rememberModuleCardVisual(module.id, module.bannerPath)
+    val banner = visual.banner
+    val displayModule = remember(module, visual.customInfo) {
+        module.copy(
+            name = module.displayName(visual.customInfo),
+            version = module.displayVersion(visual.customInfo),
+            author = module.displayAuthor(visual.customInfo),
+            description = module.displayDescription(visual.customInfo),
+        )
+    }
+    val rows = remember(displayModule, updateInfo, resources) { moduleInfoRows(resources, displayModule, updateInfo) }
     val bannerState = rememberModuleInfoBannerState(module, onBannerChanged)
+    val customInfoState = rememberModuleCustomInfoEditorState(module, onBannerChanged)
     val pickBanner = rememberModuleBannerPicker(bannerState)
     val copied = stringResource(R.string.module_info_copied)
 
     OverlayDialog(
         show = true,
-        title = module.name,
+        title = displayModule.name,
         summary = stringResource(R.string.module_info_title),
         onDismissRequest = onDismiss,
         insideMargin = DpSize(0.dp, 20.dp),
         content = {
             Column(modifier = Modifier.heightIn(max = 560.dp)) {
                 ModuleInfoBannerHeader(
-                    module = module,
+                    module = displayModule,
                     banner = banner,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -127,6 +138,75 @@ fun ModuleInfoDialogMiuix(
                     style = textStyles.footnote2,
                     color = colorScheme.onSurfaceVariantSummary,
                 )
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    text = stringResource(R.string.module_banner_custom_info),
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    style = textStyles.footnote2,
+                    color = colorScheme.onSurfaceVariantSummary,
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                TextField(
+                    value = customInfoState.name,
+                    onValueChange = customInfoState::updateName,
+                    label = stringResource(R.string.module_banner_name),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                )
+                Spacer(Modifier.height(8.dp))
+                TextField(
+                    value = customInfoState.version,
+                    onValueChange = customInfoState::updateVersion,
+                    label = stringResource(R.string.module_banner_version),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                )
+                Spacer(Modifier.height(8.dp))
+                TextField(
+                    value = customInfoState.author,
+                    onValueChange = customInfoState::updateAuthor,
+                    label = stringResource(R.string.module_banner_author),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                )
+                Spacer(Modifier.height(8.dp))
+                TextField(
+                    value = customInfoState.description,
+                    onValueChange = customInfoState::updateDescription,
+                    label = stringResource(R.string.module_banner_description),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    TextButton(
+                        text = stringResource(R.string.module_banner_reset),
+                        onClick = customInfoState::reset,
+                        enabled = (customInfoState.hasChanges || customInfoState.hasSavedInfo) && !customInfoState.busy,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(
+                        text = stringResource(R.string.module_banner_save),
+                        onClick = customInfoState::save,
+                        enabled = customInfoState.hasChanges && !customInfoState.busy,
+                        colors = ButtonDefaults.textButtonColorsPrimary(),
+                    )
+                }
 
                 Spacer(Modifier.height(8.dp))
                 HorizontalDivider(

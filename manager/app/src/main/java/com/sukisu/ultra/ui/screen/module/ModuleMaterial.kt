@@ -894,7 +894,9 @@ private fun ModuleItem(
     closeSearch: () -> Unit,
     dragHandleModifier: Modifier? = null,
 ) {
-    val hasDescription = module.description.isNotBlank()
+    val visual = rememberModuleCardVisual(module.id, module.bannerPath)
+    val displayDescription = module.displayDescription(visual.customInfo)
+    val hasDescription = displayDescription.isNotBlank()
     val maxLinesLimit = LocalModuleDescriptionMaxLines.current
     var expanded by rememberSaveable(module.id) { mutableStateOf(false) }
     var descriptionCanExpand by rememberSaveable(module.id) { mutableStateOf(true) }
@@ -902,8 +904,6 @@ private fun ModuleItem(
     val cardInteractionSource = remember { MutableInteractionSource() }
     val descriptionInteractionSource = remember { MutableInteractionSource() }
     val dragHandleInteractionSource = remember { MutableInteractionSource() }
-    val banner = rememberModuleBanner(module.id, module.bannerPath)
-
     TonalCard(
         modifier = Modifier.fillMaxWidth(),
         interactionSource = cardInteractionSource,
@@ -923,7 +923,7 @@ private fun ModuleItem(
         Column(
             modifier = Modifier
                 .alpha(if (module.enabled || module.remove) 1f else 0.6f)
-                .moduleBanner(banner, MaterialTheme.colorScheme.surfaceBright)
+                .moduleBanner(visual.banner, MaterialTheme.colorScheme.surfaceBright, alpha = bannerAlpha())
                 .padding(18.dp, 16.dp, 16.dp, 12.dp)
         ) {
             Row(
@@ -939,7 +939,7 @@ private fun ModuleItem(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = module.name,
+                            text = module.displayName(visual.customInfo),
                             modifier = Modifier.weight(1f, fill = false),
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium,
@@ -955,7 +955,7 @@ private fun ModuleItem(
                     }
 
                     Text(
-                        text = "${module.version}, ${module.author}",
+                        text = "${module.displayVersion(visual.customInfo)}, ${module.displayAuthor(visual.customInfo)}",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.labelSmall,
                         fontFamily = FontFamily.Monospace,
@@ -999,7 +999,7 @@ private fun ModuleItem(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 ExpandableDescriptionText(
-                    text = module.description,
+                    text = displayDescription,
                     expanded = expanded,
                     maxLinesLimit = maxLinesLimit,
                     modifier = Modifier

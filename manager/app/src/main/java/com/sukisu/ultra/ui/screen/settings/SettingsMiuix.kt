@@ -771,6 +771,8 @@ fun SettingPagerMiuix(
                             }
                         }
 
+                        ModuleBannerSettingsSectionMiuix()
+
                         SuiStatusSectionMiuix(
                             state = uiState,
                             actions = actions,
