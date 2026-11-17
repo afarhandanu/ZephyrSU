@@ -1,5 +1,6 @@
 package com.sukisu.ultra.ui.screen.settings
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.automirrored.rounded.Rule
@@ -54,10 +60,14 @@ import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.R
 import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.KsuIsValid
+import com.sukisu.ultra.ui.component.SearchStatus
 import com.sukisu.ultra.ui.component.Storefront
 import com.sukisu.ultra.ui.component.dialog.rememberLoadingDialog
 import com.sukisu.ultra.ui.component.miuix.AppCard
 import com.sukisu.ultra.ui.component.miuix.AppScaffold
+import com.sukisu.ultra.ui.component.miuix.SearchBarFake
+import com.sukisu.ultra.ui.component.miuix.SearchBox
+import com.sukisu.ultra.ui.component.miuix.SearchPager
 import com.sukisu.ultra.ui.component.miuix.SendLogDialog
 import com.sukisu.ultra.ui.component.profile.TemporaryRootPreferences
 import com.sukisu.ultra.ui.component.rebootlistpopup.rememberRebootAction
@@ -65,6 +75,12 @@ import com.sukisu.ultra.ui.component.rebootlistpopup.rememberRebootChoices
 import com.sukisu.ultra.ui.component.uninstalldialog.UninstallDialog
 import com.sukisu.ultra.ui.screen.builtinzygisk.problemMessage
 import com.sukisu.ultra.ui.screen.builtinzygisk.problemTitle
+import com.sukisu.ultra.ui.screen.settings.search.SettingsHubAction
+import com.sukisu.ultra.ui.screen.settings.search.SettingsSearchResultsMiuix
+import com.sukisu.ultra.ui.screen.settings.search.SettingsSearchShortcutsMiuix
+import com.sukisu.ultra.ui.screen.settings.search.SettingsSearchTarget
+import com.sukisu.ultra.ui.screen.settings.search.rememberSettingsSearchEntries
+import com.sukisu.ultra.ui.screen.settings.search.settingsSearchGroups
 import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
 import com.sukisu.ultra.ui.theme.LocalEnableBlur
 import com.sukisu.ultra.ui.theme.backgroundAwareCardColors
@@ -139,6 +155,41 @@ fun SettingPagerMiuix(
     var showProfileEditor by remember { mutableStateOf(false) }
     var showSelinuxModeDialog by remember { mutableStateOf(false) }
 
+    // Settings search (M3.1): the query lives in the SearchStatus, like ModuleRepo's;
+    // tapping a result either opens its page, opens the dialog the page itself owns,
+    // or scrolls the page to its section's card.
+    val searchHint = stringResource(R.string.settings_search_hint)
+    var searchStatus by remember(searchHint) { mutableStateOf(SearchStatus(label = searchHint)) }
+    val searchEntries = rememberSettingsSearchEntries()
+    val searchGroups = settingsSearchGroups(searchStatus.searchText, uiState, searchEntries)
+    val dynamicTopPadding by remember {
+        derivedStateOf { 12.dp * (1f - scrollBehavior.state.collapsedFraction) }
+    }
+    val density = LocalDensity.current
+    var pendingSearchAnchor by remember { mutableStateOf<Pair<String, Long>?>(null) }
+    fun onSearchTarget(target: SettingsSearchTarget) {
+        when (target) {
+            is SettingsSearchTarget.Section ->
+                pendingSearchAnchor = target.anchor to System.nanoTime()
+            is SettingsSearchTarget.Page -> actions.onOpenRoute(target.route)
+            is SettingsSearchTarget.Hub -> when (target.action) {
+                SettingsHubAction.SEND_LOG -> showSendLogDialog.value = true
+                SettingsHubAction.UNINSTALL -> showUninstallDialog.value = true
+            }
+        }
+    }
+
+    LaunchedEffect(pendingSearchAnchor) {
+        val pending = pendingSearchAnchor ?: return@LaunchedEffect
+        // The search pager collapses first; scrolling only after it is gone.
+        delay(300.milliseconds)
+        val anchor = SettingsSection.normalize(pending.first)
+        val target = anchorRequesters[SettingsSection.cardFor(anchor)]
+            ?: anchorRequesters[SettingsSection.GENERAL]
+        target?.bringIntoView()
+        pendingSearchAnchor = null
+    }
+
     if (showProfileEditor) {
         ProfileEditSheet(onDismiss = { showProfileEditor = false })
     }
@@ -212,14 +263,70 @@ fun SettingPagerMiuix(
                 TopAppBar(
                     color = Color.Transparent,
                     title = customText(CustomTextKey.PAGE_SETTINGS),
-                    scrollBehavior = scrollBehavior
+                    scrollBehavior = scrollBehavior,
+                    bottomContent = {
+                        Box(
+                            modifier = Modifier
+                                .alpha(if (searchStatus.isCollapsed()) 1f else 0f)
+                                .onGloballyPositioned { coordinates ->
+                                    with(density) {
+                                        val newOffsetY = coordinates.positionInWindow().y.toDp()
+                                        if (searchStatus.offsetY != newOffsetY) {
+                                            searchStatus = searchStatus.copy(offsetY = newOffsetY)
+                                        }
+                                    }
+                                }
+                                .then(
+                                    if (searchStatus.isCollapsed()) {
+                                        Modifier.pointerInput(Unit) {
+                                            detectTapGestures {
+                                                searchStatus = searchStatus.copy(current = SearchStatus.Status.EXPANDING)
+                                            }
+                                        }
+                                    } else Modifier,
+                                ),
+                        ) {
+                            SearchBarFake(searchStatus.label, dynamicTopPadding)
+                        }
+                    }
                 )
             }
         },
-        popupHost = { },
+        popupHost = {
+            val pagerStatus = searchStatus.copy(
+                resultStatus = if (searchStatus.searchText.isBlank()) SearchStatus.ResultStatus.DEFAULT else SearchStatus.ResultStatus.SHOW
+            )
+            pagerStatus.SearchPager(
+                onSearchStatusChange = { searchStatus = it },
+                defaultResult = {
+                    SettingsSearchShortcutsMiuix(
+                        onOpenSection = { anchor ->
+                            searchStatus = searchStatus.copy(
+                                searchText = "",
+                                current = SearchStatus.Status.COLLAPSING,
+                            )
+                            pendingSearchAnchor = anchor to System.nanoTime()
+                        },
+                    )
+                },
+                searchBarTopPadding = dynamicTopPadding,
+            ) {
+                SettingsSearchResultsMiuix(
+                    groups = searchGroups,
+                    onSelect = { entry ->
+                        searchStatus = searchStatus.copy(
+                            searchText = "",
+                            current = SearchStatus.Status.COLLAPSING,
+                        )
+                        onSearchTarget(entry.target)
+                    },
+                )
+            }
+        },
         contentWindowInsets = WindowInsets.systemBars.add(WindowInsets.displayCutout).only(WindowInsetsSides.Horizontal),
     ) { innerPadding ->
         Box(modifier = if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier) {
+            searchStatus.SearchBox {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -242,7 +349,9 @@ fun SettingPagerMiuix(
                         )
                     }
                     AppCard(
-                        modifier = Modifier.padding(top = 4.dp).fillMaxWidth(),
+                        modifier = Modifier
+                            .bringIntoViewRequester(requester(SettingsSection.TOP))
+                            .padding(top = 4.dp).fillMaxWidth(),
                         colors = backgroundAwareCardColors(),
                     ) {
                         ArrowPreference(
@@ -848,6 +957,7 @@ fun SettingPagerMiuix(
                     }
                     Spacer(Modifier.height(bottomInnerPadding))
                 }
+            }
             }
         }
     }

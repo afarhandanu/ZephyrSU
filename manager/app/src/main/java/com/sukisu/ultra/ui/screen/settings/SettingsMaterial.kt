@@ -6,6 +6,7 @@ import com.sukisu.ultra.ui.util.customText
 import com.sukisu.ultra.ui.util.CustomTextKey
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
@@ -42,12 +43,10 @@ import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
@@ -71,13 +70,19 @@ import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.KsuIsValid
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.IconTile
+import com.sukisu.ultra.ui.component.material.SearchAppBar
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
 import com.sukisu.ultra.ui.component.material.SegmentedDropdownItem
 import com.sukisu.ultra.ui.component.material.SegmentedListItem
 import com.sukisu.ultra.ui.component.material.SegmentedSwitchItem
 import com.sukisu.ultra.ui.component.material.SendLogBottomSheet
 import com.sukisu.ultra.ui.component.material.SnackBarHost
-import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
+import com.sukisu.ultra.ui.screen.settings.search.SettingsHubAction
+import com.sukisu.ultra.ui.screen.settings.search.SettingsSearchResults
+import com.sukisu.ultra.ui.screen.settings.search.SettingsSearchShortcuts
+import com.sukisu.ultra.ui.screen.settings.search.SettingsSearchTarget
+import com.sukisu.ultra.ui.screen.settings.search.rememberSettingsSearchEntries
+import com.sukisu.ultra.ui.screen.settings.search.settingsSearchGroups
 import com.sukisu.ultra.ui.component.rebootlistpopup.rememberRebootAction
 import com.sukisu.ultra.ui.component.rebootlistpopup.rememberRebootChoices
 import com.sukisu.ultra.ui.screen.builtinzygisk.problemMessage
@@ -130,6 +135,36 @@ fun SettingPagerMaterial(
     var showSelinuxModeDialog by remember { mutableStateOf(false) }
     var showBottomSheet by remember { mutableStateOf(false) }
 
+    // Settings search (M3.1): the query lives here so the top bar and the result
+    // list share it; tapping a result either opens its page, opens the dialog the
+    // page itself owns, or scrolls the page to its section's card.
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    val searchEntries = rememberSettingsSearchEntries()
+    val searchGroups = settingsSearchGroups(searchQuery, uiState, searchEntries)
+    var pendingSearchAnchor by remember { mutableStateOf<Pair<String, Long>?>(null) }
+    fun onSearchTarget(target: SettingsSearchTarget) {
+        when (target) {
+            is SettingsSearchTarget.Section ->
+                pendingSearchAnchor = target.anchor to System.nanoTime()
+            is SettingsSearchTarget.Page -> actions.onOpenRoute(target.route)
+            is SettingsSearchTarget.Hub -> when (target.action) {
+                SettingsHubAction.SEND_LOG -> showBottomSheet = true
+                SettingsHubAction.UNINSTALL -> showUninstallDialog.value = true
+            }
+        }
+    }
+
+    LaunchedEffect(pendingSearchAnchor) {
+        val pending = pendingSearchAnchor ?: return@LaunchedEffect
+        // The search overlay collapses first; scrolling only after it is gone.
+        delay(300.milliseconds)
+        val anchor = SettingsSection.normalize(pending.first)
+        val requester = anchorRequesters[SettingsSection.cardFor(anchor)]
+            ?: anchorRequesters[SettingsSection.GENERAL]
+        requester?.bringIntoView()
+        pendingSearchAnchor = null
+    }
+
     UninstallDialog(
         show = showUninstallDialog.value,
         onDismissRequest = { showUninstallDialog.value = false }
@@ -181,7 +216,33 @@ fun SettingPagerMaterial(
     ExpressiveScaffold(
         containerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
-            TopBar(scrollBehavior = scrollBehavior)
+            SearchAppBar(
+                title = { Text(customText(CustomTextKey.PAGE_SETTINGS)) },
+                searchText = searchQuery,
+                onSearchTextChange = { searchQuery = it },
+                onClearClick = { searchQuery = "" },
+                snackbarHostState = snackBarHost,
+                scrollBehavior = scrollBehavior,
+                defaultContent = { bottomPadding, closeSearch ->
+                    SettingsSearchShortcuts(
+                        onOpenSection = { anchor ->
+                            closeSearch()
+                            pendingSearchAnchor = anchor to System.nanoTime()
+                        },
+                        contentPadding = PaddingValues(bottom = bottomPadding),
+                    )
+                },
+                searchContent = { bottomPadding, closeSearch ->
+                    SettingsSearchResults(
+                        groups = searchGroups,
+                        onSelect = { entry ->
+                            closeSearch()
+                            onSearchTarget(entry.target)
+                        },
+                        contentPadding = PaddingValues(bottom = bottomPadding),
+                    )
+                },
+            )
         },
         snackbarHost = { SnackBarHost(hostState = snackBarHost, modifier = Modifier.padding(bottom = bottomInnerPadding)) },
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
@@ -201,6 +262,8 @@ fun SettingPagerMaterial(
                 onAvatarClick = { showProfileEditor = true },
             )
 
+            SettingsAnchor(SettingsSection.TOP, anchorRequesters) {
+                Column {
             SegmentedColumn(
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
             ) {
@@ -250,6 +313,8 @@ fun SettingPagerMaterial(
                             leadingContent = { IconTile(Icons.Filled.Shield, t) },
                         )
                     }
+                }
+            }
                 }
             }
 
@@ -704,20 +769,4 @@ private fun SettingsAnchor(
     Box(modifier = Modifier.fillMaxWidth().bringIntoViewRequester(requester)) {
         content()
     }
-}
-
-@Composable
-private fun TopBar(
-    scrollBehavior: TopAppBarScrollBehavior? = null
-) {
-    val hasCustomBackground = LocalBackgroundImagePath.current.isNotEmpty()
-    LargeFlexibleTopAppBar(
-        title = { Text(customText(CustomTextKey.PAGE_SETTINGS)) },
-        colors = expressiveTopAppBarColors(
-            containerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
-            scrolledContainerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
-        ),
-        windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
-        scrollBehavior = scrollBehavior
-    )
 }

@@ -8,6 +8,7 @@ package com.sukisu.ultra.ui.screen.settings
 object SettingsSection {
 
     const val GENERAL = "general"
+    const val TOP = "top"
     const val PROFILE_TEMPLATES = "profile_templates"
     const val EXTENSIONS = "extensions"
     const val TOOLS = "tools"
@@ -31,6 +32,7 @@ object SettingsSection {
 
     const val DEFAULT_UMOUNT_MODULES = "default_umount_modules"
     const val AUTO_DELETE_MODULE_ZIP = "auto_delete_module_zip"
+    const val AUTO_DELETE_UPDATE_APK = "auto_delete_update_apk"
     const val WEB_DEBUGGING = "web_debugging"
     const val AUTO_JAILBREAK = "auto_jailbreak"
 
@@ -40,16 +42,18 @@ object SettingsSection {
 
     
     val ALL: Set<String> = setOf(
-        GENERAL, PROFILE_TEMPLATES, EXTENSIONS, TOOLS, TEMPORARY_ROOT, SECURITY,
+        GENERAL, TOP, PROFILE_TEMPLATES, EXTENSIONS, TOOLS, TEMPORARY_ROOT, SECURITY,
         MODULE_BEHAVIOUR, UNINSTALL, DIAGNOSTICS,
         SU_COMPAT, KERNEL_UMOUNT, SELINUX_HIDE, AVC_SPOOF, MOUNT_HIDE, SULOG,
         ADB_ROOT, SHELL_SU_ADB_ONLY, SOFT_REBOOT,
-        DEFAULT_UMOUNT_MODULES, AUTO_DELETE_MODULE_ZIP, WEB_DEBUGGING, AUTO_JAILBREAK,
+        DEFAULT_UMOUNT_MODULES, AUTO_DELETE_MODULE_ZIP, AUTO_DELETE_UPDATE_APK,
+        WEB_DEBUGGING, AUTO_JAILBREAK,
         UI_MODE, LANGUAGE, THEME,
     )
 
     
     fun cardFor(anchor: String): String = when (anchor.trim().lowercase().replace('-', '_')) {
+        TOP -> TOP
         UI_MODE, LANGUAGE, THEME -> GENERAL
         PROFILE_TEMPLATES -> PROFILE_TEMPLATES
         EXTENSIONS -> EXTENSIONS
@@ -58,7 +62,8 @@ object SettingsSection {
         SU_COMPAT, KERNEL_UMOUNT, SELINUX_HIDE, AVC_SPOOF, MOUNT_HIDE, SULOG,
         ADB_ROOT, SHELL_SU_ADB_ONLY, SOFT_REBOOT,
         -> SECURITY
-        DEFAULT_UMOUNT_MODULES, AUTO_DELETE_MODULE_ZIP, WEB_DEBUGGING, AUTO_JAILBREAK,
+        DEFAULT_UMOUNT_MODULES, AUTO_DELETE_MODULE_ZIP, AUTO_DELETE_UPDATE_APK,
+        WEB_DEBUGGING, AUTO_JAILBREAK,
         -> MODULE_BEHAVIOUR
         UNINSTALL -> UNINSTALL
         DIAGNOSTICS -> DIAGNOSTICS

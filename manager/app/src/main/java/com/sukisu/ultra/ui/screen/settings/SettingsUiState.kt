@@ -6,6 +6,7 @@ import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.sukisu.ultra.data.model.SuiStatus
 import com.sukisu.ultra.ui.UiMode
+import com.sukisu.ultra.ui.navigation3.Route
 import com.sukisu.ultra.ui.util.BuiltinAppIcons
 import com.sukisu.ultra.ui.util.CustomTextGroup
 import com.sukisu.ultra.ui.util.HomeCardImageStyle
@@ -282,4 +283,5 @@ data class SettingsScreenActions(
     val onOpenFont: () -> Unit = {},
     val onOpenMultimedia: () -> Unit = {},
     val onOpenAuthentication: () -> Unit = {},
+    val onOpenRoute: (Route) -> Unit = {},
 )

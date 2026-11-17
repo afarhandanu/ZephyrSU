@@ -98,6 +98,7 @@ fun SettingPager(
         onOpenFont = { navigator.push(Route.Font) },
         onOpenMultimedia = { navigator.push(Route.Multimedia) },
         onOpenAuthentication = { navigator.push(Route.Authentication) },
+        onOpenRoute = { navigator.push(it) },
     )
 
     when (LocalUiMode.current) {
