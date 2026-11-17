@@ -82,6 +82,12 @@ fun ModuleRepoScreen() {
         onClearSearch = { viewModel.updateSearchText("") },
         onSearchStatusChange = viewModel::updateSearchStatus,
         onSetSortOrder = viewModel::setSortOrder,
+        onSelectSourceKind = viewModel::selectSourceKind,
+        onSelectRepository = viewModel::selectRepository,
+        onDismissRepositoryPicker = viewModel::dismissRepositoryPicker,
+        onOpenCustomUrlDialog = viewModel::openCustomUrlDialog,
+        onDismissCustomUrlDialog = viewModel::dismissCustomUrlDialog,
+        onConfirmCustomUrl = viewModel::confirmCustomUrl,
         onOpenRepoDetail = { module ->
             val args = RepoModuleArg(
                 moduleId = module.moduleId,
@@ -165,7 +171,7 @@ fun ModuleRepoDetailScreen(module: RepoModuleArg) {
 
 
 @Stable
-class ReleaseDownloadHandle(private val sha256: String, downloadedUri: Uri?) {
+class ReleaseDownloadHandle(private val key: String, downloadedUri: Uri?) {
     var isDownloading by mutableStateOf(false)
     var progress by mutableIntStateOf(0)
     var downloadedUri by mutableStateOf(downloadedUri)
@@ -173,27 +179,45 @@ class ReleaseDownloadHandle(private val sha256: String, downloadedUri: Uri?) {
 
     fun setDownloaded(uri: Uri?) {
         downloadedUri = uri
-        if (uri != null) verifiedDownloads[sha256] = uri else verifiedDownloads.remove(sha256)
+        if (uri != null) verifiedDownloads[key] = uri else verifiedDownloads.remove(key)
     }
 }
 
 /**
- * Verified release ZIPs of this process, keyed by SHA-256, so the Install / Run button survives
+ * Downloaded release ZIPs of this process, keyed by [RepoRelease.downloadKey] (SHA-256, or the
+ * download URL for releases without a recorded hash), so the Install / Run button survives
  * leaving and reopening the detail page. Callers still check [com.sukisu.ultra.ui.util.isDownloadAvailable] before use.
  */
 private val verifiedDownloads = ConcurrentHashMap<String, Uri>()
 
+/**
+ * Key identifying a downloaded release ZIP. Hash-pinned releases key by SHA-256 (as before);
+ * releases without a recorded hash (store sources) key by download URL, so two unverified
+ * downloads never share one entry.
+ */
+private fun RepoRelease.downloadKey(): String = sha256.ifBlank { zipUrl }
+
 @Composable
 fun rememberReleaseDownload(release: RepoRelease): ReleaseDownloadHandle =
     remember(release.zipUrl, release.sha256) {
-        ReleaseDownloadHandle(release.sha256, verifiedDownloads[release.sha256])
+        val key = release.downloadKey()
+        ReleaseDownloadHandle(key, verifiedDownloads[key])
+    }
+
+/** Builds the integrity expectation for a release, or `null` when it carries no usable hash. */
+private fun expectedFileOrNull(release: RepoRelease): ExpectedFile? =
+    if (release.zipSize > 0 && Regex("^[0-9a-f]{64}$").matches(release.sha256)) {
+        ExpectedFile(size = release.zipSize, sha256 = release.sha256)
+    } else {
+        null
     }
 
 /**
- * Downloads a release ZIP. The download service only accepts GitHub Release URLs (and their CDN
- * redirect targets) and checks size + SHA-256 before the file is published; on mismatch the
- * file is deleted and an error is shown, so [ReleaseDownloadHandle.downloadedUri] is only set
- * for verified files.
+ * Downloads a release ZIP. Hash-pinned releases only come from GitHub Release URLs (and their
+ * CDN redirect targets) and are checked against size + SHA-256 before the file is published;
+ * on mismatch the file is deleted and an error is shown, so [ReleaseDownloadHandle.downloadedUri]
+ * is only set for verified files. Releases without a recorded hash (module-store sources)
+ * download unverified, exactly as in FinaSU.
  */
 fun CoroutineScope.startReleaseDownload(context: Context, release: RepoRelease, handle: ReleaseDownloadHandle) {
     handle.isDownloading = true
@@ -207,7 +231,7 @@ fun CoroutineScope.startReleaseDownload(context: Context, release: RepoRelease, 
             },
             onDownloading = { handle.isDownloading = true },
             onProgress = { p -> launch(Dispatchers.Main) { handle.progress = p } },
-            expected = ExpectedFile(size = release.zipSize, sha256 = release.sha256),
+            expected = expectedFileOrNull(release),
             onFailed = { failed ->
                 Toast.makeText(context, downloadFailureMessage(context, failed, release.zipName), Toast.LENGTH_LONG).show()
             },

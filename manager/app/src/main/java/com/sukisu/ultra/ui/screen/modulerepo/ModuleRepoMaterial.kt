@@ -28,6 +28,10 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -48,6 +52,7 @@ import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.InstallMobile
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Button
@@ -66,6 +71,7 @@ import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.SelectableDropdownMenuItem
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -95,6 +101,7 @@ import com.sukisu.ultra.ui.util.customText
 import com.sukisu.ultra.ui.util.CustomTextKey
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -103,16 +110,20 @@ import kotlinx.coroutines.launch
 import com.sukisu.ultra.R
 import com.sukisu.ultra.data.model.RepoModule
 import com.sukisu.ultra.data.model.RepoRelease
+import com.sukisu.ultra.data.modulestore.StoreRepository
+import com.sukisu.ultra.data.modulestore.StoreSourceKind
 import com.sukisu.ultra.ui.component.ScrollToTopOnChange
 import com.sukisu.ultra.ui.component.dialog.ConfirmDialogHandle
 import com.sukisu.ultra.ui.component.dialog.rememberConfirmDialog
 import com.sukisu.ultra.ui.component.markdown.GithubMarkdown
+import com.sukisu.ultra.ui.component.material.ExpressiveDialog
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.ExpressiveTabRow
 import com.sukisu.ultra.ui.component.material.SearchAppBar
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
 import com.sukisu.ultra.ui.component.material.SegmentedItemContainer
 import com.sukisu.ultra.ui.component.material.SegmentedListItem
+import com.sukisu.ultra.ui.component.material.SegmentedTextField
 import com.sukisu.ultra.ui.component.material.TonalCard
 import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
@@ -185,6 +196,49 @@ fun ModuleRepoScreenMaterial(
                                             index = index,
                                             count = sortOptions.size
                                         ),
+                                        selectedLeadingIcon = {
+                                            Icon(
+                                                Icons.Filled.Check,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(MenuDefaults.LeadingIconSize),
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    var showSourceMenu by remember { mutableStateOf(false) }
+
+                    IconButton(
+                        onClick = { showSourceMenu = true }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.SwapHoriz,
+                            contentDescription = stringResource(R.string.module_repo_source)
+                        )
+
+                        DropdownMenuPopup(expanded = showSourceMenu, onDismissRequest = {
+                            showSourceMenu = false
+                        }) {
+                            val options = listOf(
+                                StoreSourceKind.OFFICIAL to R.string.module_repo_source_official,
+                                StoreSourceKind.CLUSTER to R.string.module_repo_source_cluster,
+                                StoreSourceKind.CUSTOM to R.string.module_repo_source_custom,
+                                StoreSourceKind.KERNELSU to R.string.module_repo_source_kernelsu,
+                            )
+                            DropdownMenuGroup(shapes = MenuDefaults.groupShapes()) {
+                                options.forEachIndexed { index, (kind, labelRes) ->
+                                    SelectableDropdownMenuItem(
+                                        text = { Text(stringResource(labelRes)) },
+                                        selected = state.sourceKind == kind,
+                                        onClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                            actions.onSelectSourceKind(kind)
+                                            showSourceMenu = false
+                                        },
+                                        shapes = MenuDefaults.itemShape(index = index, count = options.size),
                                         selectedLeadingIcon = {
                                             Icon(
                                                 Icons.Filled.Check,
@@ -286,7 +340,152 @@ fun ModuleRepoScreenMaterial(
                 )
             }
         }
+
+        if (state.showRepositoryPicker) {
+            RepositoryPickerDialog(
+                repositories = state.repositories,
+                loading = state.repositoryPickerLoading,
+                onSelect = actions.onSelectRepository,
+                onManualInput = actions.onOpenCustomUrlDialog,
+                onDismiss = actions.onDismissRepositoryPicker,
+            )
+        }
+
+        if (state.showCustomUrlDialog) {
+            CustomUrlDialog(
+                initialUrl = state.customUrl,
+                onConfirm = actions.onConfirmCustomUrl,
+                onDismiss = actions.onDismissCustomUrlDialog,
+            )
+        }
     }
+}
+
+@Composable
+private fun RepositoryPickerDialog(
+    repositories: List<StoreRepository>,
+    loading: Boolean,
+    onSelect: (StoreRepository) -> Unit,
+    onManualInput: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ExpressiveDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.module_repo_pick_repository)) },
+        text = {
+            when {
+                loading && repositories.isEmpty() -> Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    LoadingIndicator()
+                }
+
+                repositories.isEmpty() -> Text(
+                    text = stringResource(R.string.network_offline),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                else -> Column(
+                    modifier = Modifier
+                        .heightIn(max = 420.dp)
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    SegmentedColumn(
+                        content = repositories.map { repository ->
+                            {
+                                SegmentedListItem(
+                                    headlineContent = {
+                                        Text(
+                                            repository.name,
+                                            style = MaterialTheme.typography.titleMedium,
+                                        )
+                                    },
+                                    supportingContent = {
+                                        Column {
+                                            Text(
+                                                text = stringResource(
+                                                    R.string.module_repo_modules_count,
+                                                    repository.modulesCount,
+                                                ),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                            if (repository.description.isNotBlank()) {
+                                                Text(
+                                                    text = repository.description,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 2,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onClick = { onSelect(repository) },
+                                )
+                            }
+                        }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onManualInput) {
+                Text(stringResource(R.string.module_repo_manual_url))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun CustomUrlDialog(
+    initialUrl: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var url by remember(initialUrl) { mutableStateOf(initialUrl) }
+    val normalized = url.trim()
+    val isValid = normalized.startsWith("http://", ignoreCase = true) ||
+        normalized.startsWith("https://", ignoreCase = true)
+
+    ExpressiveDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.module_repo_custom_url)) },
+        text = {
+            SegmentedColumn(
+                content = listOf({
+                    SegmentedTextField(
+                        value = url,
+                        onValueChange = { url = it },
+                        placeholder = { Text(stringResource(R.string.module_repo_custom_url_hint)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                    )
+                }),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { if (isValid) onConfirm(normalized) },
+                enabled = isValid,
+            ) {
+                Text(stringResource(R.string.confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
 }
 
 

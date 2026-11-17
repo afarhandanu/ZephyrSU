@@ -4,6 +4,7 @@ package com.sukisu.ultra.data.repository
 
 import com.sukisu.ultra.data.model.SuiApp
 import com.sukisu.ultra.data.model.SuiStatus
+import com.sukisu.ultra.data.modulestore.StoreSourceKind
 
 import com.sukisu.ultra.ui.util.HomeCardSticker
 
@@ -125,6 +126,12 @@ interface SettingsRepository {
     var moduleManualOrder: String
     
     var moduleRepoSortOrder: String
+    // Module store source selection (M3.4, FinaSU multi-source): which backend feeds the
+    // Module Repo screen. KERNELSU is Nova's own registry; the other kinds are served by
+    // ModuleStoreSource implementations.
+    var repoSourceKind: StoreSourceKind
+    var repoCustomUrl: String
+    var repoSelectedRepositoryUrl: String
     var superuserShowSystemApps: Boolean
     var superuserShowOnlyPrimaryUserApps: Boolean
     var superuserSortOption: Int

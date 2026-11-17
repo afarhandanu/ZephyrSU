@@ -4,6 +4,8 @@ import androidx.compose.runtime.Immutable
 import com.sukisu.ultra.R
 import com.sukisu.ultra.data.model.RepoModule
 import com.sukisu.ultra.data.model.RepoModuleDetail
+import com.sukisu.ultra.data.modulestore.StoreRepository
+import com.sukisu.ultra.data.modulestore.StoreSourceKind
 import com.sukisu.ultra.data.registry.UnsupportedSchemaException
 import com.sukisu.ultra.data.script.ScriptRunRecord
 import com.sukisu.ultra.ui.component.SearchStatus
@@ -50,7 +52,7 @@ enum class RepoSort {
 
 data class ModuleRepoUiState(
     val isRefreshing: Boolean = false,
-    
+
     val hasLoaded: Boolean = false,
     val sortOrder: RepoSort = RepoSort.UPDATED,
     val offline: Boolean = false,
@@ -58,10 +60,19 @@ data class ModuleRepoUiState(
     val searchStatus: SearchStatus = SearchStatus(""),
     val searchResults: List<RepoModule> = emptyList(),
     val error: Throwable? = null,
-    
+
     val stale: Boolean = false,
-    
+
     val installedVersions: Map<String, Long> = emptyMap(),
+    // M3.4 (FinaSU multi-source): the active store backend. KERNELSU is Nova's own registry;
+    // the other kinds are served by ModuleStoreSource implementations.
+    val sourceKind: StoreSourceKind = StoreSourceKind.KERNELSU,
+    val customUrl: String = "",
+    val selectedRepositoryUrl: String = "",
+    val repositories: List<StoreRepository> = emptyList(),
+    val repositoryPickerLoading: Boolean = false,
+    val showRepositoryPicker: Boolean = false,
+    val showCustomUrlDialog: Boolean = false,
 ) {
     
     val emptyStateMessage: Int?
@@ -117,6 +128,12 @@ data class ModuleRepoActions(
     val onClearSearch: () -> Unit,
     val onSearchStatusChange: (SearchStatus) -> Unit,
     val onSetSortOrder: (RepoSort) -> Unit,
+    val onSelectSourceKind: (StoreSourceKind) -> Unit,
+    val onSelectRepository: (StoreRepository) -> Unit,
+    val onDismissRepositoryPicker: () -> Unit,
+    val onOpenCustomUrlDialog: () -> Unit,
+    val onDismissCustomUrlDialog: () -> Unit,
+    val onConfirmCustomUrl: (String) -> Unit,
     val onOpenRepoDetail: (RepoModule) -> Unit,
 )
 

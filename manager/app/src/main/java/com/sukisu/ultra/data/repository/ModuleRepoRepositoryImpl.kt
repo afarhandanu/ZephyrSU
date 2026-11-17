@@ -8,6 +8,11 @@ import com.sukisu.ultra.data.model.RepoModule
 import com.sukisu.ultra.data.model.RepoModuleDetail
 import com.sukisu.ultra.data.model.RepoModuleList
 import com.sukisu.ultra.data.model.RepoRelease
+import com.sukisu.ultra.data.modulestore.ModuleStoreRegistry
+import com.sukisu.ultra.data.modulestore.StoreSourceKind
+import com.sukisu.ultra.data.modulestore.isStoreSource
+import com.sukisu.ultra.data.modulestore.toRepoModuleDetail
+import com.sukisu.ultra.data.modulestore.toRepoModuleList
 import com.sukisu.ultra.data.registry.ApiAuthor
 import com.sukisu.ultra.data.registry.ApiModuleDetail
 import com.sukisu.ultra.data.registry.ApiModuleSummary
@@ -31,7 +36,9 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
-class ModuleRepoRepositoryImpl : ModuleRepoRepository {
+class ModuleRepoRepositoryImpl(
+    private val settings: SettingsRepository = SettingsRepositoryImpl(),
+) : ModuleRepoRepository {
 
     companion object {
         private const val TAG = "ModuleRepoRepository"
@@ -72,7 +79,19 @@ class ModuleRepoRepositoryImpl : ModuleRepoRepository {
         }
     }
 
+    // M3.4 (FinaSU multi-source): the persisted source selection decides which backend feeds
+    // the list/detail/changelog. KERNELSU is Nova's own registry (RegistryClient); every other
+    // kind is served by a ModuleStoreSource and mapped to Nova's model. Update verification,
+    // registry-text fetch and registry-URL checks stay KSU-registry-only below on purpose:
+    // a store-source module is never a registry update.
+    private fun activeSourceKind(): StoreSourceKind = settings.repoSourceKind
+
     override suspend fun fetchModules(): Result<RepoModuleList> = withContext(Dispatchers.IO) {
+        if (activeSourceKind().isStoreSource()) {
+            return@withContext runCatching {
+                ModuleStoreRegistry.current(settings).list(null).getOrThrow().toRepoModuleList()
+            }.onFailure { Log.e(TAG, "store fetch modules failed", it) }
+        }
         runCatching {
             val load = client.loadCatalog()
             load.error?.let { Log.w(TAG, "registry fetch failed, using last good copy", it) }
@@ -86,6 +105,11 @@ class ModuleRepoRepositoryImpl : ModuleRepoRepository {
     }
 
     override suspend fun fetchDetail(moduleId: String): Result<RepoModuleDetail> = withContext(Dispatchers.IO) {
+        if (activeSourceKind().isStoreSource()) {
+            return@withContext runCatching {
+                ModuleStoreRegistry.current(settings).detail(moduleId).getOrThrow().toRepoModuleDetail()
+            }.onFailure { Log.e(TAG, "store fetch detail failed", it) }
+        }
         runCatching {
             val load = client.loadDetail(moduleId)
             load.error?.let { Log.w(TAG, "detail fetch failed, using last good copy", it) }
@@ -102,6 +126,19 @@ class ModuleRepoRepositoryImpl : ModuleRepoRepository {
     }
 
     override suspend fun fetchChangelogHtml(moduleId: String, tag: String?): String? = withContext(Dispatchers.IO) {
+        if (activeSourceKind().isStoreSource()) {
+            return@withContext runCatching {
+                val detail = ModuleStoreRegistry.current(settings).detail(moduleId).getOrThrow()
+                val releases = detail.releases
+                val release = if (tag != null) {
+                    releases.firstOrNull { it.version == tag }
+                } else {
+                    releases.firstOrNull { it.versionCode == detail.versionCode }
+                        ?: releases.firstOrNull()
+                }
+                release?.changelog?.takeIf { it.isNotBlank() }
+            }.getOrNull()
+        }
         runCatching {
             val detail = client.loadDetail(moduleId).detail
             val releases = detail.releases.filter { !it.prerelease }

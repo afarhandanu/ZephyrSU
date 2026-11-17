@@ -78,6 +78,16 @@
     <string name="module_repo_stars">GitHub stars</string>
     <string name="module_repo_attestation">Build provenance (attestation)</string>
     <string name="module_repo_release_page">Release page</string>
+    <string name="module_repo_source">Repository source</string>
+    <string name="module_repo_source_official">Built-in index</string>
+    <string name="module_repo_source_cluster">Community repositories</string>
+    <string name="module_repo_source_custom">Custom repository</string>
+    <string name="module_repo_source_kernelsu">KernelSU repository</string>
+    <string name="module_repo_pick_repository">Select repository</string>
+    <string name="module_repo_manual_url">Enter address manually</string>
+    <string name="module_repo_custom_url">Custom repository URL</string>
+    <string name="module_repo_custom_url_hint">https://example.com/</string>
+    <string name="module_repo_modules_count">%1$d modules</string>
     <string name="module_update_unverifiable">The update of %s could not be verified against the module repository and was not downloaded</string>
     <string name="confirm">Confirm</string>
     <string name="uninstall">Uninstall</string>
