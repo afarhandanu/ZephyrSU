@@ -55,6 +55,13 @@ data class SuSFSUiState(
     val kstatConfigs: Set<String> = emptySet(),
     val addKstatPaths: Set<String> = emptySet(),
 
+    // 重定向规则 (M4.4, ported from FinaSU)
+    val redirectRules: Set<String> = emptySet(),
+
+    // LKM 扩展 (M4.4, ported from FinaSU)
+    val hiddenModules: Set<String> = emptySet(),
+    val mountPrefixes: Set<String> = emptySet(),
+
     // 已启用功能
     val enabledFeatures: List<EnabledFeature> = emptyList(),
     val isLoadingFeatures: Boolean = false,
@@ -71,11 +78,17 @@ data class SuSFSUiState(
     val showAddAppPathDialog: Boolean = false,
     val showAddKstatStaticallyDialog: Boolean = false,
     val showAddKstatDialog: Boolean = false,
+    val showAddRedirectDialog: Boolean = false,
+    val showAddHiddenModuleDialog: Boolean = false,
+    val showAddMountPrefixDialog: Boolean = false,
 
     val showResetPathsDialog: Boolean = false,
     val showResetLoopPathsDialog: Boolean = false,
     val showResetSusMapsDialog: Boolean = false,
     val showResetKstatDialog: Boolean = false,
+    val showResetRedirectRulesDialog: Boolean = false,
+    val showResetHiddenModulesDialog: Boolean = false,
+    val showResetMountPrefixesDialog: Boolean = false,
 
     // 编辑中项
     val editingPath: String? = null,
@@ -83,6 +96,9 @@ data class SuSFSUiState(
     val editingSusMap: String? = null,
     val editingKstatConfig: String? = null,
     val editingKstatPath: String? = null,
+    val editingRedirectRule: String? = null,
+    val editingHiddenModule: String? = null,
+    val editingMountPrefix: String? = null,
 
     val error: Throwable? = null,
 )
@@ -95,7 +111,9 @@ enum class SuSFSTab(val displayNameRes: Int) {
     SUS_LOOP_PATHS(R.string.susfs_tab_sus_loop_paths),
     SUS_MAPS(R.string.susfs_tab_sus_maps),
     KSTAT_CONFIG(R.string.susfs_tab_kstat_config),
+    REDIRECT_RULES(R.string.susfs_tab_redirect_rules),
     PRIORITY_UID_FILTER(R.string.susfs_priority_uid_filter),
+    LKM_EXTENSIONS(R.string.susfs_tab_lkm_extensions),
     ENABLED_FEATURES(R.string.susfs_tab_enabled_features);
 
     companion object {
@@ -107,7 +125,9 @@ enum class SuSFSTab(val displayNameRes: Int) {
             "sus_loop_paths" -> SUS_LOOP_PATHS
             "sus_maps" -> SUS_MAPS
             "kstat", "kstat_config" -> KSTAT_CONFIG
+            "redirect", "redirect_rules" -> REDIRECT_RULES
             "priority_uid", "priority_uid_filter" -> PRIORITY_UID_FILTER
+            "lkm", "lkm_extensions" -> LKM_EXTENSIONS
             "enabled_features" -> ENABLED_FEATURES
             else -> null
         }

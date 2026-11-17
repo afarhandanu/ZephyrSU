@@ -23,6 +23,7 @@ pub mod cmd;
 pub mod util;
 
 pub use cmd::kstat::*;
+pub use cmd::lkm::*;
 pub use cmd::paths::*;
 pub use cmd::priority_uid_filter::*;
 pub use cmd::spoof::*;

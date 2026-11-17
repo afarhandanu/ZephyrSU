@@ -9,9 +9,9 @@ use anyhow::Result;
 use super::keys::{
     KEY_ADD_KSTAT_PATHS, KEY_BUILD_TIME_VALUE, KEY_CMDLINE_OR_BOOTCONFIG_PATH,
     KEY_ENABLE_AVC_LOG_SPOOFING, KEY_ENABLE_CLEANUP_RESIDUE, KEY_ENABLE_HIDE_BL, KEY_ENABLE_LOG,
-    KEY_EXECUTE_IN_POST_FS_DATA, KEY_HIDE_SUS_MOUNTS_FOR_ALL_PROCS, KEY_KSTAT_CONFIGS,
-    KEY_PRIORITY_UID_FILTER, KEY_SUS_LOOP_PATHS, KEY_SUS_MAPS, KEY_SUS_PATH_UID_FILTER,
-    KEY_SUS_PATHS, KEY_UNAME_VALUE,
+    KEY_EXECUTE_IN_POST_FS_DATA, KEY_HIDDEN_MODULES, KEY_HIDE_SUS_MOUNTS_FOR_ALL_PROCS,
+    KEY_KSTAT_CONFIGS, KEY_MOUNT_PREFIXES, KEY_PRIORITY_UID_FILTER, KEY_REDIRECT_RULES,
+    KEY_SUS_LOOP_PATHS, KEY_SUS_MAPS, KEY_SUS_PATH_UID_FILTER, KEY_SUS_PATHS, KEY_UNAME_VALUE,
 };
 use super::store::load_config;
 
@@ -47,6 +47,56 @@ pub fn join_kstat_configs(configs: &[String]) -> String {
     configs.join(";;")
 }
 
+/// One persisted open-redirect rule: `target` is opened as `destination`
+/// for processes in `uid_scheme` (0-2, the verified scopes FinaSU offers).
+/// Ported from FinaSU's SUSFS redirect rules; Nova previously had only the
+/// one-shot `susfs add-open-redirect` command with no persistence.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RedirectRule {
+    pub target: String,
+    pub destination: String,
+    pub uid_scheme: u32,
+}
+
+/// Split a `;;`-joined `target|destination|uid_scheme` record list,
+/// skipping malformed entries (same tolerant style as `split_paths`).
+/// The manager validates rules before saving; this is the second line of
+/// defence for hand-edited config values.
+pub fn split_redirect_rules(raw: &str) -> Vec<RedirectRule> {
+    if raw.is_empty() {
+        return Vec::new();
+    }
+    raw.split(";;")
+        .filter_map(|entry| {
+            let mut parts = entry.split('|');
+            let target = parts.next()?;
+            let destination = parts.next()?;
+            let scheme = parts.next()?;
+            if parts.next().is_some() || target.is_empty() || destination.is_empty() {
+                return None;
+            }
+            let uid_scheme = scheme.parse::<u32>().ok()?;
+            if uid_scheme > 2 {
+                return None;
+            }
+            Some(RedirectRule {
+                target: target.to_string(),
+                destination: destination.to_string(),
+                uid_scheme,
+            })
+        })
+        .collect()
+}
+
+#[allow(dead_code)]
+pub fn join_redirect_rules(rules: &[RedirectRule]) -> String {
+    rules
+        .iter()
+        .map(|rule| format!("{}|{}|{}", rule.target, rule.destination, rule.uid_scheme))
+        .collect::<Vec<_>>()
+        .join(";;")
+}
+
 /// Load config from disk and convert to `ModuleConfig` for
 /// `susfs_module::install_module`.
 pub fn load_module_config() -> Result<ModuleConfig> {
@@ -58,6 +108,9 @@ pub fn load_module_config() -> Result<ModuleConfig> {
     let sus_maps_raw = get(KEY_SUS_MAPS);
     let kstat_configs_raw = get(KEY_KSTAT_CONFIGS);
     let add_kstat_paths_raw = get(KEY_ADD_KSTAT_PATHS);
+    let redirect_rules_raw = get(KEY_REDIRECT_RULES);
+    let hidden_modules_raw = get(KEY_HIDDEN_MODULES);
+    let mount_prefixes_raw = get(KEY_MOUNT_PREFIXES);
 
     Ok(ModuleConfig {
         uname_value: get(KEY_UNAME_VALUE),
@@ -76,6 +129,9 @@ pub fn load_module_config() -> Result<ModuleConfig> {
         enable_cleanup_residue: get(KEY_ENABLE_CLEANUP_RESIDUE) == "true",
         enable_avc_log_spoofing: get(KEY_ENABLE_AVC_LOG_SPOOFING) == "true",
         cmdline_or_bootconfig_path: get(KEY_CMDLINE_OR_BOOTCONFIG_PATH),
+        redirect_rules: split_redirect_rules(&redirect_rules_raw),
+        hidden_modules: split_paths(&hidden_modules_raw),
+        mount_prefixes: split_paths(&mount_prefixes_raw),
     })
 }
 
@@ -100,4 +156,7 @@ pub struct ModuleConfig {
     pub enable_cleanup_residue: bool,
     pub enable_avc_log_spoofing: bool,
     pub cmdline_or_bootconfig_path: String,
+    pub redirect_rules: Vec<RedirectRule>,
+    pub hidden_modules: Vec<String>,
+    pub mount_prefixes: Vec<String>,
 }

@@ -924,6 +924,16 @@ enum Susfs {
         /// blksize (`default` keeps the current value)
         blksize: String,
     },
+    /// Hide a kernel module name from module listings (LKM SuSFS only)
+    AddHideModule {
+        /// module name to hide
+        name: String,
+    },
+    /// Hide a mount prefix from mount listings (LKM SuSFS only)
+    AddHideMountPrefix {
+        /// mount prefix path to hide
+        path: String,
+    },
     /// Manage the SuSFS Magisk auto-start module
     Module {
         #[cfg(target_arch = "aarch64")]
@@ -1711,6 +1721,8 @@ pub fn run() -> Result<()> {
                     &blocks,
                     &blksize,
                 ),
+                Susfs::AddHideModule { name } => susfs::add_hidden_module(&name),
+                Susfs::AddHideMountPrefix { path } => susfs::add_mount_prefix(&path),
                 Susfs::Module { command } => {
                     use crate::susfs_module;
                     match command {

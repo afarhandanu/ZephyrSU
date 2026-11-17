@@ -25,6 +25,18 @@ pub const KEY_ENABLE_CLEANUP_RESIDUE: &str = "enable_cleanup_residue";
 pub const KEY_ENABLE_HIDE_BL: &str = "enable_hide_bl";
 pub const KEY_ENABLE_AVC_LOG_SPOOFING: &str = "enable_avc_log_spoofing";
 pub const KEY_CMDLINE_OR_BOOTCONFIG_PATH: &str = "cmdline_or_bootconfig_path";
+/// Open-redirect rules, `;;`-joined `target|destination|uid_scheme` records
+/// (same record style as `KEY_KSTAT_CONFIGS`). Ported from FinaSU's SUSFS
+/// redirect rules; Nova previously had only the one-shot
+/// `susfs add-open-redirect` command with no persistence.
+pub const KEY_REDIRECT_RULES: &str = "redirect_rules";
+/// LKM hidden module names (`/proc/susfs_hide_modules`), `;`-joined.
+/// Ported from FinaSU's `lkm.hidden_modules`; Nova only detected the proc
+/// node before, with no way to set entries.
+pub const KEY_HIDDEN_MODULES: &str = "hidden_modules";
+/// LKM hidden mount prefixes (`/proc/susfs_hide_mounts`), `;`-joined.
+/// Ported from FinaSU's `lkm.mount_prefixes`.
+pub const KEY_MOUNT_PREFIXES: &str = "mount_prefixes";
 
 /// All known config keys, in load order.
 ///
@@ -50,4 +62,7 @@ pub const ALL_KEYS: &[&str] = &[
     KEY_ENABLE_HIDE_BL,
     KEY_ENABLE_AVC_LOG_SPOOFING,
     KEY_CMDLINE_OR_BOOTCONFIG_PATH,
+    KEY_REDIRECT_RULES,
+    KEY_HIDDEN_MODULES,
+    KEY_MOUNT_PREFIXES,
 ];

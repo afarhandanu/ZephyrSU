@@ -48,6 +48,9 @@ fn install_at(module_path: &Path, config: &ModuleConfig) -> anyhow::Result<()> {
                 config.enable_log,
                 config.enable_hide_bl,
                 config.enable_cleanup_residue,
+                &config.redirect_rules,
+                &config.hidden_modules,
+                &config.mount_prefixes,
             ),
         ),
         (

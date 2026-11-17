@@ -170,12 +170,125 @@ internal fun SuSFSDialogs(uiState: SuSFSUiState, viewModel: SuSFSViewModel) {
         initialValue = uiState.editingKstatPath ?: ""
     )
 
+    AddRedirectDialog(
+        showDialog = uiState.showAddRedirectDialog,
+        onDismiss = { viewModel.closeAddRedirectDialog() },
+        onConfirm = { rule ->
+            val oldRecord = uiState.editingRedirectRule
+            viewModel.performOperation {
+                val success = if (oldRecord != null) {
+                    SuSFSManager.editRedirectRule(context, oldRecord, rule)
+                } else {
+                    SuSFSManager.addRedirectRule(context, rule)
+                }
+                check(success)
+                viewModel.refreshConfig()
+                viewModel.closeAddRedirectDialog()
+            }
+        },
+        isLoading = uiState.isLoading,
+        titleRes = if (uiState.editingRedirectRule != null) R.string.susfs_edit_redirect_rule else R.string.susfs_add_redirect_rule,
+        initialRule = uiState.editingRedirectRule
+    )
+
+    AddPathDialog(
+        showDialog = uiState.showAddHiddenModuleDialog,
+        onDismiss = { viewModel.closeAddHiddenModuleDialog() },
+        onConfirm = { name ->
+            val oldName = uiState.editingHiddenModule
+            viewModel.performOperation {
+                val success = if (oldName != null) {
+                    SuSFSManager.editHiddenModule(context, oldName, name)
+                } else {
+                    SuSFSManager.addHiddenModule(context, name)
+                }
+                check(success)
+                viewModel.refreshConfig()
+                viewModel.closeAddHiddenModuleDialog()
+            }
+        },
+        isLoading = uiState.isLoading,
+        titleRes = if (uiState.editingHiddenModule != null) R.string.susfs_edit_hidden_module else R.string.susfs_add_hidden_module,
+        labelRes = R.string.susfs_hidden_module_label,
+        initialValue = uiState.editingHiddenModule ?: ""
+    )
+
+    AddPathDialog(
+        showDialog = uiState.showAddMountPrefixDialog,
+        onDismiss = { viewModel.closeAddMountPrefixDialog() },
+        onConfirm = { path ->
+            val oldPath = uiState.editingMountPrefix
+            viewModel.performOperation {
+                val success = if (oldPath != null) {
+                    SuSFSManager.editMountPrefix(context, oldPath, path)
+                } else {
+                    SuSFSManager.addMountPrefix(context, path)
+                }
+                check(success)
+                viewModel.refreshConfig()
+                viewModel.closeAddMountPrefixDialog()
+            }
+        },
+        isLoading = uiState.isLoading,
+        titleRes = if (uiState.editingMountPrefix != null) R.string.susfs_edit_mount_prefix else R.string.susfs_add_mount_prefix,
+        labelRes = R.string.susfs_mount_prefix_label,
+        initialValue = uiState.editingMountPrefix ?: ""
+    )
+
     ConfirmDialog(
         showDialog = uiState.showConfirmReset,
         onDismiss = { viewModel.toggleConfirmReset(false) },
         onConfirm = { viewModel.resetAll(context) },
         titleRes = R.string.susfs_reset_confirm_title,
         messageRes = R.string.susfs_reset_confirm_title,
+        isLoading = uiState.isLoading
+    )
+
+    ConfirmDialog(
+        showDialog = uiState.showResetRedirectRulesDialog,
+        onDismiss = { viewModel.toggleResetRedirectRulesDialog(false) },
+        onConfirm = {
+            viewModel.performOperation {
+                SuSFSManager.saveRedirectRules(emptySet())
+                if (SuSFSManager.isAutoStartEnabled()) SuSFSManager.configureAutoStart(context, true)
+                viewModel.refreshConfig()
+                viewModel.toggleResetRedirectRulesDialog(false)
+            }
+        },
+        titleRes = R.string.susfs_reset_redirect_rules_title,
+        messageRes = R.string.susfs_reset_redirect_rules_message,
+        isLoading = uiState.isLoading
+    )
+
+    ConfirmDialog(
+        showDialog = uiState.showResetHiddenModulesDialog,
+        onDismiss = { viewModel.toggleResetHiddenModulesDialog(false) },
+        onConfirm = {
+            viewModel.performOperation {
+                SuSFSManager.saveHiddenModules(emptySet())
+                if (SuSFSManager.isAutoStartEnabled()) SuSFSManager.configureAutoStart(context, true)
+                viewModel.refreshConfig()
+                viewModel.toggleResetHiddenModulesDialog(false)
+            }
+        },
+        titleRes = R.string.susfs_reset_hidden_modules_title,
+        messageRes = R.string.susfs_reset_hidden_modules_message,
+        isLoading = uiState.isLoading
+    )
+
+    ConfirmDialog(
+        showDialog = uiState.showResetMountPrefixesDialog,
+        onDismiss = { viewModel.toggleResetMountPrefixesDialog(false) },
+        onConfirm = {
+            viewModel.performOperation {
+                SuSFSManager.saveMountPrefixes(emptySet())
+                if (SuSFSManager.isAutoStartEnabled()) SuSFSManager.configureAutoStart(context, true)
+                viewModel.refreshConfig()
+                viewModel.toggleResetMountPrefixesDialog(false)
+            }
+        },
+        titleRes = R.string.susfs_reset_mount_prefixes_title,
+        messageRes = R.string.susfs_reset_mount_prefixes_message,
         isLoading = uiState.isLoading
     )
 
@@ -374,6 +487,21 @@ internal fun SuSFSTabContent(uiState: SuSFSUiState, viewModel: SuSFSViewModel) {
                 onUpdateKstatFullClone = { path -> viewModel.performOperation { check(SuSFSManager.updateKstatFullClone(context, path)) } }
             )
         }
+        SuSFSTab.REDIRECT_RULES -> {
+            RedirectRulesContent(
+                redirectRules = uiState.redirectRules,
+                isLoading = uiState.isLoading,
+                onAddRule = { viewModel.openAddRedirectDialog() },
+                onRemoveRule = { record ->
+                    viewModel.performOperation {
+                        check(SuSFSManager.removeRedirectRule(record))
+                        viewModel.refreshConfig()
+                    }
+                },
+                onEditRule = { viewModel.openAddRedirectDialog(it) },
+                onReset = { viewModel.toggleResetRedirectRulesDialog(true) }
+            )
+        }
         SuSFSTab.PRIORITY_UID_FILTER -> {
             com.sukisu.ultra.ui.component.ConfigResults(uiState.priorityUidFilterResults)
             PriorityUidFilterContent(
@@ -382,6 +510,32 @@ internal fun SuSFSTabContent(uiState: SuSFSUiState, viewModel: SuSFSViewModel) {
                 onSelectApps = { viewModel.showPriorityAppsDialog(true) },
                 onApply = { viewModel.applyPriorityUidFilter(context, uiState.priorityUidFilter) },
                 onClear = { viewModel.applyPriorityUidFilter(context, emptySet()) },
+            )
+        }
+        SuSFSTab.LKM_EXTENSIONS -> {
+            LkmExtensionsContent(
+                hiddenModules = uiState.hiddenModules,
+                mountPrefixes = uiState.mountPrefixes,
+                isLoading = uiState.isLoading,
+                isLkm = uiState.runtimeInfo?.implementation == "LKM",
+                onAddModule = { viewModel.openAddHiddenModuleDialog() },
+                onRemoveModule = { name ->
+                    viewModel.performOperation {
+                        check(SuSFSManager.removeHiddenModule(name))
+                        viewModel.refreshConfig()
+                    }
+                },
+                onEditModule = { viewModel.openAddHiddenModuleDialog(it) },
+                onAddPrefix = { viewModel.openAddMountPrefixDialog() },
+                onRemovePrefix = { path ->
+                    viewModel.performOperation {
+                        check(SuSFSManager.removeMountPrefix(path))
+                        viewModel.refreshConfig()
+                    }
+                },
+                onEditPrefix = { viewModel.openAddMountPrefixDialog(it) },
+                onResetModules = { viewModel.toggleResetHiddenModulesDialog(true) },
+                onResetPrefixes = { viewModel.toggleResetMountPrefixesDialog(true) }
             )
         }
         SuSFSTab.ENABLED_FEATURES -> {

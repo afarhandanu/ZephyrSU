@@ -25,6 +25,17 @@ object SuSFSConfig {
     const val KEY_ENABLE_HIDE_BL = "enable_hide_bl"
     const val KEY_ENABLE_AVC_LOG_SPOOFING = "enable_avc_log_spoofing"
     const val KEY_CMDLINE_OR_BOOTCONFIG_PATH = "cmdline_or_bootconfig_path"
+    // Open-redirect rules, ";;"-joined "target|destination|uid_scheme" records
+    // (same record style as KEY_KSTAT_CONFIGS). Ported from FinaSU's SUSFS
+    // redirect rules; Nova previously had only the one-shot
+    // `susfs add-open-redirect` command with no persistence.
+    const val KEY_REDIRECT_RULES = "redirect_rules"
+    // LKM hidden module names ("/proc/susfs_hide_modules"), ";"-joined.
+    // Ported from FinaSU's lkm.hidden_modules.
+    const val KEY_HIDDEN_MODULES = "hidden_modules"
+    // LKM hidden mount prefixes ("/proc/susfs_hide_mounts"), ";"-joined.
+    // Ported from FinaSU's lkm.mount_prefixes.
+    const val KEY_MOUNT_PREFIXES = "mount_prefixes"
 
     // Defaults
     const val DEFAULT_UNAME = "default"

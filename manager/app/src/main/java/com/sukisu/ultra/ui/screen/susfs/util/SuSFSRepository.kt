@@ -113,6 +113,27 @@ object SuSFSRepository {
         check(SuSFSConfig.setMulti(SuSFSConfig.KEY_ADD_KSTAT_PATHS, paths, ";")) { SAVE_FAILURE }
     }
 
+    suspend fun getRedirectRules(): Set<String> =
+        SuSFSConfig.getMulti(SuSFSConfig.KEY_REDIRECT_RULES, ";;")
+
+    suspend fun saveRedirectRules(rules: Set<String>) {
+        check(SuSFSConfig.setMulti(SuSFSConfig.KEY_REDIRECT_RULES, rules, ";;")) { SAVE_FAILURE }
+    }
+
+    suspend fun getHiddenModules(): Set<String> =
+        SuSFSConfig.getMulti(SuSFSConfig.KEY_HIDDEN_MODULES)
+
+    suspend fun saveHiddenModules(modules: Set<String>) {
+        check(SuSFSConfig.setMulti(SuSFSConfig.KEY_HIDDEN_MODULES, modules, ";")) { SAVE_FAILURE }
+    }
+
+    suspend fun getMountPrefixes(): Set<String> =
+        SuSFSConfig.getMulti(SuSFSConfig.KEY_MOUNT_PREFIXES)
+
+    suspend fun saveMountPrefixes(prefixes: Set<String>) {
+        check(SuSFSConfig.setMulti(SuSFSConfig.KEY_MOUNT_PREFIXES, prefixes, ";")) { SAVE_FAILURE }
+    }
+
     suspend fun saveSusPathUidFilter(packages: Set<String>) {
         check(SuSFSConfig.set(
             SuSFSConfig.KEY_SUS_PATH_UID_FILTER,
