@@ -182,6 +182,12 @@ enum Commands {
         command: crate::uts_view::Command,
     },
 
+    /// Manage the built-in NoMount VFS redirection driver
+    Nomount {
+        #[command(subcommand)]
+        command: Nomount,
+    },
+
     /// For developers
     Debug {
         #[command(subcommand)]
@@ -790,6 +796,91 @@ enum Umount {
     Apply,
     /// Clear custom umount paths (wipe kernel list)
     ClearCustom,
+}
+
+#[derive(clap::Subcommand, Debug)]
+enum Nomount {
+    /// Print driver state, rule counts, and UID exclusions
+    Status {
+        /// Emit a single JSON object instead of key=value lines
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Build the rule list from the modules without touching the kernel
+    Inject {
+        /// Report what would be applied; never talks to the kernel
+        #[arg(long)]
+        dry_run: bool,
+        /// Emit a single JSON object instead of key=value lines
+        #[arg(long)]
+        json: bool,
+        /// With --dry-run, print every rule and every skip reason
+        #[arg(long)]
+        verbose: bool,
+    },
+
+    /// Show the rules the kernel currently holds
+    List {
+        /// Emit a single JSON object instead of text
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Drop every redirection rule; UID exclusions are kept
+    Clear,
+
+    /// Add one module's rules to the running kernel without a reboot
+    HotLoad {
+        /// module id
+        id: String,
+    },
+
+    /// Remove one module's rules from the running kernel without a reboot
+    HotUnload {
+        /// module id
+        id: String,
+    },
+
+    /// Manage the UID exclusions (apps that see the stock filesystem)
+    Uid {
+        #[command(subcommand)]
+        command: NomountUid,
+    },
+}
+
+#[derive(clap::Subcommand, Debug)]
+enum NomountUid {
+    /// Show the active and stored UID exclusions
+    List {
+        /// Emit a single JSON object instead of text
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Replace the stored list with these UIDs, then apply it
+    Set {
+        /// UIDs to keep; omit to clear the list
+        uids: Vec<u32>,
+    },
+
+    /// Add these UIDs to the stored list, then apply it
+    Add {
+        #[arg(required = true)]
+        uids: Vec<u32>,
+    },
+
+    /// Remove these UIDs from the stored list, then apply it
+    Del {
+        #[arg(required = true)]
+        uids: Vec<u32>,
+    },
+
+    /// Whether isolated processes also see the stock filesystem
+    Isolated {
+        /// `on` or `off`
+        state: String,
+    },
 }
 
 #[cfg(target_arch = "aarch64")]
@@ -1596,6 +1687,56 @@ pub fn run() -> Result<()> {
             }
         },
         Commands::UtsView { command } => crate::uts_view::run(&command),
+        Commands::Nomount { command } => match command {
+            Nomount::Status { json } => {
+                let status = crate::nomount::Status::collect()?;
+                crate::nomount::log_probe(&status.probe);
+                status.print(json)
+            }
+            Nomount::Inject {
+                dry_run,
+                json,
+                verbose,
+            } => crate::nomount::inject(dry_run, json, verbose),
+            Nomount::List { json } => crate::nomount::print_rules(json),
+            Nomount::Clear => crate::nomount::clear_rules(),
+            Nomount::HotLoad { id } => {
+                let applied = crate::nomount::hot_load(&id)?;
+                println!("rules_applied={applied}");
+                Ok(())
+            }
+            Nomount::HotUnload { id } => {
+                let removed = crate::nomount::hot_unload(&id)?;
+                println!("rules_removed={removed}");
+                Ok(())
+            }
+            Nomount::Uid { command } => match command {
+                NomountUid::List { json } => crate::nomount::uid_edit(None, &[], json),
+                NomountUid::Set { uids } => {
+                    crate::nomount::uid_edit(Some(crate::nomount::UidEdit::Set), &uids, false)
+                }
+                NomountUid::Add { uids } => {
+                    crate::nomount::uid_edit(Some(crate::nomount::UidEdit::Add), &uids, false)
+                }
+                NomountUid::Del { uids } => {
+                    crate::nomount::uid_edit(Some(crate::nomount::UidEdit::Del), &uids, false)
+                }
+                NomountUid::Isolated { state } => {
+                    let on = match state.as_str() {
+                        "on" | "1" | "true" => true,
+                        "off" | "0" | "false" => false,
+                        other => {
+                            anyhow::bail!("invalid isolated state {other:?}; expected on or off")
+                        }
+                    };
+                    crate::nomount::uid_edit(
+                        Some(crate::nomount::UidEdit::Isolated(on)),
+                        &[],
+                        false,
+                    )
+                }
+            },
+        },
         Commands::BootRestore(boot_restore) => crate::boot_patch::restore(boot_restore),
         Commands::BootPatchV2(patch) => crate::lkm_image::patch_boot(&patch),
         Commands::BootKernel { command } => crate::boot_patch::boot_kernel(command),
