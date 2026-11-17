@@ -58,6 +58,7 @@ fun BuiltinZygiskMiuix(
     onToggleInjected: (String) -> Unit,
     onSetOption: (String, String) -> Unit,
     onToggleGroup: () -> Unit,
+    onRecover: () -> Unit,
 ) {
     val scrollBehavior = MiuixScrollBehavior()
     val hasCustomBackground = LocalBackgroundImagePath.current.isNotEmpty()
@@ -130,6 +131,22 @@ fun BuiltinZygiskMiuix(
                                 tint = colorScheme.onBackground,
                             )
                         }
+                    }
+
+                    if (status.startupBlocked) {
+                        HorizontalDivider()
+                        BasicComponent(
+                            title = stringResource(R.string.builtin_zygisk_recover),
+                            summary = listOf(
+                                stringResource(
+                                    R.string.builtin_zygisk_startup_blocked_summary,
+                                    status.startupFailures
+                                ),
+                                stringResource(startupFailureText(status.startupFailureCode)),
+                                status.startupFailureDetail,
+                            ).filterNotNull().filter { it.isNotBlank() }.joinToString("\n"),
+                            onClick = onRecover,
+                        )
                     }
 
                     HorizontalDivider()

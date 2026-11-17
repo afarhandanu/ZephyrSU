@@ -263,6 +263,10 @@ pub fn on_boot_completed() {
     // the early boot already injected them.
     builtin_zygisk_step("arm", crate::builtin_zygisk::ensure_armed);
 
+    // BootGuard receipt: a boot that confirmed injection clears the latch, a
+    // boot that never did keeps its counted attempt. Never fails the boot.
+    builtin_zygisk_step("boot-guard", crate::boot_guard::on_boot_completed);
+
     crate::preinit::on_boot_completed();
 
     run_stage("boot-completed", ScriptWait::NoWait);

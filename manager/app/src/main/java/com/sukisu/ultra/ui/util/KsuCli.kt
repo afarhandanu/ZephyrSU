@@ -1485,6 +1485,12 @@ data class BuiltinZygiskStatus(
     val monitor: ZygiskProcess? = null,
     val daemons: List<ZygiskProcess> = emptyList(),
     val version: String = "",
+    /// BootGuard latch state, from `ksud zygisk status`. Absent (old ksud) reads as unlatched.
+    val startupFailures: Long = 0,
+    val startupBlocked: Boolean = false,
+    val startupFailureCode: String? = null,
+    val startupFailureDetail: String? = null,
+    val startupGeneration: Long = 0,
 )
 
 data class BuiltinZygiskConfig(
@@ -1511,6 +1517,16 @@ fun setBuiltinZygiskConfig(key: String, value: String): Boolean {
     return runCatching {
         val shell = getRootShell()
         val out = ShellUtils.fastCmd(shell, "${getKsuDaemonPath()} zygisk config set $key $value").trim()
+        out == "true"
+    }.getOrDefault(false)
+}
+
+/// Clear the BootGuard startup latch and re-enable Zygisk for the next boot.
+/// Nothing starts now; the recovery takes effect on reboot.
+fun recoverBuiltinZygisk(): Boolean {
+    return runCatching {
+        val shell = getRootShell()
+        val out = ShellUtils.fastCmd(shell, "${getKsuDaemonPath()} zygisk recover").trim()
         out == "true"
     }.getOrDefault(false)
 }
@@ -1545,6 +1561,11 @@ fun getBuiltinZygiskStatus(): BuiltinZygiskStatus {
             monitor = json.optJSONObject("monitor")?.toZygiskProcess(),
             daemons = daemons,
             version = json.optString("version", ""),
+            startupFailures = json.optLong("startup_failures", 0),
+            startupBlocked = json.optBoolean("startup_blocked", false),
+            startupFailureCode = json.optString("startup_failure_code").takeIf { it.isNotBlank() },
+            startupFailureDetail = json.optString("startup_failure_detail").takeIf { it.isNotBlank() },
+            startupGeneration = json.optLong("startup_generation", 0),
         )
     }.getOrDefault(BuiltinZygiskStatus())
 }

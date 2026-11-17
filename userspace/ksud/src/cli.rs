@@ -261,6 +261,10 @@ enum ZygiskCommand {
     Modules,
     /// Reload built-in Zygisk
     Rearm,
+    /// Clear the BootGuard startup failure latch without enabling or starting injection
+    ResetFailures,
+    /// Restore automatic startup for the next boot without starting now
+    Recover,
     /// Read or change NyaZygisk options (`config.prop`)
     Config {
         #[command(subcommand)]
@@ -1365,6 +1369,9 @@ pub fn run() -> Result<()> {
                     .into_iter()
                     .map(|(pid, name)| serde_json::json!({ "name": name, "pid": pid }))
                     .collect();
+                // A guard that cannot be read reports as unlatched: a corrupt
+                // latch file must never brick the status report.
+                let guard = crate::boot_guard::status().unwrap_or_default();
                 println!(
                     "{}",
                     serde_json::json!({
@@ -1378,6 +1385,11 @@ pub fn run() -> Result<()> {
                         "daemons": daemons_json,
                         "version": version,
                         "version_code": version_code,
+                        "startup_failures": guard.failures,
+                        "startup_blocked": guard.blocked,
+                        "startup_failure_code": guard.failure_code,
+                        "startup_failure_detail": guard.failure_detail,
+                        "startup_generation": guard.generation,
                     })
                 );
                 Ok(())
@@ -1451,6 +1463,16 @@ pub fn run() -> Result<()> {
             }
             ZygiskCommand::Rearm => {
                 crate::builtin_zygisk::rearm()?;
+                println!("true");
+                Ok(())
+            }
+            ZygiskCommand::ResetFailures => {
+                crate::boot_guard::reset_failures()?;
+                println!("true");
+                Ok(())
+            }
+            ZygiskCommand::Recover => {
+                crate::boot_guard::recover()?;
                 println!("true");
                 Ok(())
             }

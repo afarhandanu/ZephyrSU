@@ -1259,6 +1259,10 @@ fn start_switched() -> Result<()> {
             bail!("the built-in did not inject the running zygote");
         }
     }
+    // A confirmed live injection clears the latch like a boot receipt does.
+    if let Err(e) = crate::boot_guard::record_confirmed_injection() {
+        warn!("Built-in Zygisk BootGuard receipt was not recorded: {e:#}");
+    }
     Ok(())
 }
 
@@ -1558,6 +1562,15 @@ pub fn bootstrap() -> Result<()> {
         return Ok(());
     }
 
+    // BootGuard: a latched startup refuses a fresh monitor. The error is only
+    // logged by the boot path; a live switch reports it to the caller.
+    crate::boot_guard::check_start_allowed()?;
+    // One counted attempt per userspace cycle; a guard I/O error never blocks
+    // startup, it only leaves this boot uncounted.
+    if let Err(e) = crate::boot_guard::record_startup_attempt() {
+        warn!("Built-in Zygisk BootGuard attempt was not recorded: {e:#}");
+    }
+
     info!("Bootstrapping built-in Zygisk");
     let dir = Path::new(BUILTIN_ZYGISK_DIR);
     ensure_dir_exists(dir)?;
@@ -1571,6 +1584,12 @@ pub fn bootstrap() -> Result<()> {
             "built-in Zygisk tracer binary not found in {}",
             dir.display()
         );
+        if let Err(e) = crate::boot_guard::record_issue(
+            crate::boot_guard::StartupIssueCode::TracerMissing,
+            "built-in Zygisk tracer binary not found",
+        ) {
+            warn!("Built-in Zygisk BootGuard diagnostic was not recorded: {e:#}");
+        }
         return Ok(());
     };
 
@@ -1598,6 +1617,12 @@ pub fn bootstrap() -> Result<()> {
     }
     if let Err(e) = cmd.spawn() {
         error!("Failed to spawn built-in Zygisk monitor: {e}");
+        if let Err(e) = crate::boot_guard::record_issue(
+            crate::boot_guard::StartupIssueCode::MonitorSpawnFailed,
+            format!("{e:#}"),
+        ) {
+            warn!("Built-in Zygisk BootGuard diagnostic was not recorded: {e:#}");
+        }
     }
     Ok(())
 }

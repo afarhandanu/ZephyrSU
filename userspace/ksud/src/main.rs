@@ -15,6 +15,8 @@
 mod apk_sign;
 mod assets;
 mod boot_facts;
+#[cfg(target_os = "android")]
+mod boot_guard;
 mod boot_hide;
 mod boot_patch;
 #[cfg(target_os = "android")]

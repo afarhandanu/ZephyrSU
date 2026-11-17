@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,6 +46,7 @@ internal fun BuiltinZygiskMaterial(
     onToggleInjected: (String) -> Unit,
     onSetOption: (String, String) -> Unit,
     onToggleGroup: () -> Unit,
+    onRecover: () -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -111,6 +113,44 @@ internal fun BuiltinZygiskMaterial(
                                             )
                                         }
                                     }
+                                }
+                            }
+
+                            if (status.startupBlocked) {
+                                add {
+                                    SegmentedListItem(
+                                        onClick = onRecover,
+                                        headlineContent = {
+                                            Text(
+                                                text = stringResource(R.string.builtin_zygisk_recover),
+                                                fontWeight = FontWeight.SemiBold,
+                                            )
+                                        },
+                                        supportingContent = {
+                                            Text(
+                                                text = listOf(
+                                                    stringResource(
+                                                        R.string.builtin_zygisk_startup_blocked_summary,
+                                                        status.startupFailures
+                                                    ),
+                                                    stringResource(
+                                                        startupFailureText(status.startupFailureCode)
+                                                    ),
+                                                    status.startupFailureDetail,
+                                                ).filterNotNull().filter { it.isNotBlank() }
+                                                    .joinToString("\n"),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        },
+                                        leadingContent = {
+                                            Icon(
+                                                Icons.Filled.Warning,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
+                                        },
+                                    )
                                 }
                             }
 

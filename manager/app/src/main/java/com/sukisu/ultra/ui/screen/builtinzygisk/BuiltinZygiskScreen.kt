@@ -76,6 +76,11 @@ fun BuiltinZygiskScreen() {
     val onToggleGroup = {
         viewModel.toggleInjectedGroup()
     }
+    val onRecover = {
+        viewModel.recover {
+            Toast.makeText(context, R.string.builtin_zygisk_recover_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     exitTarget?.let { name ->
         SwitchRestartDialog(
@@ -100,6 +105,7 @@ fun BuiltinZygiskScreen() {
             onToggleInjected = onToggleInjected,
             onSetOption = onSetOption,
             onToggleGroup = onToggleGroup,
+            onRecover = onRecover,
         )
         UiMode.Material -> BuiltinZygiskMaterial(
             uiState = state,
@@ -109,6 +115,7 @@ fun BuiltinZygiskScreen() {
             onToggleInjected = onToggleInjected,
             onSetOption = onSetOption,
             onToggleGroup = onToggleGroup,
+            onRecover = onRecover,
         )
     }
 }
