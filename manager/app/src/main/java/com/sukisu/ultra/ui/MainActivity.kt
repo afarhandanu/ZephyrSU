@@ -136,6 +136,7 @@ import com.sukisu.ultra.ui.screen.susfs.SuSFSScreen
 import com.sukisu.ultra.ui.screen.template.AppProfileTemplateScreen
 import com.sukisu.ultra.ui.screen.templateeditor.TemplateEditorScreen
 import com.sukisu.ultra.ui.screen.umountmanager.UmountManagerScreen
+import com.sukisu.ultra.ui.screen.uts.UtsViewScreen
 import com.sukisu.ultra.data.sui.SuiPermissionHost
 import com.sukisu.ultra.ui.screen.builtinzygisk.BuiltinZygiskScreen
 import com.sukisu.ultra.ui.screen.sui.SuiPermissionRequestDialog
@@ -466,6 +467,7 @@ class MainActivity : FragmentActivity() {
                                 entry<Route.SuSFS>(swipeDismiss = swipeDismiss)  { key -> SuSFSScreen(key.tab) }
                                 entry<Route.Tool>(swipeDismiss = swipeDismiss)  { ToolsScreen() }
                                 entry<Route.UmountManager>(swipeDismiss = swipeDismiss)  { UmountManagerScreen() }
+                                entry<Route.UtsView>(swipeDismiss = swipeDismiss)  { UtsViewScreen() }
                                 entry<Route.KernelModules>(swipeDismiss = swipeDismiss)  { KernelModulesScreen() }
                                 entry<Route.DynamicManagers>(swipeDismiss = swipeDismiss) { DynamicManagersScreen() }
                                 entry<Route.Extensions>(swipeDismiss = swipeDismiss) { ExtensionsScreen() }

@@ -123,6 +123,10 @@ pub fn on_post_fs_data() -> Result<()> {
         warn!("init extensions failed: {e}");
     }
 
+    // Apply a persisted UTS View template (no-op without the kernel driver;
+    // failures are recorded as a runtime error, never fail the boot).
+    crate::uts_view::boot_apply();
+
     #[cfg(target_arch = "aarch64")]
     if let Err(e) = kpm::booted_load() {
         warn!("KPM: Failed to start KPM watcher: {e}");

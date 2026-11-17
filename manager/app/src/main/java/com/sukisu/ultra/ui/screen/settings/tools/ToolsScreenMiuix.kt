@@ -15,6 +15,7 @@ import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -108,6 +109,10 @@ fun ToolsMiuix(
                         onOpen = actions.onOpenKernelModules
                     )
 
+                    UtsViewSectionMiuix(
+                        onOpen = actions.onOpenUtsView
+                    )
+
                     AllowlistBackupSectionMiuix(
                         onBackup = actions.onBackupAllowlist,
                         onRestore = actions.onRestoreAllowlist
@@ -166,6 +171,31 @@ private fun KernelModulesSectionMiuix(
                     imageVector = Icons.Rounded.Memory,
                     modifier = Modifier.padding(end = 6.dp),
                     contentDescription = title,
+                    tint = colorScheme.onBackground
+                )
+            },
+            onClick = onOpen
+        )
+    }
+}
+
+@Composable
+private fun UtsViewSectionMiuix(
+    onOpen: () -> Unit,
+) {
+    AppCard(
+        modifier = Modifier
+            .padding(top = 12.dp)
+            .fillMaxWidth(),
+    ) {
+        ArrowPreference(
+            title = stringResource(R.string.settings_uts_view),
+            summary = stringResource(R.string.settings_uts_view_summary),
+            startAction = {
+                Icon(
+                    imageVector = Icons.Rounded.TextFields,
+                    modifier = Modifier.padding(end = 6.dp),
+                    contentDescription = stringResource(R.string.settings_uts_view),
                     tint = colorScheme.onBackground
                 )
             },

@@ -103,6 +103,9 @@ fun ToolsScreen() {
         onOpenKernelModules = {
             navigator.push(Route.KernelModules)
         },
+        onOpenUtsView = {
+            navigator.push(Route.UtsView)
+        },
     )
 
     val state = ToolsUiState(

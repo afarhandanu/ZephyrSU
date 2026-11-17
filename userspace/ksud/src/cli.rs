@@ -176,6 +176,12 @@ enum Commands {
         command: BootInfo,
     },
 
+    /// Manage the built-in UTS view (uname spoof)
+    UtsView {
+        #[command(subcommand)]
+        command: crate::uts_view::Command,
+    },
+
     /// For developers
     Debug {
         #[command(subcommand)]
@@ -1557,6 +1563,7 @@ pub fn run() -> Result<()> {
                 return Ok(());
             }
         },
+        Commands::UtsView { command } => crate::uts_view::run(&command),
         Commands::BootRestore(boot_restore) => crate::boot_patch::restore(boot_restore),
         Commands::BootPatchV2(patch) => crate::lkm_image::patch_boot(&patch),
         Commands::BootKernel { command } => crate::boot_patch::boot_kernel(command),

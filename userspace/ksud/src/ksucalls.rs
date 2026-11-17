@@ -308,6 +308,21 @@ pub fn set_feature(feature_id: u32, value: u64) -> Result<()> {
     Ok(())
 }
 
+/// Get the kernel UTS View config (uname spoof template + observation counters).
+/// Only meaningful on kernels carrying the UTS View driver (KSU_FEATURE_UTS_VIEW).
+pub fn get_uts_view_config() -> Result<ksu_uapi::ksu_uts_view_config> {
+    let mut cmd = unsafe { std::mem::zeroed::<ksu_uapi::ksu_uts_view_config>() };
+    ksuctl(ksu_uapi::KSU_IOCTL_GET_UTS_VIEW_CONFIG, &raw mut cmd)?;
+    Ok(cmd)
+}
+
+/// Set the kernel UTS View config.
+pub fn set_uts_view_config(config: &ksu_uapi::ksu_uts_view_config) -> Result<()> {
+    let mut cmd = *config;
+    ksuctl(ksu_uapi::KSU_IOCTL_SET_UTS_VIEW_CONFIG, &raw mut cmd)?;
+    Ok(())
+}
+
 pub fn get_wrapped_fd(fd: RawFd) -> Result<RawFd> {
     let mut cmd = ksu_uapi::ksu_get_wrapper_fd_cmd {
         fd: fd as u32,

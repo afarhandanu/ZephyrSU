@@ -449,6 +449,15 @@ object AiFeatureCatalog : AiFeatureService {
                 solution = rootSolution(a, manager),
             ),
             entry(
+                id = "uts_view",
+                title = "UTS View",
+                summary = "Show different kernel information to selected apps, or to every app.",
+                target = ManagerAiTarget.Push(Route.UtsView),
+                supported = kernelReady,
+                reason = rootReason(a, manager),
+                solution = rootSolution(a, manager),
+            ),
+            entry(
                 id = "dynamic_managers",
                 title = "Dynamic manager",
                 summary = "Allow additional manager packages/signatures to use the kernel interface.",
