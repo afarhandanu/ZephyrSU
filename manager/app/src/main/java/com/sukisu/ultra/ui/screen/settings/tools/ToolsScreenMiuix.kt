@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Restore
@@ -113,6 +114,10 @@ fun ToolsMiuix(
                         onOpen = actions.onOpenUtsView
                     )
 
+                    NomountSectionMiuix(
+                        onOpen = actions.onOpenNomount
+                    )
+
                     AllowlistBackupSectionMiuix(
                         onBackup = actions.onBackupAllowlist,
                         onRestore = actions.onRestoreAllowlist
@@ -196,6 +201,31 @@ private fun UtsViewSectionMiuix(
                     imageVector = Icons.Rounded.TextFields,
                     modifier = Modifier.padding(end = 6.dp),
                     contentDescription = stringResource(R.string.settings_uts_view),
+                    tint = colorScheme.onBackground
+                )
+            },
+            onClick = onOpen
+        )
+    }
+}
+
+@Composable
+private fun NomountSectionMiuix(
+    onOpen: () -> Unit,
+) {
+    AppCard(
+        modifier = Modifier
+            .padding(top = 12.dp)
+            .fillMaxWidth(),
+    ) {
+        ArrowPreference(
+            title = stringResource(R.string.settings_nomount),
+            summary = stringResource(R.string.settings_nomount_summary),
+            startAction = {
+                Icon(
+                    imageVector = Icons.Filled.Layers,
+                    modifier = Modifier.padding(end = 6.dp),
+                    contentDescription = stringResource(R.string.settings_nomount),
                     tint = colorScheme.onBackground
                 )
             },

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Restore
@@ -78,6 +79,10 @@ fun ToolsMaterial(
 
                     UtsViewSectionMaterial(
                         onOpen = actions.onOpenUtsView
+                    )
+
+                    NomountSectionMaterial(
+                        onOpen = actions.onOpenNomount
                     )
 
                     AllowlistBackupSectionMaterial(
@@ -155,6 +160,28 @@ private fun UtsViewSectionMaterial(
                     IconTile(
                         Icons.Rounded.TextFields,
                         stringResource(R.string.settings_uts_view),
+                    )
+                },
+                onClick = onOpen,
+            )
+        })
+    )
+}
+
+@Composable
+private fun NomountSectionMaterial(
+    onOpen: () -> Unit,
+) {
+    SegmentedColumn(
+        modifier = Modifier.padding(top = 12.dp),
+        content = listOf({
+            SegmentedListItem(
+                headlineContent = { Text(stringResource(R.string.settings_nomount)) },
+                supportingContent = { Text(stringResource(R.string.settings_nomount_summary)) },
+                leadingContent = {
+                    IconTile(
+                        Icons.Filled.Layers,
+                        stringResource(R.string.settings_nomount),
                     )
                 },
                 onClick = onOpen,

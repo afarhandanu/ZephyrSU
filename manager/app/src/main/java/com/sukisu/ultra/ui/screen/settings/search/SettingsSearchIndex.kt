@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.FormatAlignLeft
 import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LayersClear
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Lock
@@ -559,6 +560,20 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
             icon = Icons.Rounded.TextFields,
             route = Route.UtsView,
             aliases = listOf("uts", "uts view", "kernel identity", "uname", "spoof", "identitas kernel"),
+        )
+    )
+
+    // NoMount (VFS path redirection), reached from the Tools page
+    add(
+        pageRow(
+            groupKey = SettingsSection.TOOLS,
+            groupTitleRes = R.string.settings_search_section_tools,
+            id = "tools.nomount",
+            titleRes = R.string.settings_nomount,
+            summaryRes = R.string.settings_nomount_summary,
+            icon = Icons.Filled.Layers,
+            route = Route.Nomount,
+            aliases = listOf("nomount", "no mount", "exclusion", "injection", "redirection", "pengalihan"),
         )
     )
 
