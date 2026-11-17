@@ -206,4 +206,12 @@ interface SettingsRepository {
     fun setBootHideEnabled(enabled: Boolean): Boolean
     suspend fun getSELinuxMode(): String
     suspend fun setSELinuxMode(enforcing: Boolean): Boolean
+
+    // Local backup (M4.5, ported from FinaSU). WebDAV prefs are intentionally absent —
+    // WebDAV is out of scope for M4.5.
+    var backupLocalEnabled: Boolean
+    var backupModulesEnabled: Boolean
+    var backupAllowlistEnabled: Boolean
+    var backupPartitions: Set<String>
+    var backupBeforeFlash: Boolean
 }

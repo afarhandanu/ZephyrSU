@@ -883,6 +883,11 @@ fun SettingPagerMiuix(
 
                         ModuleBannerSettingsSectionMiuix()
 
+                        // Local backup (ported from FinaSU, Milestone 4.5).
+                        BackupSettingsContentMiuix(
+                            modifier = Modifier.bringIntoViewRequester(requester(SettingsSection.BACKUP))
+                        )
+
                         SuiStatusSectionMiuix(
                             state = uiState,
                             actions = actions,

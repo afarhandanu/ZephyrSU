@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -29,11 +30,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
 import com.sukisu.ultra.R
+import com.sukisu.ultra.data.backup.BackupKind
+import com.sukisu.ultra.data.backup.PreFlashBackup
+import com.sukisu.ultra.data.backup.backupResult
+import com.sukisu.ultra.data.backup.source.ModuleInstaller
+import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.data.repository.isAutoDeleteModuleZipEnabled
+import com.sukisu.ultra.ksuApp
 import com.sukisu.ultra.ui.util.FlashResult
 import com.sukisu.ultra.ui.util.LkmSelection
 import com.sukisu.ultra.ui.util.downloadBoot
 import com.sukisu.ultra.ui.util.flashModule
+import com.sukisu.ultra.ui.util.getFileName
 import com.sukisu.ultra.ui.util.installBoot
 import com.sukisu.ultra.ui.util.patchKpmBoot
 import com.sukisu.ultra.ui.util.restoreBoot
@@ -191,6 +199,82 @@ fun flashIt(
     }
 }
 
+/** Kinds of content a flash may overwrite, and therefore should be snapshotted first. */
+private fun FlashIt.preliminaryBackupKinds(): Set<BackupKind> = when (this) {
+    is FlashIt.FlashBoot -> setOf(BackupKind.BOOT)
+    is FlashIt.DownloadBoot -> setOf(BackupKind.BOOT)
+    is FlashIt.PatchKpmBoot -> setOf(BackupKind.BOOT)
+    is FlashIt.FlashModules -> setOf(BackupKind.MODULE)
+    FlashIt.FlashRestore, FlashIt.FlashUninstall -> emptySet()
+}
+
+/** Partitions a flash is about to write, so the snapshot can cover them even if not selected. */
+private fun FlashIt.overwrittenPartitions(): Set<String> = when (this) {
+    is FlashIt.FlashBoot -> setOfNotNull(partition)
+    is FlashIt.DownloadBoot -> setOf(partition)
+    else -> emptySet()
+}
+
+/**
+ * Best-effort pre-flash snapshot (M4.5, ported from FinaSU). Runs before [flashIt] when the
+ * "Back up before flashing" setting is on; backup failures must not abort flashing, but coroutine
+ * cancellation must still propagate. No-op unless the setting is enabled, so the default flash
+ * path is unchanged.
+ */
+private suspend fun snapshotBeforeFlash(flashIt: FlashIt, onStdout: (String) -> Unit) {
+    val kinds = flashIt.preliminaryBackupKinds()
+    val settings = SettingsRepositoryImpl()
+    if (kinds.isEmpty() || !settings.backupBeforeFlash) return
+    if (!settings.backupLocalEnabled) return
+    var installers = emptyList<ModuleInstaller>()
+    try {
+        if (settings.backupModulesEnabled) installers = stageModuleInstallers(flashIt)
+        PreFlashBackup(settings = settings).run(
+            kinds = kinds,
+            extraPartitions = flashIt.overwrittenPartitions(),
+            moduleInstallers = installers,
+            onLog = onStdout,
+            slotSuffix = null,
+        )
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        onStdout("Pre-flash backup failed: ${e.message ?: e.toString()}")
+    } finally {
+        installers.forEach { it.file.delete() }
+    }
+}
+
+/** Copies selected ZIPs without changing the user's documents; unreadable picks are skipped. */
+private suspend fun stageModuleInstallers(flashIt: FlashIt): List<ModuleInstaller> {
+    val modules = flashIt as? FlashIt.FlashModules ?: return emptyList()
+    if (modules.uris.isEmpty()) return emptyList()
+    val created = mutableListOf<File>()
+    return try {
+        withContext(Dispatchers.IO) {
+            modules.uris.mapNotNull { uri ->
+                backupResult {
+                    val name = uri.getFileName(ksuApp) ?: "module.zip"
+                    val file = File.createTempFile("module-installer-", ".zip", ksuApp.cacheDir)
+                    created += file
+                    try {
+                        requireNotNull(ksuApp.contentResolver.openInputStream(uri)) {
+                            "Cannot read module archive"
+                        }.use { input -> file.outputStream().use { input.copyTo(it) } }
+                        ModuleInstaller(file, originalName = name)
+                    } catch (t: Throwable) {
+                        file.delete()
+                        throw t
+                    }
+                }.getOrNull()
+            }
+        }
+    } catch (t: Throwable) {
+        created.forEach { it.delete() }
+        throw t
+    }
+}
+
 @Composable
 fun FlashEffect(
     flashIt: FlashIt,
@@ -207,19 +291,22 @@ fun FlashEffect(
         }
         var currentText = text
         val mainHandler = Handler(Looper.getMainLooper())
+        val appendLog: (String) -> Unit = {
+            val tempText = "$it\n"
+            if (tempText.startsWith("[H[J")) { // clear command
+                currentText = tempText.substring(6)
+            } else {
+                currentText += tempText
+            }
+            mainHandler.post {
+                onTextUpdate(currentText)
+            }
+            logContent.append(it).append("\n")
+        }
         withContext(Dispatchers.IO) {
-            flashIt(flashIt, onStdout = {
-                val tempText = "$it\n"
-                if (tempText.startsWith("[H[J")) { // clear command
-                    currentText = tempText.substring(6)
-                } else {
-                    currentText += tempText
-                }
-                mainHandler.post {
-                    onTextUpdate(currentText)
-                }
-                logContent.append(it).append("\n")
-            }, onStderr = {
+            // Pre-flash backup snapshot (M4.5); no-op unless the setting is enabled.
+            snapshotBeforeFlash(flashIt, onStdout = appendLog)
+            flashIt(flashIt, onStdout = appendLog, onStderr = {
                 logContent.append(it).append("\n")
             }).apply {
                 if (code != 0) {

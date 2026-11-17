@@ -129,6 +129,7 @@ import com.sukisu.ultra.ui.screen.modulerepo.ModuleRepoDetailScreen
 import com.sukisu.ultra.ui.screen.modulerepo.ModuleRepoScreen
 import com.sukisu.ultra.ui.screen.scriptrun.ScriptRunScreen
 import com.sukisu.ultra.ui.screen.settings.SettingPager
+import com.sukisu.ultra.ui.screen.settings.BackupListScreen
 import com.sukisu.ultra.ui.screen.settings.tools.ToolsScreen
 import com.sukisu.ultra.ui.screen.sulog.SulogScreen
 import com.sukisu.ultra.ui.screen.superuser.SuperUserPager
@@ -468,6 +469,7 @@ class MainActivity : FragmentActivity() {
                                 entry<Route.Tool>(swipeDismiss = swipeDismiss)  { ToolsScreen() }
                                 entry<Route.UmountManager>(swipeDismiss = swipeDismiss)  { UmountManagerScreen() }
                                 entry<Route.UtsView>(swipeDismiss = swipeDismiss)  { UtsViewScreen() }
+                                entry<Route.BackupList>(swipeDismiss = swipeDismiss)  { BackupListScreen() }
                                 entry<Route.KernelModules>(swipeDismiss = swipeDismiss)  { KernelModulesScreen() }
                                 entry<Route.DynamicManagers>(swipeDismiss = swipeDismiss) { DynamicManagersScreen() }
                                 entry<Route.Extensions>(swipeDismiss = swipeDismiss) { ExtensionsScreen() }

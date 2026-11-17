@@ -693,6 +693,11 @@ fun SettingPagerMaterial(
                 }
             }
 
+            // Local backup (ported from FinaSU, Milestone 4.5).
+            SettingsAnchor(SettingsSection.BACKUP, anchorRequesters) {
+                BackupSettingsContent()
+            }
+
             if (uiState.isLkmMode) {
                 SettingsAnchor(SettingsSection.UNINSTALL, anchorRequesters) {
                 SegmentedColumn(

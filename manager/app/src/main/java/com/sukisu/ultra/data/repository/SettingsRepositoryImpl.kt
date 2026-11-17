@@ -807,4 +807,29 @@ class SettingsRepositoryImpl : SettingsRepository {
 
     override suspend fun setSELinuxMode(enforcing: Boolean): Boolean =
         withContext(Dispatchers.IO) { setSELinuxEnforcing(enforcing) }
+
+    // Local backup (M4.5, ported from FinaSU). Defaults match FinaSU: local on, modules and
+    // allowlist on, boot/init_boot/vendor_boot selected, pre-flash snapshot off.
+    override var backupLocalEnabled: Boolean
+        get() = prefs.getBoolean("backup_local_enabled", true)
+        set(value) = prefs.edit { putBoolean("backup_local_enabled", value) }
+
+    override var backupModulesEnabled: Boolean
+        get() = prefs.getBoolean("backup_modules_enabled", true)
+        set(value) = prefs.edit { putBoolean("backup_modules_enabled", value) }
+
+    override var backupAllowlistEnabled: Boolean
+        get() = prefs.getBoolean("backup_allowlist_enabled", true)
+        set(value) = prefs.edit { putBoolean("backup_allowlist_enabled", value) }
+
+    override var backupPartitions: Set<String>
+        get() = prefs.getStringSet(
+            "backup_partitions",
+            setOf("boot", "init_boot", "vendor_boot"),
+        ) ?: emptySet()
+        set(value) = prefs.edit { putStringSet("backup_partitions", value) }
+
+    override var backupBeforeFlash: Boolean
+        get() = prefs.getBoolean("backup_before_flash", false)
+        set(value) = prefs.edit { putBoolean("backup_before_flash", value) }
 }

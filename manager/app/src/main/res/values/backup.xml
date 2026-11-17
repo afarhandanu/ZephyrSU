@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Local backup strings (M4.5, ported from FinaSU). English-only, like the other ported
+  feature strings (uts_view.xml). WebDAV strings are intentionally absent — WebDAV is out of
+  scope for M4.5 and split to a later sub-milestone.
+-->
+<resources>
+    <string name="settings_category_backup">Backup</string>
+    <string name="backup_section_targets">Backup to</string>
+    <string name="backup_section_content">What to back up</string>
+    <string name="backup_local_enabled">Local folder</string>
+    <string name="backup_local_summary">Saved to Download/ZephyrSU</string>
+    <string name="backup_open_folder">Open backup folder</string>
+    <string name="backup_modules">Modules</string>
+    <string name="backup_modules_summary">Archived before a flash from the installers you select</string>
+    <string name="backup_allowlist">Superuser list</string>
+    <string name="backup_no_partitions">No backupable partitions detected</string>
+    <string name="backup_partition_boot">Boot image</string>
+    <string name="backup_partition_boot_summary">boot · kernel, plus the ramdisk before Android 13</string>
+    <string name="backup_partition_init_boot">Init boot image</string>
+    <string name="backup_partition_init_boot_summary">init_boot · generic ramdisk only (Android 13 and later)</string>
+    <string name="backup_partition_vendor_boot">Vendor boot image</string>
+    <string name="backup_partition_vendor_boot_summary">vendor_boot · vendor kernel modules and device tree</string>
+    <string name="backup_now">Back up now</string>
+    <string name="backup_running">Backing up…</string>
+    <string name="backup_result">Backup finished: %1$d written, %2$d skipped, %3$d failed</string>
+    <string name="backup_loading">Loading…</string>
+    <string name="backup_delete">Delete</string>
+    <string name="backup_delete_confirm">Delete %1$s?</string>
+    <string name="backup_before_flash">Back up before flashing</string>
+    <string name="backup_before_flash_summary">Snapshot the modules or partitions a flash is about to overwrite</string>
+    <string name="backup_restore_title">Backups</string>
+    <string name="backup_open_list">Manage backups</string>
+    <string name="backup_empty_list">No backups yet</string>
+    <string name="backup_partitions">Partitions</string>
+    <string name="backup_restored">Restored %1$s</string>
+    <string name="backup_deleted">Deleted %1$s</string>
+</resources>
