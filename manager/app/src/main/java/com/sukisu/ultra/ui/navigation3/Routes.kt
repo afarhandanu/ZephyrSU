@@ -172,6 +172,10 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object UmountManager: Route
 
+    @Parcelize
+    @Serializable
+    data object UtsView: Route
+
     
     @Parcelize
     @Serializable

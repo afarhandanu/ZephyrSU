@@ -10,6 +10,10 @@ enum ksu_feature_id {
     // 5 was webview_zygote_umount (v3.3.0), keep it unused so stale configs don't apply
     KSU_FEATURE_SHELL_SU_ADB_ONLY = 6,
 
+    /* FinaSU's UTS View id; free here (7/8 unused). No kernel driver
+     * for it yet in ZephyrSU — ksud/manager only until M6 ports it. */
+    KSU_FEATURE_UTS_VIEW = 9,
+
     /*
      * Fork-local features start at 16. Upstream allocates from 0 upwards, so a
      * gap here keeps a rebase from silently renumbering a feature that the

@@ -431,6 +431,20 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
         )
     )
 
+    // UTS View (kernel identity spoofing), reached from the Tools page
+    add(
+        pageRow(
+            groupKey = SettingsSection.TOOLS,
+            groupTitleRes = R.string.settings_search_section_tools,
+            id = "tools.uts_view",
+            titleRes = R.string.settings_uts_view,
+            summaryRes = R.string.settings_uts_view_summary,
+            icon = Icons.Rounded.TextFields,
+            route = Route.UtsView,
+            aliases = listOf("uts", "uts view", "kernel identity", "uname", "spoof", "identitas kernel"),
+        )
+    )
+
     // Temporary root
     add(
         sectionRow(

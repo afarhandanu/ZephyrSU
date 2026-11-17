@@ -14,6 +14,7 @@ import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -75,6 +76,10 @@ fun ToolsMaterial(
                         onOpen = actions.onOpenKernelModules
                     )
 
+                    UtsViewSectionMaterial(
+                        onOpen = actions.onOpenUtsView
+                    )
+
                     AllowlistBackupSectionMaterial(
                         onBackup = actions.onBackupAllowlist,
                         onRestore = actions.onRestoreAllowlist
@@ -128,6 +133,28 @@ private fun KernelModulesSectionMaterial(
                     IconTile(
                         Icons.Rounded.Memory,
                         title,
+                    )
+                },
+                onClick = onOpen,
+            )
+        })
+    )
+}
+
+@Composable
+private fun UtsViewSectionMaterial(
+    onOpen: () -> Unit,
+) {
+    SegmentedColumn(
+        modifier = Modifier.padding(top = 12.dp),
+        content = listOf({
+            SegmentedListItem(
+                headlineContent = { Text(stringResource(R.string.settings_uts_view)) },
+                supportingContent = { Text(stringResource(R.string.settings_uts_view_summary)) },
+                leadingContent = {
+                    IconTile(
+                        Icons.Rounded.TextFields,
+                        stringResource(R.string.settings_uts_view),
                     )
                 },
                 onClick = onOpen,

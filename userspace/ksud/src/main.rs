@@ -87,6 +87,10 @@ mod unload;
 #[cfg(target_os = "android")]
 mod utils;
 #[cfg(target_os = "android")]
+mod uts_view;
+#[cfg(any(target_os = "android", test))]
+mod uts_view_config;
+#[cfg(target_os = "android")]
 mod version_spoof;
 
 #[cfg(target_os = "android")]
