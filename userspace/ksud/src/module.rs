@@ -250,7 +250,15 @@ impl SigchldBlock {
             }
             let timeout = libc::timespec {
                 tv_sec: remaining.as_secs() as libc::time_t,
-                tv_nsec: remaining.subsec_nanos() as libc::c_long, // subsec_nanos < 1e9, cannot overflow; c_long is i32 on armv7, i64 elsewhere, matching tv_nsec on every target
+                tv_nsec: {
+                    // subsec_nanos < 1e9, cannot overflow; c_long is i32 on armv7, i64
+                    // elsewhere, matching tv_nsec on every target. `From<u32>` does
+                    // not exist for i32 on armv7, so `as` is the only cast that
+                    // compiles on every target — clippy's ::from suggestion would
+                    // re-break the armv7 build.
+                    #[allow(clippy::cast_lossless)]
+                    remaining.subsec_nanos() as libc::c_long
+                },
             };
             // SIGCHLD stays blocked between waitpid and sigtimedwait to avoid lost wakeups.
             if unsafe {
