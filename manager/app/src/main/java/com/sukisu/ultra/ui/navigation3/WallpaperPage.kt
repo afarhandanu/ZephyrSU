@@ -1,6 +1,6 @@
 package com.sukisu.ultra.ui.navigation3
 
-import androidx.navigation3.runtime.NavKey
+import top.yukonga.miuix.kmp.nav.core.NavKey
 import com.sukisu.ultra.wallpaper.WallpaperConfig
 
 /**

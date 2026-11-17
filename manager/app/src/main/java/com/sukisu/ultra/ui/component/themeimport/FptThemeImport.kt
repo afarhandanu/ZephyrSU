@@ -191,9 +191,10 @@ private fun FptThemeImportDialog(
     )
 }
 
-/** Only the parts M5.1 can apply; page backgrounds, surfaces and home layout are M5.2/M5.3. */
+/** Page backgrounds and surfaces are applyable since M5.2; only the home layout still needs the home layouts (M5.3). */
 private val ThemePartOrder = listOf(
     ThemePart.COLORS, ThemePart.INTERFACE, ThemePart.MAIN_BACKGROUND,
+    ThemePart.PAGE_BACKGROUNDS, ThemePart.SURFACES,
     ThemePart.FONT, ThemePart.NAV_ICONS, ThemePart.MUSIC,
     ThemePart.SOUND, ThemePart.LANGUAGE,
 )

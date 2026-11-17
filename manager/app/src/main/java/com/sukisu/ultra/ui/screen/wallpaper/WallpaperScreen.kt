@@ -292,7 +292,7 @@ fun WallpaperScreen() {
         },
     )
 
-    val requestImport = rememberThemeImportRequest { result ->
+    val requestImport = rememberFptThemeImportRequest { result ->
             scope.launch {
                 snackbarHost.showSnackbar(
                     resources.getString(
