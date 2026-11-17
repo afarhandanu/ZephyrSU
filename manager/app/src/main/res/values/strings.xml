@@ -1376,6 +1376,7 @@
     <string name="app_icon_empty_custom">No custom icons yet</string>
     <string name="app_icon_empty_custom_summary">Import a ZIP archive to add your own icons</string>
     <string name="app_icon_builtin_zako">SukiSU Line Art</string>
+    <string name="app_icon_builtin_geometry">Geometry</string>
     <string name="app_icon_dynamic_color_title">Dynamic color</string>
     <string name="app_icon_dynamic_color_summary">Allow supported launchers to tint the icon with wallpaper colors (Android 13+)</string>
     <string name="app_icon_selected">Selected</string>
