@@ -191,12 +191,12 @@ private fun FptThemeImportDialog(
     )
 }
 
-/** Page backgrounds and surfaces are applyable since M5.2; only the home layout still needs the home layouts (M5.3). */
+/** Home layout is applyable since M5.3 (GridUI + its preference); all parts are offered now. */
 private val ThemePartOrder = listOf(
     ThemePart.COLORS, ThemePart.INTERFACE, ThemePart.MAIN_BACKGROUND,
     ThemePart.PAGE_BACKGROUNDS, ThemePart.SURFACES,
     ThemePart.FONT, ThemePart.NAV_ICONS, ThemePart.MUSIC,
-    ThemePart.SOUND, ThemePart.LANGUAGE,
+    ThemePart.SOUND, ThemePart.LANGUAGE, ThemePart.HOME_LAYOUT,
 )
 
 @Composable

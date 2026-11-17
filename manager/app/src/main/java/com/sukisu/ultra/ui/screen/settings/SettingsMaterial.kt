@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Adb
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Collections
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DeveloperMode
@@ -68,6 +69,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.R
+import com.sukisu.ultra.data.model.HomeLayoutStyle
 import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.KsuIsValid
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
@@ -403,6 +405,33 @@ fun SettingPagerMaterial(
                                 Icon(
                                     Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                     null
+                                )
+                            }
+                        )
+                    }
+                    add {
+                        // M5.3: only the layouts that exist are offered — Circle (Nova home)
+                        // and GridUI. Focus/Dashboard/Stats are not ported yet.
+                        val supportedHomeLayouts = listOf(HomeLayoutStyle.CIRCLE, HomeLayoutStyle.GRID)
+                        val homeLayoutItems = supportedHomeLayouts.map { style ->
+                            stringResource(
+                                when (style) {
+                                    HomeLayoutStyle.GRID -> R.string.settings_home_layout_grid
+                                    else -> R.string.settings_home_layout_circle
+                                }
+                            )
+                        }
+                        val selectedHomeLayout =
+                            supportedHomeLayouts.indexOf(uiState.homeLayoutStyle).coerceAtLeast(0)
+                        SegmentedDropdownItem(
+                            icon = Icons.Filled.GridView,
+                            title = stringResource(id = R.string.settings_home_layout),
+                            summary = stringResource(id = R.string.settings_home_layout_summary),
+                            items = homeLayoutItems,
+                            selectedIndex = selectedHomeLayout,
+                            onItemSelected = { index ->
+                                actions.onSetHomeLayoutStyle(
+                                    supportedHomeLayouts.getOrElse(index) { HomeLayoutStyle.DEFAULT }
                                 )
                             }
                         )

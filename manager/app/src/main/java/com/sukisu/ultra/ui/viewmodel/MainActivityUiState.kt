@@ -24,6 +24,8 @@ data class MainActivityUiState(
     val customBackgroundScrimPercent: Int = -35,
     
     val supportLinksStyle: String = "",
+    /** Active home layout token, see HomeLayoutStyle (M5.3). */
+    val homeLayoutStyle: String = com.sukisu.ultra.data.model.HomeLayoutStyle.DEFAULT,
     val supportLinksCustomTitle: String = "",
     val supportLinksCustomSubtitle: String = "",
     val supportLinksCustomUrl: String = "",

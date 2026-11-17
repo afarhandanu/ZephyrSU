@@ -14,6 +14,7 @@ import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.sukisu.ultra.Natives
 import com.sukisu.ultra.R
+import com.sukisu.ultra.data.model.HomeLayoutStyle
 import com.sukisu.ultra.data.model.SuiStatus
 import com.sukisu.ultra.data.model.SupportLinksStyle
 import com.sukisu.ultra.data.repository.SettingsRepository
@@ -100,6 +101,7 @@ class SettingsViewModel(
         customHomeTitle = repo.customHomeTitle,
         customTexts = repo.customTexts,
         supportLinksStyle = repo.supportLinksStyle,
+        homeLayoutStyle = repo.homeLayoutStyle,
         supportLinksCustomTitle = repo.supportLinksCustomTitle,
         supportLinksCustomSubtitle = repo.supportLinksCustomSubtitle,
         supportLinksCustomUrl = repo.supportLinksCustomUrl,
@@ -265,6 +267,7 @@ class SettingsViewModel(
                     customHomeTitle = repo.customHomeTitle,
                     customTexts = repo.customTexts,
                     supportLinksStyle = repo.supportLinksStyle,
+                    homeLayoutStyle = repo.homeLayoutStyle,
                     supportLinksCustomTitle = repo.supportLinksCustomTitle,
                     supportLinksCustomSubtitle = repo.supportLinksCustomSubtitle,
                     supportLinksCustomUrl = repo.supportLinksCustomUrl,
@@ -2716,6 +2719,12 @@ homePillScale = repo.homePillScale,
         val normalized = SupportLinksStyle.fromValue(style)
         repo.supportLinksStyle = normalized
         _uiState.update { it.copy(supportLinksStyle = normalized) }
+    }
+
+    fun setHomeLayoutStyle(style: String) {
+        val normalized = HomeLayoutStyle.fromValue(style)
+        repo.homeLayoutStyle = normalized
+        _uiState.update { it.copy(homeLayoutStyle = normalized) }
     }
 
     fun setSupportLinksCustomTitle(title: String) {

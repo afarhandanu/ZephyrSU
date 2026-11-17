@@ -127,6 +127,8 @@ data class SettingsUiState(
     val customHomeTitle: String = "",
     val customTexts: Map<String, String> = emptyMap(),
     val supportLinksStyle: String = "",
+    /** Home layout token, see HomeLayoutStyle (M5.3). */
+    val homeLayoutStyle: String = com.sukisu.ultra.data.model.HomeLayoutStyle.DEFAULT,
     val supportLinksCustomTitle: String = "",
     val supportLinksCustomSubtitle: String = "",
     val supportLinksCustomUrl: String = "",
@@ -256,6 +258,7 @@ data class SettingsScreenActions(
     val onOpenWallpaper: () -> Unit = {},
     val onOpenWallpaperGallery: () -> Unit = {},
     val onSetUiModeIndex: (Int) -> Unit,
+    val onSetHomeLayoutStyle: (String) -> Unit = {},
     val onOpenProfileTemplate: () -> Unit,
     val onSetLanguage: (String) -> Unit,
     val onSetSuCompatMode: (Int) -> Unit,

@@ -60,7 +60,9 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.filled.GridView
 import com.sukisu.ultra.R
+import com.sukisu.ultra.data.model.HomeLayoutStyle
 import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.KsuIsValid
 import com.sukisu.ultra.ui.component.SearchStatus
@@ -495,6 +497,36 @@ fun SettingPagerMiuix(
                                 )
                             },
                             onClick = actions.onOpenWallpaperGallery
+                        )
+                        // M5.3: only the layouts that exist are offered — Circle (Nova home)
+                        // and GridUI. Focus/Dashboard/Stats are not ported yet.
+                        val supportedHomeLayouts = listOf(HomeLayoutStyle.CIRCLE, HomeLayoutStyle.GRID)
+                        val homeLayoutItems = supportedHomeLayouts.map { style ->
+                            stringResource(
+                                when (style) {
+                                    HomeLayoutStyle.GRID -> R.string.settings_home_layout_grid
+                                    else -> R.string.settings_home_layout_circle
+                                }
+                            )
+                        }
+                        OverlayDropdownPreference(
+                            title = stringResource(id = R.string.settings_home_layout),
+                            summary = stringResource(id = R.string.settings_home_layout_summary),
+                            items = homeLayoutItems,
+                            startAction = {
+                                Icon(
+                                    Icons.Filled.GridView,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(id = R.string.settings_home_layout),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            selectedIndex = supportedHomeLayouts.indexOf(uiState.homeLayoutStyle).coerceAtLeast(0),
+                            onSelectedIndexChange = { index ->
+                                actions.onSetHomeLayoutStyle(
+                                    supportedHomeLayouts.getOrElse(index) { HomeLayoutStyle.DEFAULT }
+                                )
+                            }
                         )
 
                     }
