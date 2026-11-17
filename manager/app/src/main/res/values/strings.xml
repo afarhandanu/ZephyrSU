@@ -323,6 +323,7 @@
     <string name="settings_search_section_temporary_root">Temporary Root</string>
     <string name="settings_search_section_security">Security</string>
     <string name="settings_search_section_module_behaviour">Module Behaviour</string>
+    <string name="settings_search_section_backup">Backup</string>
     <string name="settings_search_section_uninstall">Uninstall</string>
     <string name="settings_search_section_diagnostics">Diagnostics</string>
     <string name="settings_section_background">Background</string>

@@ -458,6 +458,15 @@ object AiFeatureCatalog : AiFeatureService {
                 solution = rootSolution(a, manager),
             ),
             entry(
+                id = "backup",
+                title = "Backup",
+                summary = "Back up the superuser list, installed modules and boot images to Download/ZephyrSU, restore or delete them, and snapshot before flashing.",
+                target = ManagerAiTarget.Push(Route.BackupList),
+                supported = kernelReady,
+                reason = rootReason(a, manager),
+                solution = rootSolution(a, manager),
+            ),
+            entry(
                 id = "dynamic_managers",
                 title = "Dynamic manager",
                 summary = "Allow additional manager packages/signatures to use the kernel interface.",

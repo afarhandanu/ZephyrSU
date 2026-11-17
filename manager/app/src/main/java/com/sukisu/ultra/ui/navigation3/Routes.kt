@@ -176,6 +176,10 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object UtsView: Route
 
+    @Parcelize
+    @Serializable
+    data object BackupList: Route
+
     
     @Parcelize
     @Serializable

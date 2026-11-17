@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.filled.Adb
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Circle
@@ -152,6 +153,7 @@ val settingsSearchGroupOrder: List<String> = listOf(
     SettingsSection.TEMPORARY_ROOT,
     SettingsSection.SECURITY,
     SettingsSection.MODULE_BEHAVIOUR,
+    SettingsSection.BACKUP,
     SettingsSection.UNINSTALL,
     SettingsSection.DIAGNOSTICS,
     GROUP_THEME,
@@ -202,6 +204,11 @@ val settingsSearchSections: List<SettingsSearchSectionMeta> = listOf(
         SettingsSection.MODULE_BEHAVIOUR,
         R.string.settings_search_section_module_behaviour,
         Icons.Filled.Extension,
+    ),
+    SettingsSearchSectionMeta(
+        SettingsSection.BACKUP,
+        R.string.settings_search_section_backup,
+        Icons.Filled.Backup,
     ),
     SettingsSearchSectionMeta(
         SettingsSection.UNINSTALL,
@@ -804,6 +811,31 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
             anchor = SettingsSection.MODULE_BEHAVIOUR,
             aliases = listOf("module", "banner", "opacity", "transparan"),
             available = { ModuleBannerConfig.enabled && ModuleBannerConfig.customOpacityEnabled },
+        )
+    )
+
+    // Backup (local backup, ported from FinaSU, Milestone 4.5)
+    add(
+        sectionRow(
+            groupKey = SettingsSection.BACKUP,
+            groupTitleRes = R.string.settings_search_section_backup,
+            id = "backup.backup",
+            titleRes = R.string.settings_category_backup,
+            summaryRes = R.string.backup_local_summary,
+            icon = Icons.Filled.Backup,
+            anchor = SettingsSection.BACKUP,
+            aliases = listOf("backup", "restore", "cadangan", "pulihkan"),
+        )
+    )
+    add(
+        pageRow(
+            groupKey = SettingsSection.BACKUP,
+            groupTitleRes = R.string.settings_search_section_backup,
+            id = "backup.backup_list",
+            titleRes = R.string.backup_restore_title,
+            icon = Icons.Filled.Backup,
+            route = Route.BackupList,
+            aliases = listOf("backup", "restore", "list", "cadangan", "daftar"),
         )
     )
 

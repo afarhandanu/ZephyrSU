@@ -15,6 +15,7 @@ object SettingsSection {
     const val TEMPORARY_ROOT = "temporary_root"
     const val SECURITY = "security"
     const val MODULE_BEHAVIOUR = "module_behaviour"
+    const val BACKUP = "backup"
     const val UNINSTALL = "uninstall"
     const val DIAGNOSTICS = "diagnostics"
 
@@ -43,7 +44,7 @@ object SettingsSection {
     
     val ALL: Set<String> = setOf(
         GENERAL, TOP, PROFILE_TEMPLATES, EXTENSIONS, TOOLS, TEMPORARY_ROOT, SECURITY,
-        MODULE_BEHAVIOUR, UNINSTALL, DIAGNOSTICS,
+        MODULE_BEHAVIOUR, BACKUP, UNINSTALL, DIAGNOSTICS,
         SU_COMPAT, KERNEL_UMOUNT, SELINUX_HIDE, AVC_SPOOF, MOUNT_HIDE, SULOG,
         ADB_ROOT, SHELL_SU_ADB_ONLY, SOFT_REBOOT,
         DEFAULT_UMOUNT_MODULES, AUTO_DELETE_MODULE_ZIP, AUTO_DELETE_UPDATE_APK,
@@ -65,6 +66,7 @@ object SettingsSection {
         DEFAULT_UMOUNT_MODULES, AUTO_DELETE_MODULE_ZIP, AUTO_DELETE_UPDATE_APK,
         WEB_DEBUGGING, AUTO_JAILBREAK,
         -> MODULE_BEHAVIOUR
+        BACKUP -> BACKUP
         UNINSTALL -> UNINSTALL
         DIAGNOSTICS -> DIAGNOSTICS
         else -> GENERAL
