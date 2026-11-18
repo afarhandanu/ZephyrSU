@@ -4,7 +4,8 @@
     android:height="108dp"
     android:viewportWidth="512"
     android:viewportHeight="512">
-  <!-- Animated by ic_launcher_splash; identity transform for the launcher icon -->
+  <!-- Former launcher/splash mascot; now only the module shortcut placeholder.
+       The system splash and the default icon entry use the Wind Spirit mark. -->
   <group
       android:name="splash_main_body"
       android:pivotX="256"

@@ -36,7 +36,7 @@ object BuiltinAppIcons {
             id = DEFAULT_ID,
             nameRes = R.string.app_icon_builtin_default,
             iconRes = R.mipmap.ic_launcher,
-            foregroundRes = R.drawable.ic_launcher_foreground,
+            foregroundRes = R.drawable.ic_launcher_foreground_windspirit,
             aliasClassName = mainActivityName + "AliasDefault",
         ),
         BuiltinAppIcon(
