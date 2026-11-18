@@ -118,6 +118,7 @@ data class WallpaperUiState(
     val useWallpaperColor: Boolean,
     val multiBackgroundEnabled: Boolean,
     val homeBackgroundSelected: Boolean,
+    val kpmBackgroundSelected: Boolean,
     val pluginBackgroundSelected: Boolean,
     val superuserBackgroundSelected: Boolean,
     val moduleBackgroundSelected: Boolean,
@@ -148,6 +149,7 @@ data class WallpaperScreenActions(
     val onToggleUseWallpaperColor: (Boolean) -> Unit,
     val onToggleMultiBackground: (Boolean) -> Unit,
     val onPickHomeBackground: () -> Unit,
+    val onPickKpmBackground: () -> Unit,
     val onPickPluginBackground: () -> Unit,
     val onPickSuperuserBackground: () -> Unit,
     val onPickModuleBackground: () -> Unit,
@@ -373,6 +375,7 @@ fun WallpaperScreen() {
         useWallpaperColor = WallpaperConfig.useWallpaperColor,
         multiBackgroundEnabled = WallpaperConfig.multiBackgroundEnabled,
         homeBackgroundSelected = !WallpaperConfig.homeBackgroundUri.isNullOrEmpty(),
+        kpmBackgroundSelected = !WallpaperConfig.kpmBackgroundUri.isNullOrEmpty(),
         pluginBackgroundSelected = !WallpaperConfig.pluginBackgroundUri.isNullOrEmpty(),
         superuserBackgroundSelected = !WallpaperConfig.superuserBackgroundUri.isNullOrEmpty(),
         moduleBackgroundSelected = !WallpaperConfig.moduleBackgroundUri.isNullOrEmpty(),
@@ -428,6 +431,10 @@ fun WallpaperScreen() {
         },
         onPickHomeBackground = {
             pendingPage = WallpaperConfig.PAGE_HOME
+            pagePickToken += 1
+        },
+        onPickKpmBackground = {
+            pendingPage = WallpaperConfig.PAGE_KPM
             pagePickToken += 1
         },
         onPickPluginBackground = {
@@ -572,6 +579,14 @@ fun WallpaperScreenMaterial(
                                     selected = state.homeBackgroundSelected,
                                     enabled = !state.isSaving,
                                     onClick = actions.onPickHomeBackground,
+                                )
+                            }
+                            add {
+                                WallpaperPagePickItem(
+                                    titleRes = R.string.wallpaper_select_kpm_background,
+                                    selected = state.kpmBackgroundSelected,
+                                    enabled = !state.isSaving,
+                                    onClick = actions.onPickKpmBackground,
                                 )
                             }
                             add {

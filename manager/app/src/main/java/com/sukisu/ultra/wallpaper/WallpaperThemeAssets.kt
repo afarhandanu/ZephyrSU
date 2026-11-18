@@ -230,6 +230,24 @@ internal object HomeBackgroundAsset : ThemedAsset {
     }
 }
 
+internal object KpmBackgroundAsset : ThemedAsset {
+    override val base = "background_kpm"
+
+    override fun currentFile(context: Context): File? =
+        currentPageFile(WallpaperConfig.kpmBackgroundUri)
+
+    override fun writeConfig(json: JSONObject) = Unit
+
+    override suspend fun apply(context: Context, json: JSONObject, file: File?) {
+        if (!json.optBoolean("isMultiBackgroundEnabled")) return
+        applyPageBackground(context, WallpaperConfig.PAGE_KPM, file)
+    }
+
+    override suspend fun reset(context: Context) {
+        WallpaperManager.clearPageBackground(context, WallpaperConfig.PAGE_KPM)
+    }
+}
+
 internal object PluginBackgroundAsset : ThemedAsset {
     override val base = "background_kernel"
 

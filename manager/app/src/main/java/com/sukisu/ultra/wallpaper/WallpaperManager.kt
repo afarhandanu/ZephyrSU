@@ -33,6 +33,7 @@ object WallpaperManager {
     private const val FILENAME_BASE = "wallpaper"
     private const val WORK_CARD_FILENAME_BASE = "work_card_background"
     private const val PAGE_HOME_FILENAME_BASE = "wallpaper_home"
+    private const val PAGE_KPM_FILENAME_BASE = "wallpaper_kpm"
     private const val PAGE_PLUGIN_FILENAME_BASE = "wallpaper_plugin"
     private const val PAGE_SUPERUSER_FILENAME_BASE = "wallpaper_superuser"
     private const val PAGE_MODULE_FILENAME_BASE = "wallpaper_module"
@@ -179,7 +180,7 @@ object WallpaperManager {
     }
 
     /**
-     * Copies the picked image into app storage as the background for [page] (0..4).
+     * Copies the picked image into app storage as the background for [page] (0..5).
      *
      * Interactive picks enable multi mode unless a newer switch decision superseded the pick.
      * Imports pass [activate] = false to preserve the theme's explicit switch values.
@@ -228,6 +229,7 @@ object WallpaperManager {
     /** File-name stem for a page background, or null when [page] is out of range. */
     private fun pageFilenameBase(page: Int): String? = when (page) {
         WallpaperConfig.PAGE_HOME -> PAGE_HOME_FILENAME_BASE
+        WallpaperConfig.PAGE_KPM -> PAGE_KPM_FILENAME_BASE
         WallpaperConfig.PAGE_PLUGIN -> PAGE_PLUGIN_FILENAME_BASE
         WallpaperConfig.PAGE_SUPERUSER -> PAGE_SUPERUSER_FILENAME_BASE
         WallpaperConfig.PAGE_MODULE -> PAGE_MODULE_FILENAME_BASE
@@ -238,6 +240,7 @@ object WallpaperManager {
     private fun updatePageUri(page: Int, value: String?) {
         when (page) {
             WallpaperConfig.PAGE_HOME -> WallpaperConfig.updateHomeBackgroundUri(value)
+            WallpaperConfig.PAGE_KPM -> WallpaperConfig.updateKpmBackgroundUri(value)
             WallpaperConfig.PAGE_PLUGIN -> WallpaperConfig.updatePluginBackgroundUri(value)
             WallpaperConfig.PAGE_SUPERUSER -> WallpaperConfig.updateSuperuserBackgroundUri(value)
             WallpaperConfig.PAGE_MODULE -> WallpaperConfig.updateModuleBackgroundUri(value)
@@ -248,6 +251,7 @@ object WallpaperManager {
     private fun updatePageLuminance(page: Int, value: Float) {
         when (page) {
             WallpaperConfig.PAGE_HOME -> WallpaperConfig.updateHomeBackgroundLuminance(value)
+            WallpaperConfig.PAGE_KPM -> WallpaperConfig.updateKpmBackgroundLuminance(value)
             WallpaperConfig.PAGE_PLUGIN -> WallpaperConfig.updatePluginBackgroundLuminance(value)
             WallpaperConfig.PAGE_SUPERUSER -> WallpaperConfig.updateSuperuserBackgroundLuminance(value)
             WallpaperConfig.PAGE_MODULE -> WallpaperConfig.updateModuleBackgroundLuminance(value)
@@ -258,6 +262,7 @@ object WallpaperManager {
     private fun updatePageSeed(page: Int, value: Int) {
         when (page) {
             WallpaperConfig.PAGE_HOME -> WallpaperConfig.updateHomeBackgroundSeed(value)
+            WallpaperConfig.PAGE_KPM -> WallpaperConfig.updateKpmBackgroundSeed(value)
             WallpaperConfig.PAGE_PLUGIN -> WallpaperConfig.updatePluginBackgroundSeed(value)
             WallpaperConfig.PAGE_SUPERUSER -> WallpaperConfig.updateSuperuserBackgroundSeed(value)
             WallpaperConfig.PAGE_MODULE -> WallpaperConfig.updateModuleBackgroundSeed(value)

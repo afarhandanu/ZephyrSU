@@ -7,6 +7,7 @@
     <string name="wallpaper_multi_background_mode">Multi-page background</string>
     <string name="wallpaper_multi_background_mode_summary">Use a different background for each page</string>
     <string name="wallpaper_select_home_background">Home page background</string>
+    <string name="wallpaper_select_kpm_background">KPM page background</string>
     <string name="wallpaper_select_plugin_background">Plugin page background</string>
     <string name="wallpaper_select_superuser_background">Superuser background</string>
     <string name="wallpaper_select_module_background">Module background</string>

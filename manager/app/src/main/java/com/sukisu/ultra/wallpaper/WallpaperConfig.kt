@@ -38,13 +38,16 @@ object WallpaperConfig {
 
     private const val KEY_MULTI_BACKGROUND_ENABLED = "multi_background_enabled"
     private const val KEY_HOME_BACKGROUND_URI = "home_background_uri"
+    private const val KEY_KPM_BACKGROUND_URI = "kpm_background_uri"
     private const val KEY_PLUGIN_BACKGROUND_URI = "plugin_background_uri"
     private const val KEY_SUPERUSER_BACKGROUND_URI = "superuser_background_uri"
     private const val KEY_MODULE_BACKGROUND_URI = "module_background_uri"
     private const val KEY_SETTINGS_BACKGROUND_URI = "settings_background_uri"
     private const val KEY_HOME_BACKGROUND_LUMINANCE = "home_background_luminance"
+    private const val KEY_KPM_BACKGROUND_LUMINANCE = "kpm_background_luminance"
     private const val KEY_PLUGIN_BACKGROUND_LUMINANCE = "plugin_background_luminance"
     private const val KEY_HOME_BACKGROUND_SEED = "home_background_seed"
+    private const val KEY_KPM_BACKGROUND_SEED = "kpm_background_seed"
     private const val KEY_PLUGIN_BACKGROUND_SEED = "plugin_background_seed"
     private const val KEY_SUPERUSER_BACKGROUND_LUMINANCE = "superuser_background_luminance"
     private const val KEY_SUPERUSER_BACKGROUND_SEED = "superuser_background_seed"
@@ -63,6 +66,8 @@ object WallpaperConfig {
     const val PAGE_SUPERUSER = 2
     const val PAGE_MODULE = 3
     const val PAGE_SETTINGS = 4
+    /** KPM's own slot (PR #31 follow-up): KPM no longer shares the Plugin slot. */
+    const val PAGE_KPM = 5
 
     /** Store opaque (1.0) surfaces entirely hide the wallpaper; keep a gentle default. */
     var enabled by mutableStateOf(false)
@@ -112,6 +117,8 @@ object WallpaperConfig {
 
     var homeBackgroundUri by mutableStateOf<String?>(null)
         private set
+    var kpmBackgroundUri by mutableStateOf<String?>(null)
+        private set
     var pluginBackgroundUri by mutableStateOf<String?>(null)
         private set
     var superuserBackgroundUri by mutableStateOf<String?>(null)
@@ -124,6 +131,8 @@ object WallpaperConfig {
     /** Per-page luminance in 0..1; -1f means "unknown". */
     var homeBackgroundLuminance by mutableFloatStateOf(-1f)
         private set
+    var kpmBackgroundLuminance by mutableFloatStateOf(-1f)
+        private set
     var pluginBackgroundLuminance by mutableFloatStateOf(-1f)
         private set
     var superuserBackgroundLuminance by mutableFloatStateOf(-1f)
@@ -135,6 +144,8 @@ object WallpaperConfig {
 
     /** Per-page ARGB seed; 0 means "not derived". */
     var homeBackgroundSeed by mutableIntStateOf(0)
+        private set
+    var kpmBackgroundSeed by mutableIntStateOf(0)
         private set
     var pluginBackgroundSeed by mutableIntStateOf(0)
         private set
@@ -179,14 +190,14 @@ object WallpaperConfig {
     val isActive: Boolean
         get() = enabled && ((com.sukisu.ultra.media.VisualMediaConfig.videoEnabled &&
             com.sukisu.ultra.media.VisualMediaConfig.videoFilename != null) || if (multiBackgroundEnabled) {
-            listOf(homeBackgroundUri, pluginBackgroundUri, superuserBackgroundUri, moduleBackgroundUri, settingsBackgroundUri)
+            listOf(homeBackgroundUri, kpmBackgroundUri, pluginBackgroundUri, superuserBackgroundUri, moduleBackgroundUri, settingsBackgroundUri)
                 .any { !it.isNullOrEmpty() }
         } else {
             !uri.isNullOrEmpty()
         })
 
     /**
-     * Background URI to paint for [page] (0..4), or null when the master switch is off. In multi
+     * Background URI to paint for [page] (0..5), or null when the master switch is off. In multi
      * mode only that page's own URI applies.
      */
     fun pageUri(page: Int): String? =
@@ -197,16 +208,17 @@ object WallpaperConfig {
     fun isPageActive(page: Int, videoActive: Boolean = false): Boolean =
         videoActive || pageUri(page) != null
 
-    /** Background luminance to adapt against for [page] (0..4); -1f when the master switch is off. */
+    /** Background luminance to adapt against for [page] (0..5); -1f when the master switch is off. */
     fun pageLuminance(page: Int): Float =
         if (!enabled) -1f else if (multiBackgroundEnabled) pageOwnLuminance(page) else derivedLuminance
 
-    /** Background seed color for [page] (0..4); 0 when the master switch is off. */
+    /** Background seed color for [page] (0..5); 0 when the master switch is off. */
     fun pageSeed(page: Int): Int =
         if (!enabled) 0 else if (multiBackgroundEnabled) pageOwnSeed(page) else derivedSeed
 
     private fun pageOwnUri(page: Int): String? = when (page) {
         PAGE_HOME -> homeBackgroundUri
+        PAGE_KPM -> kpmBackgroundUri
         PAGE_PLUGIN -> pluginBackgroundUri
         PAGE_SUPERUSER -> superuserBackgroundUri
         PAGE_MODULE -> moduleBackgroundUri
@@ -216,6 +228,7 @@ object WallpaperConfig {
 
     private fun pageOwnLuminance(page: Int): Float = when (page) {
         PAGE_HOME -> homeBackgroundLuminance
+        PAGE_KPM -> kpmBackgroundLuminance
         PAGE_PLUGIN -> pluginBackgroundLuminance
         PAGE_SUPERUSER -> superuserBackgroundLuminance
         PAGE_MODULE -> moduleBackgroundLuminance
@@ -225,6 +238,7 @@ object WallpaperConfig {
 
     private fun pageOwnSeed(page: Int): Int = when (page) {
         PAGE_HOME -> homeBackgroundSeed
+        PAGE_KPM -> kpmBackgroundSeed
         PAGE_PLUGIN -> pluginBackgroundSeed
         PAGE_SUPERUSER -> superuserBackgroundSeed
         PAGE_MODULE -> moduleBackgroundSeed
@@ -299,6 +313,9 @@ object WallpaperConfig {
     fun updateHomeBackgroundUri(value: String?) {
         homeBackgroundUri = value
     }
+    fun updateKpmBackgroundUri(value: String?) {
+        kpmBackgroundUri = value
+    }
     fun updatePluginBackgroundUri(value: String?) {
         pluginBackgroundUri = value
     }
@@ -318,6 +335,9 @@ object WallpaperConfig {
     fun updateHomeBackgroundLuminance(value: Float) {
         homeBackgroundLuminance = value
     }
+    fun updateKpmBackgroundLuminance(value: Float) {
+        kpmBackgroundLuminance = value
+    }
     fun updatePluginBackgroundLuminance(value: Float) {
         pluginBackgroundLuminance = value
     }
@@ -336,6 +356,9 @@ object WallpaperConfig {
 
     fun updateHomeBackgroundSeed(value: Int) {
         homeBackgroundSeed = value
+    }
+    fun updateKpmBackgroundSeed(value: Int) {
+        kpmBackgroundSeed = value
     }
     fun updatePluginBackgroundSeed(value: Int) {
         pluginBackgroundSeed = value
@@ -398,16 +421,19 @@ object WallpaperConfig {
         useWallpaperColor = prefs.getBoolean(KEY_USE_COLOR, false)
         multiBackgroundEnabled = prefs.getBoolean(KEY_MULTI_BACKGROUND_ENABLED, false)
         homeBackgroundUri = prefs.getString(KEY_HOME_BACKGROUND_URI, null)
+        kpmBackgroundUri = prefs.getString(KEY_KPM_BACKGROUND_URI, null)
         pluginBackgroundUri = prefs.getString(KEY_PLUGIN_BACKGROUND_URI, null)
         superuserBackgroundUri = prefs.getString(KEY_SUPERUSER_BACKGROUND_URI, null)
         moduleBackgroundUri = prefs.getString(KEY_MODULE_BACKGROUND_URI, null)
         settingsBackgroundUri = prefs.getString(KEY_SETTINGS_BACKGROUND_URI, null)
         homeBackgroundLuminance = prefs.getFloat(KEY_HOME_BACKGROUND_LUMINANCE, -1f)
+        kpmBackgroundLuminance = prefs.getFloat(KEY_KPM_BACKGROUND_LUMINANCE, -1f)
         pluginBackgroundLuminance = prefs.getFloat(KEY_PLUGIN_BACKGROUND_LUMINANCE, -1f)
         superuserBackgroundLuminance = prefs.getFloat(KEY_SUPERUSER_BACKGROUND_LUMINANCE, -1f)
         moduleBackgroundLuminance = prefs.getFloat(KEY_MODULE_BACKGROUND_LUMINANCE, -1f)
         settingsBackgroundLuminance = prefs.getFloat(KEY_SETTINGS_BACKGROUND_LUMINANCE, -1f)
         homeBackgroundSeed = prefs.getInt(KEY_HOME_BACKGROUND_SEED, 0)
+        kpmBackgroundSeed = prefs.getInt(KEY_KPM_BACKGROUND_SEED, 0)
         pluginBackgroundSeed = prefs.getInt(KEY_PLUGIN_BACKGROUND_SEED, 0)
         superuserBackgroundSeed = prefs.getInt(KEY_SUPERUSER_BACKGROUND_SEED, 0)
         moduleBackgroundSeed = prefs.getInt(KEY_MODULE_BACKGROUND_SEED, 0)
@@ -437,16 +463,19 @@ object WallpaperConfig {
             putBoolean(KEY_USE_COLOR, useWallpaperColor)
             putBoolean(KEY_MULTI_BACKGROUND_ENABLED, multiBackgroundEnabled)
             putString(KEY_HOME_BACKGROUND_URI, homeBackgroundUri)
+            putString(KEY_KPM_BACKGROUND_URI, kpmBackgroundUri)
             putString(KEY_PLUGIN_BACKGROUND_URI, pluginBackgroundUri)
             putString(KEY_SUPERUSER_BACKGROUND_URI, superuserBackgroundUri)
             putString(KEY_MODULE_BACKGROUND_URI, moduleBackgroundUri)
             putString(KEY_SETTINGS_BACKGROUND_URI, settingsBackgroundUri)
             putFloat(KEY_HOME_BACKGROUND_LUMINANCE, homeBackgroundLuminance)
+            putFloat(KEY_KPM_BACKGROUND_LUMINANCE, kpmBackgroundLuminance)
             putFloat(KEY_PLUGIN_BACKGROUND_LUMINANCE, pluginBackgroundLuminance)
             putFloat(KEY_SUPERUSER_BACKGROUND_LUMINANCE, superuserBackgroundLuminance)
             putFloat(KEY_MODULE_BACKGROUND_LUMINANCE, moduleBackgroundLuminance)
             putFloat(KEY_SETTINGS_BACKGROUND_LUMINANCE, settingsBackgroundLuminance)
             putInt(KEY_HOME_BACKGROUND_SEED, homeBackgroundSeed)
+            putInt(KEY_KPM_BACKGROUND_SEED, kpmBackgroundSeed)
             putInt(KEY_PLUGIN_BACKGROUND_SEED, pluginBackgroundSeed)
             putInt(KEY_SUPERUSER_BACKGROUND_SEED, superuserBackgroundSeed)
             putInt(KEY_MODULE_BACKGROUND_SEED, moduleBackgroundSeed)
@@ -470,16 +499,19 @@ object WallpaperConfig {
         useWallpaperColor = false
         multiBackgroundEnabled = false
         homeBackgroundUri = null
+        kpmBackgroundUri = null
         pluginBackgroundUri = null
         superuserBackgroundUri = null
         moduleBackgroundUri = null
         settingsBackgroundUri = null
         homeBackgroundLuminance = -1f
+        kpmBackgroundLuminance = -1f
         pluginBackgroundLuminance = -1f
         superuserBackgroundLuminance = -1f
         moduleBackgroundLuminance = -1f
         settingsBackgroundLuminance = -1f
         homeBackgroundSeed = 0
+        kpmBackgroundSeed = 0
         pluginBackgroundSeed = 0
         superuserBackgroundSeed = 0
         moduleBackgroundSeed = 0
@@ -489,7 +521,7 @@ object WallpaperConfig {
 }
 
 /**
- * The settled main pager index (0..4) that wallpaper lookups resolve against.
+ * The settled main pager index (0..5) that wallpaper lookups resolve against.
  *
  * Provided once at the activity root so the theme and the background layer agree on the current
  * page without threading the index through every composable.

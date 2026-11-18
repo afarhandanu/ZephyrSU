@@ -10,11 +10,9 @@ import com.sukisu.ultra.wallpaper.WallpaperConfig
  * flows keep their parent page's wallpaper.
  *
  * Adapted from FinaSU (M5.2): Nova's main pager has six pages (Home/Kpm/Plugin/SuperUser/
- * Module/Setting) — the Kpm tab occupies FinaSU's Plugin slot, so `PAGE_PLUGIN` paints
- * behind it, and the Plugin tab now paints its own natural slot. Both pages share the one
- * Plugin-slot image from the Wallpaper settings: there is a single "Plugin page background"
- * slot, and splitting KPM onto a sixth slot would need a new config slot, settings row and
- * .fpt round-trip, so sharing stays the least surprising option.
+ * Module/Setting) — KPM paints its own slot (`PAGE_KPM`, added as a PR #31 follow-up so KPM
+ * and Plugin no longer share one image) and the Plugin tab paints its natural slot
+ * (`PAGE_PLUGIN`). Each page has its own "page background" row in the Wallpaper settings.
  * It is also kept as a constant for `.fpt` import/export compatibility (a theme's plugin
  * background round-trips through the archive). FinaSU-only routes
  * (PluginStore, MyThemes, Language, WebDavBrowser, SettingsCategory)
@@ -67,13 +65,11 @@ private val NavKey.wallpaperPage: Int?
     }
 
 /**
- * Nova's main-pager slot to the FinaSU wallpaper page it paints. Pager 1 is Kpm, which
- * occupies FinaSU's Plugin slot (PAGE_PLUGIN) — the KPM tab paints the Plugin wallpaper —
- * and pager 2 is the Plugin tab itself, which paints the same slot. Both pages share the
- * one Plugin-slot image; see the file header for why KPM was not moved to a new slot.
+ * Nova's main-pager slot to the wallpaper page it paints. Pager 1 is Kpm, which paints its
+ * own slot (PAGE_KPM), and pager 2 is the Plugin tab, which paints PAGE_PLUGIN.
  */
 internal fun mainPageToWallpaperPage(page: Int): Int = when (page) {
-    1 -> WallpaperConfig.PAGE_PLUGIN
+    1 -> WallpaperConfig.PAGE_KPM
     2 -> WallpaperConfig.PAGE_PLUGIN
     3 -> WallpaperConfig.PAGE_SUPERUSER
     4 -> WallpaperConfig.PAGE_MODULE

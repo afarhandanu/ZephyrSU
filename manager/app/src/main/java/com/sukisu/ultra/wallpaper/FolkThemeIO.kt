@@ -27,6 +27,7 @@ object FolkThemeIO {
         add(VisualMediaThemeAsset(false))
         addAll(SurfaceRegistry.themeSlots().map { SurfaceBackgroundAsset(it) })
         add(HomeBackgroundAsset)
+        add(KpmBackgroundAsset)
         add(PluginBackgroundAsset)
         add(SuperuserBackgroundAsset)
         add(ModuleBackgroundAsset)

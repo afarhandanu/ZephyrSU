@@ -313,8 +313,8 @@ class MainActivity : FragmentActivity() {
             val navigator = rememberNavigator(Route.Main)
             // FinaSU wallpaper (M5.2): the page whose background paints, from the nav
             // back stack with the visible main pager page as the fallback. Nova's
-            // pager has six pages; mainPageToWallpaperPage maps them onto FinaSU's
-            // five page slots (Kpm and Plugin share the Plugin slot).
+            // pager has six pages; mainPageToWallpaperPage maps them onto the six
+            // page slots (KPM has its own slot, PAGE_KPM).
             val wallpaperPage = wallpaperPageFor(navigator.backStack, mainPageToWallpaperPage(selectedMainPage))
             val videoActive = VisualMediaConfig.videoEnabled && VisualMediaConfig.videoFilename != null
             val wallpaperActive = WallpaperConfig.enabled && WallpaperConfig.isPageActive(wallpaperPage, videoActive)
