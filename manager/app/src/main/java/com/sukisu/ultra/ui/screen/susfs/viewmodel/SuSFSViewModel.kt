@@ -206,7 +206,10 @@ class SuSFSViewModel(
             com.sukisu.ultra.data.repository.SuperUserRepositoryImpl().getAppList()
                 .getOrThrow().first.mapNotNull { app ->
                     val info = app.packageInfo.applicationInfo ?: return@mapNotNull null
-                    if (info.uid !in 10000..19999) return@mapNotNull null
+                    // FinaSU priority picker (85ab872): app IDs are 10000..19999
+                    // modulo the user id, so secondary-user / work-profile apps
+                    // (uid 110000+) are listed instead of dropped.
+                    if (info.uid % 100000 !in 10000..19999) return@mapNotNull null
                     com.sukisu.ultra.ui.screen.susfs.util.AppInfo(
                         app.packageName, app.label, app.packageInfo,
                         info.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM != 0
