@@ -196,7 +196,9 @@ import com.sukisu.ultra.ui.theme.LocalEnableProgressiveBlur
 import com.sukisu.ultra.ui.theme.LocalFloatingAutoHide
 import com.sukisu.ultra.ui.theme.LocalFloatingSwipeHide
 import com.sukisu.ultra.ui.theme.LocalShowNavKpm
+import com.sukisu.ultra.ui.theme.LocalShowNavPlugin
 import com.sukisu.ultra.ui.theme.LocalShowNavModule
+import com.sukisu.ultra.ui.theme.LocalMaterialBottomBarDocked
 import com.sukisu.ultra.ui.theme.LocalShowNavSuperuser
 import com.sukisu.ultra.ui.theme.LocalModuleDescriptionMaxLines
 import com.sukisu.ultra.ui.util.BackgroundNavTransition
@@ -311,8 +313,8 @@ class MainActivity : FragmentActivity() {
             val navigator = rememberNavigator(Route.Main)
             // FinaSU wallpaper (M5.2): the page whose background paints, from the nav
             // back stack with the visible main pager page as the fallback. Nova's
-            // pager has four pages; mainPageToWallpaperPage maps them onto FinaSU's
-            // five page slots (there is no Plugin page in Nova).
+            // pager has six pages; mainPageToWallpaperPage maps them onto the six
+            // page slots (KPM has its own slot, PAGE_KPM).
             val wallpaperPage = wallpaperPageFor(navigator.backStack, mainPageToWallpaperPage(selectedMainPage))
             val videoActive = VisualMediaConfig.videoEnabled && VisualMediaConfig.videoFilename != null
             val wallpaperActive = WallpaperConfig.enabled && WallpaperConfig.isPageActive(wallpaperPage, videoActive)
@@ -358,7 +360,9 @@ class MainActivity : FragmentActivity() {
                 LocalEnableNavigationBadge provides uiState.enableNavigationBadge,
                 LocalShowNavSuperuser provides uiState.showNavSuperuser,
                 LocalShowNavKpm provides uiState.showNavKpm,
+                LocalShowNavPlugin provides uiState.showNavPlugin,
                 LocalShowNavModule provides uiState.showNavModule,
+                LocalMaterialBottomBarDocked provides uiState.materialBottomBarDocked,
                 LocalFloatingAutoHide provides uiState.floatingAutoHide,
                 LocalFloatingSwipeHide provides uiState.floatingSwipeHide,
                 LocalModuleDescriptionMaxLines provides uiState.moduleDescriptionMaxLines,
@@ -734,14 +738,15 @@ fun MainScreen(
     val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
     val useNavigationRail = useNavigationRail(enableFloatingBottomBar)
     // M5.4: the visible destinations, from the visibility prefs. Home and Setting always
-    // stay; Kpm, SuperUser and Module can be hidden in Settings. The pager holds only these, so
+    // stay; Kpm, Plugin, SuperUser and Module can be hidden in Settings. The pager holds only these, so
     // hiding a tab shifts the pager indices — the persisted page is a destination ordinal,
     // not a slot, and is mapped onto the visible index here.
     val showNavSuperuser = LocalShowNavSuperuser.current
     val showNavKpm = LocalShowNavKpm.current
+    val showNavPlugin = LocalShowNavPlugin.current
     val showNavModule = LocalShowNavModule.current
-    val destinations = remember(showNavSuperuser, showNavKpm, showNavModule) {
-        visibleDestinations(showNavSuperuser, showNavModule, showNavKpm)
+    val destinations = remember(showNavSuperuser, showNavKpm, showNavPlugin, showNavModule) {
+        visibleDestinations(showNavSuperuser, showNavModule, showNavKpm, showNavPlugin)
     }
     val initialDestination = BottomBarDestination.entries.getOrElse(initialPage) { BottomBarDestination.Home }
     val initialVisiblePage = destinations.indexOf(initialDestination).coerceAtLeast(0)
@@ -829,8 +834,11 @@ fun MainScreen(
     // Rail layouts show no bottom bar at all, so the state stays idle there. The bar is
     // hidden with a graphics-layer slide+fade, NOT by removing it from the Scaffold slot:
     // the slot keeps its size, so the pager content never jumps when the bar hides.
+    // A docked Material bar is never floating: it pins to the edge and never hides.
+    val materialBottomBarDocked = LocalMaterialBottomBarDocked.current
     val isFloatingBar = !useNavigationRail &&
-        (uiMode == UiMode.Material || enableFloatingBottomBar)
+        ((uiMode == UiMode.Material && !materialBottomBarDocked) ||
+            (uiMode == UiMode.Miuix && enableFloatingBottomBar))
     val floatingAutoHide = LocalFloatingAutoHide.current
     val floatingSwipeHide = LocalFloatingSwipeHide.current
     val floatingVisibility = rememberFloatingBarVisibilityState(
@@ -870,9 +878,9 @@ fun MainScreen(
         allowProgressive = needsStandardMiuixBarBackdrop,
     )
     // The floating pills (Material bar, Miuix floating bar) sample this pager layer for their
-    // liquid glass and/or progressive blur. Rail layouts show no bottom bar at all.
-    val needsBottomBarBackdrop = !useNavigationRail &&
-        (uiMode == UiMode.Material || enableFloatingBottomBar) &&
+    // liquid glass and/or progressive blur. Rail layouts show no bottom bar at all, and a
+    // docked bar paints its own surface, so neither captures the pager.
+    val needsBottomBarBackdrop = isFloatingBar &&
         (enableFloatingBottomBarBlur || enableProgressiveBlur)
 
     // The capture is painted to the screen as well as sampled by the floating bar's blur, so
@@ -951,6 +959,7 @@ fun MainScreen(
                     when (destinations.getOrNull(page)) {
                         BottomBarDestination.Home -> if (contentReady || isCurrentPage) HomePager(navController, bottomInnerPadding, isCurrentPage)
                         BottomBarDestination.Kpm -> if (contentReady || isCurrentPage) KpmScreen(bottomInnerPadding)
+                        BottomBarDestination.Plugin -> if (contentReady || isCurrentPage) PluginPager(bottomInnerPadding, isCurrentPage)
                         BottomBarDestination.SuperUser -> if (contentReady || isCurrentPage) SuperUserPager(navController, bottomInnerPadding, isCurrentPage)
                         BottomBarDestination.Module -> if (contentReady || isCurrentPage) ModulePager(bottomInnerPadding, isCurrentPage)
                         BottomBarDestination.Setting -> if (contentReady || isCurrentPage) SettingPager(navController, bottomInnerPadding, isCurrentPage)

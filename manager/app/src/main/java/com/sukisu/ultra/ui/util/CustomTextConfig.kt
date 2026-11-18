@@ -82,6 +82,7 @@ enum class CustomTextKey(
     // 主要分頁抬頭 (底欄、側欄與對應頁面的頂抬頭)
     PAGE_HOME("page.home", R.string.home, R.string.home, CustomTextGroup.PAGE_MAIN),
     PAGE_KPM("page.kpm", R.string.kpm, R.string.kpm, CustomTextGroup.PAGE_MAIN),
+    PAGE_PLUGIN("page.plugin", R.string.plugin, R.string.plugin, CustomTextGroup.PAGE_MAIN),
     PAGE_SUPERUSER("page.superuser", R.string.superuser, R.string.superuser, CustomTextGroup.PAGE_MAIN),
     PAGE_MODULES("page.modules", R.string.module, R.string.module, CustomTextGroup.PAGE_MAIN),
     PAGE_SETTINGS("page.settings", R.string.settings, R.string.settings, CustomTextGroup.PAGE_MAIN),

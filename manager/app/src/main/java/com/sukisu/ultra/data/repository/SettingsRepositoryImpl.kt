@@ -493,6 +493,10 @@ class SettingsRepositoryImpl : SettingsRepository {
         get() = prefs.getBoolean("show_nav_kpm", true)
         set(value) = prefs.edit { putBoolean("show_nav_kpm", value) }
 
+    override var showNavPlugin: Boolean
+        get() = prefs.getBoolean("show_nav_plugin", true)
+        set(value) = prefs.edit { putBoolean("show_nav_plugin", value) }
+
     override var showNavModule: Boolean
         get() = prefs.getBoolean("show_nav_apm", true)
         set(value) = prefs.edit { putBoolean("show_nav_apm", value) }
@@ -504,6 +508,10 @@ class SettingsRepositoryImpl : SettingsRepository {
     override var floatingSwipeHide: Boolean
         get() = prefs.getBoolean("floating_swipe_hide", true)
         set(value) = prefs.edit { putBoolean("floating_swipe_hide", value) }
+
+    override var materialBottomBarDocked: Boolean
+        get() = prefs.getBoolean("material_bottom_bar_docked", false)
+        set(value) = prefs.edit { putBoolean("material_bottom_bar_docked", value) }
 
     override var navigationRailExpanded: Boolean
         get() = prefs.getBoolean("nav_rail_expanded", false)

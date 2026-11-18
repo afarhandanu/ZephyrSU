@@ -42,11 +42,13 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Settings
@@ -55,6 +57,9 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -72,6 +77,9 @@ import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.Natives
 import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 import com.sukisu.ultra.ui.LocalMainPagerState
+import com.sukisu.ultra.ui.component.material.ChromeEdge
+import com.sukisu.ultra.ui.component.material.WallpaperChromeZone
+import com.sukisu.ultra.ui.theme.LocalMaterialBottomBarDocked
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
 import com.sukisu.ultra.ui.util.CustomTextKey
 import com.sukisu.ultra.ui.util.customText
@@ -96,10 +104,20 @@ fun BottomBarMaterial(
         when (destination) {
             BottomBarDestination.Home -> MaterialNavItem(CustomTextKey.PAGE_HOME, Icons.Filled.Home, Icons.Outlined.Home, bottomBarIcons["home"])
             BottomBarDestination.Kpm -> MaterialNavItem(CustomTextKey.PAGE_KPM, Icons.Filled.Memory, Icons.Outlined.Memory, bottomBarIcons["kpm"])
+            BottomBarDestination.Plugin -> MaterialNavItem(CustomTextKey.PAGE_PLUGIN, Icons.Filled.GridView, Icons.Outlined.GridView, bottomBarIcons["plugin"])
             BottomBarDestination.SuperUser -> MaterialNavItem(CustomTextKey.PAGE_SUPERUSER, Icons.Filled.Shield, Icons.Outlined.Shield, bottomBarIcons["superuser"])
             BottomBarDestination.Module -> MaterialNavItem(CustomTextKey.PAGE_MODULES, Icons.Filled.Extension, Icons.Outlined.Extension, bottomBarIcons["module"])
             BottomBarDestination.Setting -> MaterialNavItem(CustomTextKey.PAGE_SETTINGS, Icons.Filled.Settings, Icons.Outlined.Settings, bottomBarIcons["setting"])
         }
+    }
+
+    // Docked (pinned) variant: a full-width bar on the bottom edge instead of the floating
+    // pill. The Scaffold's bottomBar slot reserves its height for the pager, so no content
+    // hides behind it. The chrome zone draws the wallpaper reading platform in wallpaper
+    // mode; outside it the bar keeps its opaque container.
+    if (LocalMaterialBottomBarDocked.current) {
+        DockedBottomBarMaterial(items, navigationBadge, modifier)
+        return
     }
 
     if (LocalEnableFloatingBottomBarBlur.current && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -183,6 +201,57 @@ fun BottomBarMaterial(
                         },
                     )
                 }
+            }
+        }
+    }
+}
+
+// Docked variant: the standard full-width NavigationBar pinned to the bottom edge.
+// The selection pill follows BottomBarControl: opaque secondary container normally,
+// transparent in wallpaper mode (the selected item already switches to the filled icon,
+// so a second background block would only re-introduce a floating layer over the photo).
+@Composable
+private fun DockedBottomBarMaterial(
+    items: List<MaterialNavItem>,
+    navigationBadge: NavigationBadgeState,
+    modifier: Modifier = Modifier,
+) {
+    val mainPagerState = LocalMainPagerState.current
+    val style = BottomBarControl.style(BottomBarLayout.Docked)
+    WallpaperChromeZone(edge = ChromeEdge.Bottom) {
+        NavigationBar(
+            modifier = modifier.fillMaxWidth(),
+            containerColor = style.containerColor,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            tonalElevation = 0.dp,
+        ) {
+            items.forEachIndexed { index, item ->
+                val selected = mainPagerState.selectedPage == index
+                // Badges key off the destination, not the visible index: hiding a tab
+                // shifts every index after it.
+                val destination = mainPagerState.destinations.getOrNull(index)
+                NavigationBarItem(
+                    selected = selected,
+                    onClick = {
+                        if (!selected) {
+                            mainPagerState.animateToPage(index)
+                        }
+                    },
+                    icon = {
+                        NavigationIconWithBadge(
+                            icon = if (selected) item.selectedIcon else item.unselectedIcon,
+                            iconPath = item.iconPath,
+                            contentDescription = customText(item.label),
+                            badge = destination?.let { badgeFor(it.ordinal, navigationBadge) },
+                            selected = selected,
+                        )
+                    },
+                    label = { Text(text = customText(item.label)) },
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = style.indicatorColor
+                            ?: MaterialTheme.colorScheme.secondaryContainer,
+                    ),
+                )
             }
         }
     }

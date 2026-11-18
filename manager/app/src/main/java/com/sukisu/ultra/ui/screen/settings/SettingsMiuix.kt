@@ -46,6 +46,7 @@ import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Policy
 import androidx.compose.material.icons.rounded.Security
@@ -552,6 +553,15 @@ fun SettingPagerMiuix(
                             },
                             checked = uiState.showNavKpm,
                             onCheckedChange = actions.onSetShowNavKpm,
+                        )
+                        SwitchPreference(
+                            title = stringResource(R.string.settings_nav_show_plugin),
+                            summary = stringResource(R.string.settings_nav_show_plugin_summary),
+                            startAction = {
+                                Icon(Icons.Rounded.GridView, modifier = Modifier.padding(end = 6.dp), contentDescription = stringResource(R.string.settings_nav_show_plugin), tint = colorScheme.onBackground)
+                            },
+                            checked = uiState.showNavPlugin,
+                            onCheckedChange = actions.onSetShowNavPlugin,
                         )
                         SwitchPreference(
                             title = stringResource(R.string.settings_nav_show_superuser),

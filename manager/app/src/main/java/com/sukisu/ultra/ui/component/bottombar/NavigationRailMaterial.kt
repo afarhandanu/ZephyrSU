@@ -12,12 +12,14 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuOpen
 import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Settings
@@ -68,6 +70,7 @@ fun NavigationRailMaterial(
         when (destination) {
             BottomBarDestination.Home -> Triple(CustomTextKey.PAGE_HOME, Icons.Filled.Home, Icons.Outlined.Home)
             BottomBarDestination.Kpm -> Triple(CustomTextKey.PAGE_KPM, Icons.Filled.Memory, Icons.Outlined.Memory)
+            BottomBarDestination.Plugin -> Triple(CustomTextKey.PAGE_PLUGIN, Icons.Filled.GridView, Icons.Outlined.GridView)
             BottomBarDestination.SuperUser -> Triple(CustomTextKey.PAGE_SUPERUSER, Icons.Filled.Shield, Icons.Outlined.Shield)
             BottomBarDestination.Module -> Triple(CustomTextKey.PAGE_MODULES, Icons.Filled.Extension, Icons.Outlined.Extension)
             BottomBarDestination.Setting -> Triple(CustomTextKey.PAGE_SETTINGS, Icons.Filled.Settings, Icons.Outlined.Settings)

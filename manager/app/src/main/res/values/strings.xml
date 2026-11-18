@@ -352,6 +352,10 @@
     <string name="settings_nav_show_module_summary">Show the Module tab in the bottom bar or navigation rail</string>
     <string name="settings_nav_show_kpm">Show KPM tab</string>
     <string name="settings_nav_show_kpm_summary">Show the KPM tab in the bottom bar or navigation rail</string>
+    <string name="settings_nav_show_plugin">Show Plugin tab</string>
+    <string name="settings_nav_show_plugin_summary">Show the Plugin tab in the bottom bar or navigation rail</string>
+    <string name="settings_bottom_bar_docked">Docked bottom bar</string>
+    <string name="settings_bottom_bar_docked_summary">Pin the bottom bar to the screen edge instead of floating it (Material theme)</string>
     <string name="settings_floating_auto_hide">Auto-hide floating bar</string>
     <string name="settings_floating_auto_hide_summary">Hide the floating bar automatically after 3 seconds idle</string>
     <string name="settings_floating_swipe_hide">Hide floating bar on scroll</string>

@@ -15,6 +15,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cottage
 import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Settings
@@ -236,6 +237,7 @@ enum class BottomBarDestination(
 ) {
     Home(CustomTextKey.PAGE_HOME, Icons.Rounded.Cottage, "home"),
     Kpm(CustomTextKey.PAGE_KPM, Icons.Rounded.Memory, "kpm"),
+    Plugin(CustomTextKey.PAGE_PLUGIN, Icons.Rounded.GridView, "plugin"),
     SuperUser(CustomTextKey.PAGE_SUPERUSER, Icons.Rounded.Security, "superuser"),
     Module(CustomTextKey.PAGE_MODULES, Icons.Rounded.Extension, "module"),
     Setting(CustomTextKey.PAGE_SETTINGS, Icons.Rounded.Settings, "setting")
