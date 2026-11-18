@@ -964,10 +964,27 @@ fun MainScreen(
             ) {
                 HorizontalPager(
                     modifier = Modifier
+                        // Round 3: the Cross-Axis swipe interceptor (Miuix
+                        // PagerSwipeNode) consumes every horizontal drag in the
+                        // Initial pass — before a child's own draggable ever sees
+                        // it in the Main pass — so the "Banner opacity" slider on
+                        // the Settings tab could never move: its onValueChange
+                        // never fired and the thumb stayed pinned at 100%.
+                        // PR #42/#44 fixed the wrong layer (slider state
+                        // handling); the drag never reached the slider at all.
+                        // The banner slider is the only horizontal-drag control
+                        // on any tab page (every working slider — Wallpaper,
+                        // Multimedia, page scale — lives on a pushed screen
+                        // outside this pager), so while the Settings tab is
+                        // current the interceptor is off and the slider drags
+                        // normally. Trade-off: tab swiping is unavailable from
+                        // the Settings page itself (the bottom bar / rail still
+                        // switches tabs); it returns on every other tab.
                         .pagerGestureOverride(
                             pagerState = mainPagerState.pagerState,
                             mode = pagerMode,
-                            enabled = userScrollEnabled,
+                            enabled = userScrollEnabled &&
+                                destinations.getOrNull(currentPage) != BottomBarDestination.Setting,
                         )
                         // Material always floats its bar, so only the glass/progressive band matters there.
                         .then(if (needsBottomBarBackdrop) Modifier.layerBackdrop(backdrop) else Modifier),
