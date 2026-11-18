@@ -1,5 +1,6 @@
 package com.sukisu.ultra.ui.screen.settings.search
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,9 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,9 +53,6 @@ import top.yukonga.miuix.kmp.utils.overScrollVertical
  * AnnotatedString usage with Miuix Text exists in the codebase).
  */
 
-/** Emphasis is a weight, never a different colour. */
-private val MatchEmphasis = SpanStyle(fontWeight = FontWeight.SemiBold)
-
 /**
  * The query's results, grouped by section.
  *
@@ -69,6 +64,10 @@ private val MatchEmphasis = SpanStyle(fontWeight = FontWeight.SemiBold)
  * Hardened (PR #45): typing runs this on every keystroke, so a single bad row or query must never
  * force-close the app. A throwing availability predicate hides its row, a throwing match skips its
  * row, and any other unexpected failure degrades to "no results" instead of a crash.
+ *
+ * Round 2 (PR #52): the match highlight is built in the guarded data pipeline
+ * ([matchSettings]), not during composition — the row composables only draw precomputed
+ * strings, so no per-row computation is left in the render path.
  */
 fun settingsSearchGroups(
     query: String,
@@ -86,8 +85,9 @@ fun settingsSearchGroups(
                 }
             })
         )
-    } catch (_: Exception) {
+    } catch (e: Exception) {
         // Last resort: show the empty state, never a force-close.
+        Log.w("SettingsSearch", "settingsSearchGroups failed", e)
         emptyList()
     }
 
@@ -170,30 +170,20 @@ fun SettingsSearchShortcuts(
 @Composable
 private fun SettingsResultRow(result: SettingsSearchResult, onClick: () -> Unit) {
     val entry = result.entry
+    // The highlighted strings are precomputed in the guarded data pipeline
+    // (matchSettings); the row only draws them, so no per-row computation here
+    // can throw during composition.
     SegmentedListItem(
         onClick = onClick,
-        headlineContent = { Text(matchedText(entry.title, result.titleMatches)) },
+        headlineContent = { Text(result.titleAnnotated) },
         supportingContent = if (entry.summary.isNotEmpty()) {
-            { Text(matchedText(entry.summary, result.summaryMatches)) }
+            { Text(result.summaryAnnotated) }
         } else {
             null
         },
         leadingContent = { IconTile(entry.entry.icon, entry.title) },
         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) },
     )
-}
-
-/** Emphasises the parts of [text] the query hit; the rest of the row keeps its own style. */
-private fun matchedText(text: String, ranges: List<IntRange>): AnnotatedString {
-    if (ranges.isEmpty()) return AnnotatedString(text)
-    return buildAnnotatedString {
-        append(text)
-        ranges.forEach { range ->
-            val start = range.first.coerceIn(0, text.length)
-            val end = (range.last + 1).coerceIn(start, text.length)
-            if (start < end) addStyle(MatchEmphasis, start, end)
-        }
-    }
 }
 
 @Composable

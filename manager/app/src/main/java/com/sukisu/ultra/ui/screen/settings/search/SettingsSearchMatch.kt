@@ -1,5 +1,10 @@
 package com.sukisu.ultra.ui.screen.settings.search
 
+import android.util.Log
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import java.text.Normalizer
 
 /**
@@ -14,12 +19,23 @@ import java.text.Normalizer
  * unchanged from FinaSU.
  */
 
-/** One row that matched, with the ranges to emphasise. */
+/**
+ * One row that matched, with the ranges to emphasise and the highlighted text already built.
+ *
+ * The highlighted text is built here, in the guarded data pipeline, instead of during
+ * composition: [matchSettings] runs inside a per-entry try/catch, so a row whose highlight
+ * computation throws is skipped instead of force-closing the app. The row composables only
+ * ever draw the precomputed strings. (Round 2: PR #45 hardened the data pipeline, but the
+ * highlight was still built during composition — the one per-row computation left in the
+ * Material render path.)
+ */
 data class SettingsSearchResult(
     val entry: ResolvedSettingsEntry,
     val score: Int,
     val titleMatches: List<IntRange>,
     val summaryMatches: List<IntRange>,
+    val titleAnnotated: AnnotatedString,
+    val summaryAnnotated: AnnotatedString,
 )
 
 /** The rows of one section, in the order they should be drawn. */
@@ -209,7 +225,11 @@ fun settingsMatchRanges(text: String, tokens: List<String>): List<IntRange> {
             from = start + 1
         }
     }
-    return mergeRanges(ranges)
+    // Ranges must stay inside the source text: drop anything that does not, so a bad
+    // range can never reach the highlight builder.
+    return mergeRanges(ranges).filter { range ->
+        range.first >= 0 && range.last < text.length && range.first <= range.last
+    }
 }
 
 private fun mergeRanges(ranges: List<IntRange>): List<IntRange> {
@@ -227,6 +247,34 @@ private fun mergeRanges(ranges: List<IntRange>): List<IntRange> {
     }
     merged += current
     return merged
+}
+
+/** Emphasis is a weight, never a different colour. */
+private val MatchEmphasis = SpanStyle(fontWeight = FontWeight.SemiBold)
+
+/**
+ * Emphasises the parts of [text] the query hit; the rest of the row keeps its own style.
+ *
+ * Never throws: a bad range falls back to plain text instead of killing the search. Ranges
+ * are validated here as well as at the producer ([settingsMatchRanges]), so the highlight
+ * holds by construction even if the matcher changes. This is the only per-row computation
+ * the Material results row used to do during composition; building it here keeps a throwing
+ * highlight inside [matchSettings]'s per-entry guard, where it only skips that row.
+ */
+internal fun matchedText(text: String, ranges: List<IntRange>): AnnotatedString {
+    if (ranges.isEmpty()) return AnnotatedString(text)
+    return try {
+        buildAnnotatedString {
+            append(text)
+            ranges.forEach { range ->
+                val start = range.first.coerceIn(0, text.length)
+                val end = (range.last + 1).coerceIn(start, text.length)
+                if (start < end) addStyle(MatchEmphasis, start, end)
+            }
+        }
+    } catch (_: Exception) {
+        AnnotatedString(text)
+    }
 }
 
 /**
@@ -249,15 +297,21 @@ fun matchSettings(query: String, entries: List<ResolvedSettingsEntry>): List<Set
                     foldedParent = entry.foldedParent,
                     foldedAliases = entry.foldedAliases,
                 ) ?: return@mapNotNull null
+                val titleMatches = settingsMatchRanges(entry.title, tokens)
+                val summaryMatches = settingsMatchRanges(entry.summary, tokens)
                 SettingsSearchResult(
                     entry = entry,
                     score = score,
-                    titleMatches = settingsMatchRanges(entry.title, tokens),
-                    summaryMatches = settingsMatchRanges(entry.summary, tokens),
+                    titleMatches = titleMatches,
+                    summaryMatches = summaryMatches,
+                    titleAnnotated = matchedText(entry.title, titleMatches),
+                    summaryAnnotated = matchedText(entry.summary, summaryMatches),
                 )
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 // One bad row must never kill the whole search: skip it and keep
                 // the remaining results. (Typing any query runs this per keystroke.)
+                // Logged so a reproduction leaves a breadcrumb even without a crash.
+                Log.w("SettingsSearch", "Skipping search entry ${entry.entry.id}", e)
                 null
             }
         }
