@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.saveable.listSaver
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
+import com.sukisu.ultra.data.model.FeatureChange
 import com.sukisu.ultra.data.model.FolkMountMode
 import com.sukisu.ultra.data.model.FolkMountStatus
 import com.sukisu.ultra.data.model.SuiStatus
@@ -61,6 +62,9 @@ data class SettingsUiState(
     // Kernel Umount
     val kernelUmountStatus: String = "",
     val isKernelUmountEnabled: Boolean = false,
+
+    // External feature changes (drift detected since boot)
+    val externalFeatureChanges: List<FeatureChange> = emptyList(),
 
     // SELinux Hide
     val selinuxHideStatus: String = "",

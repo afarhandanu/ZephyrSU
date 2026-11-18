@@ -3,6 +3,7 @@ package com.sukisu.ultra.ui.screen.settings
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -20,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -49,6 +51,7 @@ import androidx.compose.material.icons.rounded.Policy
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material.icons.rounded.VerifiedUser
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.runtime.Composable
@@ -663,6 +666,43 @@ fun SettingPagerMiuix(
                             stringResource(id = R.string.settings_mode_disable_until_reboot),
                             stringResource(id = R.string.settings_mode_disable_always),
                         )
+
+                        if (uiState.externalFeatureChanges.isNotEmpty()) {
+                            AppCard(
+                                modifier = Modifier
+                                    .padding(top = 12.dp)
+                                    .fillMaxWidth(),
+                                colors = backgroundAwareCardColors(),
+                            ) {
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            Icons.Rounded.Warning,
+                                            modifier = Modifier.padding(end = 6.dp),
+                                            contentDescription = null,
+                                            tint = colorScheme.onBackground,
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.feature_external_changes_title),
+                                            style = textStyles.title4,
+                                            color = colorScheme.onBackground,
+                                        )
+                                    }
+                                    val details = mutableListOf<String>()
+                                    for (change in uiState.externalFeatureChanges) {
+                                        details += "${featureChangeLabel(change.name)}: " +
+                                            "${featureChangeValue(change.expected)} → ${featureChangeValue(change.actual)}"
+                                    }
+                                    Text(
+                                        text = "${details.joinToString("\n")}\n\n" +
+                                            stringResource(R.string.feature_external_changes_summary),
+                                        modifier = Modifier.padding(top = 8.dp),
+                                        style = textStyles.body2,
+                                        color = colorScheme.onBackground,
+                                    )
+                                }
+                            }
+                        }
 
                         AppCard(
                             modifier = Modifier

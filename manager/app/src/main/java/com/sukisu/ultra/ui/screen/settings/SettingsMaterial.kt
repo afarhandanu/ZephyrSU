@@ -46,6 +46,7 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.Wallpaper
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHostState
@@ -560,6 +561,29 @@ fun SettingPagerMaterial(
                     stringResource(id = R.string.settings_mode_disable_until_reboot),
                     stringResource(id = R.string.settings_mode_disable_always),
                 )
+
+                if (uiState.externalFeatureChanges.isNotEmpty()) {
+                    SegmentedColumn(
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
+                        content = listOf {
+                            SegmentedListItem(
+                                leadingContent = { Icon(Icons.Filled.Warning, null) },
+                                headlineContent = { Text(stringResource(R.string.feature_external_changes_title)) },
+                                supportingContent = {
+                                    val details = mutableListOf<String>()
+                                    for (change in uiState.externalFeatureChanges) {
+                                        details += "${featureChangeLabel(change.name)}: " +
+                                            "${featureChangeValue(change.expected)} → ${featureChangeValue(change.actual)}"
+                                    }
+                                    Text(
+                                        "${details.joinToString("\n")}\n\n" +
+                                            stringResource(R.string.feature_external_changes_summary),
+                                    )
+                                },
+                            )
+                        },
+                    )
+                }
 
                 SettingsAnchor(SettingsSection.SECURITY, anchorRequesters) {
                 SegmentedColumn(

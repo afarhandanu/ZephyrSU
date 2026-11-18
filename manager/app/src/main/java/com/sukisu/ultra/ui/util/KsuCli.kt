@@ -22,6 +22,7 @@ import com.sukisu.ultra.core.tasks.BootKernelVersion
 import com.sukisu.ultra.core.tasks.ExtractImage
 import com.sukisu.ultra.core.tasks.ProbeResult
 import com.sukisu.ultra.core.utils.DataSourceChannel
+import com.sukisu.ultra.data.model.FeatureChange
 import com.sukisu.ultra.data.registry.DownloadVerificationException
 import com.sukisu.ultra.data.registry.RegistryDownloadStore
 import com.sukisu.ultra.data.registry.copyForInstall
@@ -135,6 +136,33 @@ suspend fun getFeatureStatus(feature: String): String = withContext(Dispatchers.
     val out = shell.newJob()
         .add("${getKsuDaemonPath()} feature check $feature").to(ArrayList<String>(), null).exec().out
     out.firstOrNull()?.trim().orEmpty()
+}
+
+suspend fun getFeatureChanges(): String = withContext(Dispatchers.IO) {
+    val shell = getRootShell()
+    val out = shell.newJob()
+        .add("${getKsuDaemonPath()} feature changes").to(ArrayList<String>(), null).exec().out
+    out.joinToString("\n")
+}
+
+fun parseFeatureChanges(json: String): List<FeatureChange> {
+    if (json.isBlank()) return emptyList()
+    // Defensive: an old ksud (or a clap error) yields non-JSON output — treat as no drift.
+    val array = try {
+        org.json.JSONObject(json).optJSONArray("changes")
+    } catch (_: Exception) {
+        null
+    } ?: return emptyList()
+    val changes = mutableListOf<FeatureChange>()
+    for (i in 0 until array.length()) {
+        val item = array.optJSONObject(i) ?: continue
+        changes += FeatureChange(
+            name = item.optString("feature"),
+            expected = item.optLong("expected"),
+            actual = item.optLong("actual"),
+        )
+    }
+    return changes
 }
 
 suspend fun getFeaturePersistValue(feature: String): Long? = readFeatureValue("--config $feature")

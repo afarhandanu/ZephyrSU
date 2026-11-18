@@ -116,6 +116,7 @@ pub fn on_post_fs_data() -> Result<()> {
     } else if let Err(e) = crate::feature::init_features() {
         warn!("init features failed: {e}");
     }
+    crate::feature::capture_baseline();
 
     crate::extension::init_forced_extensions();
     if is_safe_mode() {
@@ -200,6 +201,7 @@ pub fn on_post_fs_data() -> Result<()> {
     ) {
         warn!("exec plugin post-fs-data callbacks failed: {e}");
     }
+    crate::feature::detect_external_changes("post-fs-data");
 
     crate::boot_hide::boot_apply();
 
@@ -253,6 +255,7 @@ pub fn run_stage(stage: &str, wait: ScriptWait) {
     if let Err(e) = crate::module::exec_stage_script(stage, wait) {
         warn!("Failed to exec {stage} scripts: {e}");
     }
+    crate::feature::detect_external_changes(stage);
 
     // run lua stage script
     #[cfg(all(target_os = "android", target_arch = "aarch64"))]

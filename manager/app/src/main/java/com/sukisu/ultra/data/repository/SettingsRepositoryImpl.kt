@@ -20,6 +20,7 @@ import com.sukisu.ultra.ui.util.ImageStorage
 import com.sukisu.ultra.ui.util.HomeCardSticker
 import com.sukisu.ultra.ui.util.HomeStatusStyle
 import com.sukisu.ultra.ui.util.BuiltinAppIcons
+import com.sukisu.ultra.data.model.FeatureChange
 import com.sukisu.ultra.data.model.SuiApp
 import com.sukisu.ultra.data.model.SuiStatus
 import com.sukisu.ultra.data.model.FolkMountMode
@@ -41,6 +42,8 @@ import org.json.JSONObject
 import com.sukisu.ultra.ui.util.getFeaturePersistValue
 import com.sukisu.ultra.ui.util.getFeatureValue
 import com.sukisu.ultra.ui.util.getFeatureStatus
+import com.sukisu.ultra.ui.util.getFeatureChanges
+import com.sukisu.ultra.ui.util.parseFeatureChanges
 import com.sukisu.ultra.ui.util.LocaleHelper
 import java.security.SecureRandom
 import kotlinx.serialization.json.Json
@@ -649,6 +652,9 @@ class SettingsRepositoryImpl : SettingsRepository {
     override fun getSuCompatModePref(): Int = prefs.getInt("su_compat_mode", 0)
 
     override suspend fun getKernelUmountStatus(): String = getFeatureStatus("kernel_umount")
+
+    override suspend fun getExternalFeatureChanges(): List<FeatureChange> =
+        parseFeatureChanges(getFeatureChanges())
 
     override fun isKernelUmountEnabled(): Boolean = Natives.isKernelUmountEnabled()
 

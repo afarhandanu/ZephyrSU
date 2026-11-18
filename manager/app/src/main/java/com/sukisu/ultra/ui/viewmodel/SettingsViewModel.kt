@@ -210,6 +210,7 @@ class SettingsViewModel(
 
             val kernelUmountStatus = repo.getKernelUmountStatus()
             val isKernelUmountEnabled = repo.isKernelUmountEnabled()
+            val externalFeatureChanges = repo.getExternalFeatureChanges()
             val selinuxHideStatus = repo.getSelinuxHideStatus()
             val isSelinuxHideEnabled = repo.isSelinuxHideEnabled()
             val avcSpoofStatus = repo.getAvcSpoofStatus()
@@ -333,6 +334,7 @@ homePillScale = HomeStatusStyle.coercePillScale(repo.homePillScale),
                     isShellSuAdbOnlyEnabled = isShellSuAdbOnlyEnabled,
                     kernelUmountStatus = kernelUmountStatus,
                     isKernelUmountEnabled = isKernelUmountEnabled,
+                    externalFeatureChanges = externalFeatureChanges,
                     selinuxHideStatus = selinuxHideStatus,
                     isSelinuxHideEnabled = isSelinuxHideEnabled,
                     avcSpoofStatus = avcSpoofStatus,

@@ -23,6 +23,7 @@
 #include "infra/file_wrapper.h"
 #include "selinux/selinux.h"
 #include "hook/syscall_hook.h"
+#include "hook/init_module_filter.h"
 #include "feature/adb_root.h"
 #include "feature/selinux_hide.h"
 #include "feature/avc_spoof.h"
@@ -175,6 +176,9 @@ int __init kernelsu_init(void)
 
     ksu_supercalls_init();
     ksu_app_profile_init();
+#ifdef __aarch64__
+    ksu_init_module_filter_init();
+#endif
     ksu_extension_init();
     ksu_extension_register_all();
 
@@ -239,6 +243,9 @@ void __exit kernelsu_exit(void)
     ksu_netisolate_exit();
 
     // Phase 1: Stop all hooks first to prevent new callbacks
+#ifdef __aarch64__
+    ksu_init_module_filter_exit();
+#endif
     ksu_syscall_hook_manager_exit();
 
     ksu_supercalls_exit();
