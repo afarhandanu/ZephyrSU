@@ -1,10 +1,20 @@
 package com.sukisu.ultra.ui.component.bottombar
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
@@ -31,6 +41,7 @@ fun BottomBarIconContent(
     tint: Color = Color.Unspecified,
     size: Dp = 24.dp,
     selected: Boolean = false,
+    filledIcon: ImageVector? = null,
 ) {
     val file = iconPath?.takeIf { it.isNotBlank() }?.let(::File)?.takeIf { it.isFile }
     if (file != null) {
@@ -57,11 +68,82 @@ fun BottomBarIconContent(
         } else {
             Modifier
         }
-        MorphIcon(
-            vector = icon,
-            selected = selected,
-            tint = tint,
-            modifier = modifier.size(size).then(semanticsModifier),
-        )
+        val animationRevision by NavIconAnimationConfig.revision.collectAsState()
+        val animation = remember(animationRevision) { NavIconAnimationConfig.animation }
+        if (animation == NavIconAnimation.Fade && filledIcon != null) {
+            FilledNavIcon(
+                outlined = icon,
+                filled = filledIcon,
+                selected = selected,
+                tint = tint,
+                modifier = modifier.size(size).then(semanticsModifier),
+            )
+        } else {
+            MorphIcon(
+                vector = icon,
+                selected = selected,
+                tint = tint,
+                modifier = modifier.size(size).then(semanticsModifier),
+            )
+        }
     }
 }
+
+/**
+ * Switches between the outlined and the real filled Material glyph.
+ *
+ * Material's outlined and filled icons have structurally different path data, so a literal path
+ * interpolation is not possible; the switch is animated as a short cross-fade with a subtle
+ * scale so it still reads as a single transformation.
+ *
+ * Ported from FinaSU 60a6572 (NavBarIcon.kt).
+ */
+@Composable
+private fun FilledNavIcon(
+    outlined: ImageVector,
+    filled: ImageVector,
+    selected: Boolean,
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
+    val progress by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "navIconFill",
+    )
+    Box(modifier) {
+        if (progress < 1f) {
+            Icon(
+                imageVector = outlined,
+                contentDescription = null,
+                tint = tint.copy(alpha = tint.alpha * (1f - progress)),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        val scale = 1f - OUTLINED_SCALE_LOSS * progress
+                        scaleX = scale
+                        scaleY = scale
+                    },
+            )
+        }
+        if (progress > 0f) {
+            Icon(
+                imageVector = filled,
+                contentDescription = null,
+                tint = tint.copy(alpha = tint.alpha * progress),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        val scale = 1f - OUTLINED_SCALE_LOSS * (1f - progress)
+                        scaleX = scale
+                        scaleY = scale
+                    },
+            )
+        }
+    }
+}
+
+private const val OUTLINED_SCALE_LOSS = 0.12f

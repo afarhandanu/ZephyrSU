@@ -13,6 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cottage
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.Cottage
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.GridView
@@ -110,6 +116,7 @@ fun BottomBarMiuix(
                                 iconPath = iconPath,
                                 label = label,
                                 badge = navigationBadgeFor(destination.ordinal, navigationBadge),
+                                filledIcon = destination.iconSelected,
                             )
                         }
                     }
@@ -152,6 +159,7 @@ fun BottomBarMiuix(
                             contentDescription = label,
                             tint = MiuixLocalContentColor.current,
                             selected = mainState.selectedPage == index,
+                            filledIcon = destination.iconSelected,
                         )
                     }
                     if (badge != null) {
@@ -181,6 +189,7 @@ private fun androidx.compose.foundation.layout.RowScope.MiuixCustomNavigationBar
     iconPath: String,
     label: String,
     badge: (@Composable () -> Unit)?,
+    filledIcon: ImageVector? = null,
 ) {
     val tint = MiuixTheme.colorScheme.onSurfaceContainer.copy(
         alpha = if (selected) 1f else NavigationBarDefaults.UnselectedAlpha,
@@ -210,6 +219,7 @@ private fun androidx.compose.foundation.layout.RowScope.MiuixCustomNavigationBar
                         tint = tint,
                         size = NavigationBarDefaults.IconSize,
                         selected = selected,
+                        filledIcon = filledIcon,
                     )
                 }
             } else {
@@ -220,6 +230,7 @@ private fun androidx.compose.foundation.layout.RowScope.MiuixCustomNavigationBar
                     tint = tint,
                     size = NavigationBarDefaults.IconSize,
                     selected = selected,
+                    filledIcon = filledIcon,
                 )
             }
         }
@@ -237,13 +248,15 @@ enum class BottomBarDestination(
     val textKey: CustomTextKey,
     val icon: ImageVector,
     val key: String,
+    /** Filled counterpart of [icon], used by the Fade nav-icon animation. */
+    val iconSelected: ImageVector,
 ) {
-    Home(CustomTextKey.PAGE_HOME, Icons.Rounded.Cottage, "home"),
-    Kpm(CustomTextKey.PAGE_KPM, Icons.Rounded.Memory, "kpm"),
-    Plugin(CustomTextKey.PAGE_PLUGIN, Icons.Rounded.GridView, "plugin"),
-    SuperUser(CustomTextKey.PAGE_SUPERUSER, Icons.Rounded.Security, "superuser"),
-    Module(CustomTextKey.PAGE_MODULES, Icons.Rounded.Extension, "module"),
-    Setting(CustomTextKey.PAGE_SETTINGS, Icons.Rounded.Settings, "setting")
+    Home(CustomTextKey.PAGE_HOME, Icons.Rounded.Cottage, "home", Icons.Filled.Cottage),
+    Kpm(CustomTextKey.PAGE_KPM, Icons.Rounded.Memory, "kpm", Icons.Filled.Memory),
+    Plugin(CustomTextKey.PAGE_PLUGIN, Icons.Rounded.GridView, "plugin", Icons.Filled.GridView),
+    SuperUser(CustomTextKey.PAGE_SUPERUSER, Icons.Rounded.Security, "superuser", Icons.Filled.Security),
+    Module(CustomTextKey.PAGE_MODULES, Icons.Rounded.Extension, "module", Icons.Filled.Extension),
+    Setting(CustomTextKey.PAGE_SETTINGS, Icons.Rounded.Settings, "setting", Icons.Filled.Settings)
 }
 
 internal fun navigationBadgeFor(

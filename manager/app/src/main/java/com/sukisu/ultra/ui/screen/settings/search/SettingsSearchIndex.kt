@@ -67,6 +67,7 @@ import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.outlined.WifiOff
+import androidx.compose.material.icons.rounded.Animation
 import androidx.compose.material.icons.rounded.AspectRatio
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.DesignServices
@@ -508,6 +509,18 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
             icon = Icons.Filled.Extension,
             anchor = SettingsSection.NAVIGATION,
             aliases = listOf("module", "tab", "show", "hide", "sembunyi", "tampilkan"),
+        )
+    )
+    add(
+        sectionRow(
+            groupKey = SettingsSection.NAVIGATION,
+            groupTitleRes = R.string.settings_search_section_navigation,
+            id = "navigation.icon_animation",
+            titleRes = R.string.settings_nav_icon_animation,
+            summaryRes = R.string.settings_nav_icon_animation_summary,
+            icon = Icons.Rounded.Animation,
+            anchor = SettingsSection.NAVIGATION,
+            aliases = listOf("icon", "animation", "morph", "fade", "animasi", "ikon"),
         )
     )
     add(

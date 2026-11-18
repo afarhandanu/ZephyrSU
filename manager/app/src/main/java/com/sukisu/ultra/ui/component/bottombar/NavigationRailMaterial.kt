@@ -147,7 +147,8 @@ fun NavigationRailMaterial(
                 },
                 icon = {
                     NavigationIconWithBadge(
-                        icon = if (selected) selectedIcon else unselectedIcon,
+                        icon = unselectedIcon,
+                        filledIcon = selectedIcon,
                         contentDescription = customText(label),
                         badge = destination?.let { badgeFor(it.ordinal, navigationBadge) },
                         selected = selected,
