@@ -21,9 +21,25 @@ fun getGitCommitCount(): Int {
     return process.inputStream.bufferedReader().use { it.readText().trim().toInt() }
 }
 
+private fun git(vararg args: String): String =
+    Runtime.getRuntime().exec(arrayOf("git") + args)
+        .inputStream.bufferedReader().use { it.readText().trim() }
+
 fun getGitDescribe(): String {
-    val process = Runtime.getRuntime().exec(arrayOf("git", "describe", "--tags", "--always", "--abbrev=0"))
-    return process.inputStream.bufferedReader().use { it.readText().trim() }
+    // Only version tags. The repository also carries the rolling `manager-ci`
+    // tag, and without the pattern it becomes the version name, so every APK
+    // was called ZephyrSU_manager-ci_<code>-<abi>-release.apk.
+    val described = git("describe", "--tags", "--always", "--abbrev=0", "--match", "v[0-9]*")
+    // --always falls back to a commit hash when no version tag is reachable, and a
+    // hash in the file name is noise: use the newest version tag instead.
+    if (described.isNotEmpty() && !described.matches(Regex("^[0-9a-f]{7,40}$"))) {
+        return described
+    }
+    return git("tag", "--list", "v*", "--sort=-v:refname")
+        .lineSequence()
+        .map { it.trim() }
+        .firstOrNull { it.isNotEmpty() }
+        ?: "dev"
 }
 
 fun getVersionCode(): Int {
