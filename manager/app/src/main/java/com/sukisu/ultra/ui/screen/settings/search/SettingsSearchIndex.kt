@@ -65,6 +65,7 @@ import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Widgets
+import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material.icons.rounded.AspectRatio
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.DesignServices
@@ -604,6 +605,20 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
             icon = Icons.Outlined.Memory,
             route = Route.KmodRegistry,
             aliases = listOf("kmod", "kernel module", "ko", "lkm", "autoload", "modul kernel"),
+        )
+    )
+
+    // Network isolation (per-app), reached from the Tools page
+    add(
+        pageRow(
+            groupKey = SettingsSection.TOOLS,
+            groupTitleRes = R.string.settings_search_section_tools,
+            id = "tools.netisolate",
+            titleRes = R.string.settings_netisolate,
+            summaryRes = R.string.settings_netisolate_summary,
+            icon = Icons.Outlined.WifiOff,
+            route = Route.NetIsolate,
+            aliases = listOf("netisolate", "network", "isolate", "offline", "wifi", "jaringan", "internet"),
         )
     )
 

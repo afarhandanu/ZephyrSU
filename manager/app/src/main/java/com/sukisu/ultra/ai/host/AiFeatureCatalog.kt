@@ -602,6 +602,15 @@ object AiFeatureCatalog : AiFeatureService {
                 solution = ROOT_SOLUTION,
             ),
             entry(
+                id = "netisolate",
+                title = "Network isolation",
+                summary = "Block new internet connections for selected apps, with per-app policies and a log of blocked attempts.",
+                target = ManagerAiTarget.Push(Route.NetIsolate),
+                supported = root,
+                reason = ROOT_REASON,
+                solution = ROOT_SOLUTION,
+            ),
+            entry(
                 id = "tools",
                 title = "Tools",
                 summary = "Root utilities: CPU information, CPU spoof presets, device and kernel diagnostics.",

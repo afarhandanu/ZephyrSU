@@ -29,6 +29,7 @@
 #include "feature/uts_spoof.h"
 #include "feature/shell_su_adb_only.h"
 #include "feature/module_blacklist.h"
+#include "feature/netisolate.h"
 #include "infra/symbol_resolver.h"
 #include "preinit/preinit.h"
 #include "extension/extension.h"
@@ -169,6 +170,8 @@ int __init kernelsu_init(void)
     ksu_selinux_hide_init();
     ksu_avc_spoof_init();
     ksu_shell_su_adb_only_init();
+    if (ksu_netisolate_init())
+        pr_info("netisolate: feature unavailable\n");
 
     ksu_supercalls_init();
     ksu_app_profile_init();
@@ -233,6 +236,8 @@ int __init kernelsu_init(void)
 
 void __exit kernelsu_exit(void)
 {
+    ksu_netisolate_exit();
+
     // Phase 1: Stop all hooks first to prevent new callbacks
     ksu_syscall_hook_manager_exit();
 

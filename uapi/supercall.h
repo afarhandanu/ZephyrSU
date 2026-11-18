@@ -6,6 +6,7 @@
 
 #include "uapi/app_profile.h"
 #include "uapi/manager.h"
+#include "uapi/netisolate.h"
 #include "uapi/uts_view.h"
 
 // 2: allowlist v4 root profile flags
@@ -225,6 +226,16 @@ static const __u32 KSU_IOCTL_DISABLE_ESCAPE_TO_ROOT = _IO('K', 21);
 static const __u32 KSU_IOCTL_LOOKUP_SYMBOLS = _IOW('K', 22, struct ksu_lookup_symbols_cmd);
 static const __u32 KSU_IOCTL_GET_UTS_VIEW_CONFIG = _IOWR('K', 25, struct ksu_uts_view_config);
 static const __u32 KSU_IOCTL_SET_UTS_VIEW_CONFIG = _IOW('K', 26, struct ksu_uts_view_config);
+static const __u32 KSU_IOCTL_GET_NETISOLATE_CONFIG = _IOWR('K', 27, struct ksu_netisolate_config);
+static const __u32 KSU_IOCTL_SET_NETISOLATE_CONFIG = _IOW('K', 28, struct ksu_netisolate_config);
+static const __u32 KSU_IOCTL_GET_NETISOLATE_POLICIES =
+    _IOWR('K', 29, struct ksu_netisolate_policies);
+static const __u32 KSU_IOCTL_SET_NETISOLATE_POLICIES =
+    _IOW('K', 30, struct ksu_netisolate_policies);
+static const __u32 KSU_IOCTL_GET_NETISOLATE_EVENTS =
+    _IOWR('K', 31, struct ksu_netisolate_events);
+static const __u32 KSU_IOCTL_CLEAR_NETISOLATE_EVENTS =
+    _IOW('K', 32, struct ksu_netisolate_events);
 // Other IOCTL command definitions
 static const __u32 KSU_IOCTL_GET_FULL_VERSION = _IOC(_IOC_READ, 'K', 100, 0);
 static const __u32 KSU_IOCTL_HOOK_TYPE = _IOC(_IOC_READ, 'K', 101, 0);

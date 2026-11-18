@@ -115,6 +115,9 @@ fun ToolsScreen() {
         onOpenKmodRegistry = {
             navigator.push(Route.KmodRegistry)
         },
+        onOpenNetIsolate = {
+            navigator.push(Route.NetIsolate)
+        },
     )
 
     val state = ToolsUiState(

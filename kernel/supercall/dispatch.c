@@ -18,6 +18,7 @@
 #include "ksu.h"
 #include "runtime/ksud_boot.h"
 #include "feature/kernel_umount.h"
+#include "feature/netisolate.h"
 #include "manager/manager_identity.h"
 #include "extension/dynamic_manager.h"
 #include "selinux/selinux.h"
@@ -461,6 +462,83 @@ static int do_set_feature(void __user *arg)
     }
 
     return 0;
+}
+
+static int do_get_netisolate_config(void __user *arg)
+{
+    struct ksu_netisolate_config config;
+    int ret;
+
+    ret = ksu_netisolate_get_config(&config);
+    if (ret)
+        return ret;
+    if (copy_to_user(arg, &config, sizeof(config)))
+        return -EFAULT;
+    return 0;
+}
+
+static int do_set_netisolate_config(void __user *arg)
+{
+    struct ksu_netisolate_config config;
+
+    if (copy_from_user(&config, arg, sizeof(config)))
+        return -EFAULT;
+    return ksu_netisolate_set_config(&config);
+}
+
+static int do_get_netisolate_policies(void __user *arg)
+{
+    struct ksu_netisolate_policies *config;
+    int ret;
+
+    config = kzalloc(sizeof(*config), GFP_KERNEL);
+    if (!config)
+        return -ENOMEM;
+    ret = ksu_netisolate_get_policies(config);
+    if (ret)
+        goto out;
+    if (copy_to_user(arg, config, sizeof(*config)))
+        ret = -EFAULT;
+out:
+    kfree(config);
+    return ret;
+}
+
+static int do_set_netisolate_policies(void __user *arg)
+{
+    struct ksu_netisolate_policies *config;
+    int ret;
+
+    config = kzalloc(sizeof(*config), GFP_KERNEL);
+    if (!config)
+        return -ENOMEM;
+    if (copy_from_user(config, arg, sizeof(*config)))
+        ret = -EFAULT;
+    else
+        ret = ksu_netisolate_set_policies(config);
+    kfree(config);
+    return ret;
+}
+
+static int do_get_netisolate_events(void __user *arg)
+{
+    struct ksu_netisolate_events *events;
+    int ret;
+
+    events = kzalloc(sizeof(*events), GFP_KERNEL);
+    if (!events)
+        return -ENOMEM;
+    ret = ksu_netisolate_get_events(events);
+    if (!ret && copy_to_user(arg, events, sizeof(*events)))
+        ret = -EFAULT;
+    kfree(events);
+    return ret;
+}
+
+static int do_clear_netisolate_events(void __user *arg)
+{
+    (void)arg;
+    return ksu_netisolate_clear_events();
 }
 
 static int do_get_wrapper_fd(void __user *arg)
@@ -1053,6 +1131,42 @@ static const struct ksu_ioctl_cmd_map ksu_ioctl_handlers[] = {
         .handler = do_disable_escape_to_root,
         .perm_check = only_root,
         .allow_su_session = true
+    },
+    {
+        .cmd = KSU_IOCTL_GET_NETISOLATE_CONFIG,
+        .name = "GET_NETISOLATE_CONFIG",
+        .handler = do_get_netisolate_config,
+        .perm_check = manager_or_root
+    },
+    {
+        .cmd = KSU_IOCTL_SET_NETISOLATE_CONFIG,
+        .name = "SET_NETISOLATE_CONFIG",
+        .handler = do_set_netisolate_config,
+        .perm_check = manager_or_root
+    },
+    {
+        .cmd = KSU_IOCTL_GET_NETISOLATE_POLICIES,
+        .name = "GET_NETISOLATE_POLICIES",
+        .handler = do_get_netisolate_policies,
+        .perm_check = manager_or_root
+    },
+    {
+        .cmd = KSU_IOCTL_SET_NETISOLATE_POLICIES,
+        .name = "SET_NETISOLATE_POLICIES",
+        .handler = do_set_netisolate_policies,
+        .perm_check = manager_or_root
+    },
+    {
+        .cmd = KSU_IOCTL_GET_NETISOLATE_EVENTS,
+        .name = "GET_NETISOLATE_EVENTS",
+        .handler = do_get_netisolate_events,
+        .perm_check = manager_or_root
+    },
+    {
+        .cmd = KSU_IOCTL_CLEAR_NETISOLATE_EVENTS,
+        .name = "CLEAR_NETISOLATE_EVENTS",
+        .handler = do_clear_netisolate_events,
+        .perm_check = manager_or_root
     },
     {
         .cmd = KSU_IOCTL_LOOKUP_SYMBOLS,

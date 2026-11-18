@@ -128,6 +128,10 @@ pub fn on_post_fs_data() -> Result<()> {
     // failures are recorded as a runtime error, never fail the boot).
     crate::uts_view::boot_apply();
 
+    // Reapply persisted network isolation (no-op without the kernel driver;
+    // failures are only logged, never fail the boot).
+    crate::netisolate::boot_apply();
+
     match crate::kernel_module::autoload_with_startup_timeout() {
         Ok(Some(report)) => {
             if !report.failures.is_empty() {
