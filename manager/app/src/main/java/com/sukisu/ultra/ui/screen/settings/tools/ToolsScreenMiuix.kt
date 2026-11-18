@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.outlined.Memory
+import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Memory
@@ -126,6 +127,10 @@ fun ToolsMiuix(
 
                     KmodRegistrySectionMiuix(
                         onOpen = actions.onOpenKmodRegistry
+                    )
+
+                    NetIsolateSectionMiuix(
+                        onOpen = actions.onOpenNetIsolate
                     )
 
                     AllowlistBackupSectionMiuix(
@@ -286,6 +291,31 @@ private fun KmodRegistrySectionMiuix(
                     imageVector = Icons.Outlined.Memory,
                     modifier = Modifier.padding(end = 6.dp),
                     contentDescription = stringResource(R.string.kernel_modules),
+                    tint = colorScheme.onBackground
+                )
+            },
+            onClick = onOpen
+        )
+    }
+}
+
+@Composable
+private fun NetIsolateSectionMiuix(
+    onOpen: () -> Unit,
+) {
+    AppCard(
+        modifier = Modifier
+            .padding(top = 12.dp)
+            .fillMaxWidth(),
+    ) {
+        ArrowPreference(
+            title = stringResource(R.string.settings_netisolate),
+            summary = stringResource(R.string.settings_netisolate_summary),
+            startAction = {
+                Icon(
+                    imageVector = Icons.Outlined.WifiOff,
+                    modifier = Modifier.padding(end = 6.dp),
+                    contentDescription = stringResource(R.string.settings_netisolate),
                     tint = colorScheme.onBackground
                 )
             },

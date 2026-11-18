@@ -162,6 +162,7 @@ import com.sukisu.ultra.ui.screen.uts.UtsViewScreen
 import com.sukisu.ultra.ui.screen.nomount.NomountExclusionsScreen
 import com.sukisu.ultra.ui.screen.nomount.NomountScreen
 import com.sukisu.ultra.ui.screen.kernelmodule.KernelModuleScreen
+import com.sukisu.ultra.ui.screen.netisolate.NetIsolateScreen
 import com.sukisu.ultra.ui.screen.plugin.PluginPager
 import com.sukisu.ultra.ui.screen.plugin.PluginStoreScreen
 import com.sukisu.ultra.data.sui.SuiPermissionHost
@@ -523,6 +524,7 @@ class MainActivity : FragmentActivity() {
                                 entry<Route.Plugin>(swipeDismiss = swipeDismiss)  { PluginPager(bottomInnerPadding = 0.dp) }
                                 entry<Route.PluginStore>(swipeDismiss = swipeDismiss)  { PluginStoreScreen() }
                                 entry<Route.KmodRegistry>(swipeDismiss = swipeDismiss)  { KernelModuleScreen() }
+                                entry<Route.NetIsolate>(swipeDismiss = swipeDismiss)  { NetIsolateScreen() }
                                 entry<Route.BackupList>(swipeDismiss = swipeDismiss)  { BackupListScreen() }
                                 entry<Route.KernelModules>(swipeDismiss = swipeDismiss)  { KernelModulesScreen() }
                                 entry<Route.DynamicManagers>(swipeDismiss = swipeDismiss) { DynamicManagersScreen() }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.outlined.Memory
+import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Memory
@@ -93,6 +94,10 @@ fun ToolsMaterial(
 
                     KmodRegistrySectionMaterial(
                         onOpen = actions.onOpenKmodRegistry
+                    )
+
+                    NetIsolateSectionMaterial(
+                        onOpen = actions.onOpenNetIsolate
                     )
 
                     AllowlistBackupSectionMaterial(
@@ -236,6 +241,28 @@ private fun KmodRegistrySectionMaterial(
                     IconTile(
                         Icons.Outlined.Memory,
                         stringResource(R.string.kernel_modules),
+                    )
+                },
+                onClick = onOpen,
+            )
+        })
+    )
+}
+
+@Composable
+private fun NetIsolateSectionMaterial(
+    onOpen: () -> Unit,
+) {
+    SegmentedColumn(
+        modifier = Modifier.padding(top = 12.dp),
+        content = listOf({
+            SegmentedListItem(
+                headlineContent = { Text(stringResource(R.string.settings_netisolate)) },
+                supportingContent = { Text(stringResource(R.string.settings_netisolate_summary)) },
+                leadingContent = {
+                    IconTile(
+                        Icons.Outlined.WifiOff,
+                        stringResource(R.string.settings_netisolate),
                     )
                 },
                 onClick = onOpen,

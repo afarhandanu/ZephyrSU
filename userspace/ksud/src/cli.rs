@@ -201,6 +201,12 @@ enum Commands {
         command: crate::uts_view::Command,
     },
 
+    /// Manage kernel UID network isolation
+    Netisolate {
+        #[command(subcommand)]
+        command: crate::netisolate::Command,
+    },
+
     /// Manage built-in module mounting (Folk Mount)
     Mount {
         #[command(subcommand)]
@@ -1756,6 +1762,7 @@ pub fn run() -> Result<()> {
             }
         },
         Commands::UtsView { command } => crate::uts_view::run(&command),
+        Commands::Netisolate { command } => crate::netisolate::run(&command),
         Commands::Mount { command } => match command {
             Mount::Status { json } => crate::magic_mount::print_status(json),
             Mount::SetMode { mode } => crate::magic_mount::set_mode(&mode),

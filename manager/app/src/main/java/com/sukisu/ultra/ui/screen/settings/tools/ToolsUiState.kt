@@ -19,6 +19,7 @@ data class ToolsActions(
     val onOpenNomount: () -> Unit = {},
     val onOpenPlugin: () -> Unit = {},
     val onOpenKmodRegistry: () -> Unit = {},
+    val onOpenNetIsolate: () -> Unit = {},
 )
 
 @Immutable

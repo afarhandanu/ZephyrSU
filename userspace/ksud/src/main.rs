@@ -71,6 +71,8 @@ mod mount_plan;
 #[cfg(target_os = "android")]
 mod mount_ui;
 #[cfg(target_os = "android")]
+mod netisolate;
+#[cfg(target_os = "android")]
 mod nomount;
 #[cfg(target_os = "android")]
 mod nomount_plan;
