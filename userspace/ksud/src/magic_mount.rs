@@ -1228,6 +1228,8 @@ pub fn set_mode(mode: &str) -> Result<()> {
     write_mount_mode(parsed)?;
     if parsed == MountMode::Nomount {
         crate::nomount::forget_inflight()?;
+    } else if parsed != MountMode::Off {
+        mount_guard::try_clear(inflight_path())?;
     }
     Ok(())
 }

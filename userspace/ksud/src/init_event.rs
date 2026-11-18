@@ -325,6 +325,13 @@ pub fn on_boot_completed() {
 
     crate::preinit::on_boot_completed();
 
+    // The boot reached a usable state, so the step recorded for it finished:
+    // dropping that record is what tells the next boot which provider may run
+    // again (a record from an earlier boot has to stay, see `mount_guard`).
+    if let Err(error) = crate::mount_guard::clear_if_ours(Path::new(defs::MOUNT_INFLIGHT)) {
+        warn!("could not clear the completed mount guard: {error:#}");
+    }
+
     run_stage("boot-completed", ScriptWait::NoWait);
 }
 

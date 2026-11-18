@@ -212,15 +212,11 @@ pub fn try_clear(path: &Path) -> Result<()> {
 /// A stale record has to survive: it is what tells the next boot not to repeat
 /// a step that stopped an earlier one (booting into safe mode, for instance,
 /// skips mounting and must not swallow the evidence).
-// Only used by FinaSU mount_ui tests (stripped in ZephyrSU); kept for a future port.
-#[allow(dead_code)]
 pub fn clear_if_ours(path: &Path) -> Result<()> {
     let epoch = crate::startup_epoch::current_or_create()?;
     clear_if_ours_at(path, &epoch)
 }
 
-// Only used by FinaSU mount_ui tests (stripped in ZephyrSU); kept for a future port.
-#[allow(dead_code)]
 pub fn clear_if_ours_at(path: &Path, epoch: &crate::startup_epoch::StartupEpoch) -> Result<()> {
     let ours = read(path).is_none_or(|record| {
         record.boot_id == epoch.boot_id
