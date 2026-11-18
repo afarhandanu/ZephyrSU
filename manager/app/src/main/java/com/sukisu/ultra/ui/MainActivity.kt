@@ -334,7 +334,14 @@ class MainActivity : FragmentActivity() {
             // page slots (KPM has its own slot, PAGE_KPM).
             val wallpaperPage = wallpaperPageFor(navigator.backStack, mainPageToWallpaperPage(selectedMainPage))
             val videoActive = VisualMediaConfig.videoEnabled && VisualMediaConfig.videoFilename != null
-            val wallpaperActive = WallpaperConfig.enabled && WallpaperConfig.isPageActive(wallpaperPage, videoActive)
+            // FinaSU wallpaper renders in Material theme only: Miuix has no wallpaper
+            // tokens and its pages are opaque, so in Miuix the layer could only ever show
+            // as a flash — the nav transition below fades the covered page out whenever
+            // a background is active, briefly revealing the layer behind it. Gating the
+            // render here, not WallpaperConfig.enabled, keeps the stored config intact:
+            // switching back to Material restores the same wallpaper with no re-setup.
+            val wallpaperActive = uiMode == UiMode.Material &&
+                WallpaperConfig.enabled && WallpaperConfig.isPageActive(wallpaperPage, videoActive)
             // App Lock session (ported from FinaSU, Milestone 2).
             val authenticationSession = rememberAuthenticationSession(this@MainActivity, ksuApp.securityRepository)
             val context = LocalContext.current

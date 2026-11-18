@@ -1,5 +1,7 @@
 package com.sukisu.ultra.ui.screen.wallpaper
 
+import com.sukisu.ultra.ui.LocalUiMode
+import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.themeimport.rememberFptThemeImportRequest
 import com.sukisu.ultra.ui.component.themeimport.ThemeMetadataEditor
 import com.sukisu.ultra.wallpaper.ThemeMetadata
@@ -530,7 +532,11 @@ fun WallpaperScreenMaterial(
     // MainActivity's wallpaperActive): the token-based isBackgroundActive() is only
     // provided by the Material theme, so it would stay false in Miuix mode and the
     // screen would stay black there.
-    val wallpaperBehind = state.enabled &&
+    // Material theme only: MainActivity paints the layer behind this screen only in
+    // Material mode, so in Miuix a transparent canvas would show the covered Settings
+    // page bleeding through instead of a wallpaper. The stored config is untouched —
+    // the sliders below keep editing it for the next Material switch.
+    val wallpaperBehind = LocalUiMode.current == UiMode.Material && state.enabled &&
         ((state.videoEnabled && state.videoFilename != null) ||
             if (state.multiBackgroundEnabled) state.settingsBackgroundSelected else state.hasImage)
 
