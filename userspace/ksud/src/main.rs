@@ -40,9 +40,9 @@ mod feature_id;
 mod hot_install;
 #[cfg(target_os = "android")]
 mod init_event;
+mod kernel_module;
 #[cfg(target_arch = "aarch64")]
 mod kpm;
-mod kernel_module;
 #[cfg(target_os = "android")]
 mod ksucalls;
 #[cfg(target_os = "android")]

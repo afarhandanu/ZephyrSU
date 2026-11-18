@@ -120,9 +120,6 @@ fun KernelModuleScreen() {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val pullState = rememberPullToRefreshState()
-    // No LayoutVariant system in ZephyrSU yet (M5.3 follow-up); the M3E
-    // layout is not available, so the standard layout is always used.
-    val m3eLayout = false
     val installingMessage = stringResource(R.string.kernel_modules_installing)
     var bannerDialogModule by remember { mutableStateOf<KernelModule?>(null) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -151,7 +148,7 @@ fun KernelModuleScreen() {
             actions = actions,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
             onLongPress = { bannerDialogModule = it },
         )
     }
@@ -159,20 +156,15 @@ fun KernelModuleScreen() {
     ExpressiveScaffold(
         topBar = {
             SearchAppBar(
-                largeTitle = m3eLayout,
-                topSearch = !m3eLayout,
-                collapsibleSearch = m3eLayout,
                 scrollBehavior = null,
                 title = { Text(stringResource(R.string.kernel_modules)) },
                 searchText = state.searchText,
                 onSearchTextChange = actions.onSearchTextChange,
                 onClearClick = { actions.onSearchTextChange("") },
-                searchPlaceholder = stringResource(R.string.kernel_modules_search_hint),
                 snackbarHostState = snackbar,
                 navigationIcon = {
                     TopBarBackButton(
                         onClick = { navigator.pop() },
-                        horizontalPadding = 0.dp,
                     )
                 },
                 defaultContent = { bottom, _ ->
