@@ -6,6 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.sukisu.ultra.Natives
+import com.sukisu.ultra.media.MediaFeedback
 import com.sukisu.ultra.R
 import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.ui.LocalMainPagerState
@@ -55,6 +56,7 @@ fun NavigationRailMiuix(
             NavigationRailItem(
                 selected = mainState.selectedPage == index,
                 onClick = {
+                    if (mainState.selectedPage != index) MediaFeedback.navigation()
                     mainState.animateToPage(index)
                 },
                 icon = icon,

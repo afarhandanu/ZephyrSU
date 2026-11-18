@@ -170,6 +170,7 @@ import com.sukisu.ultra.data.sui.SuiPermissionHost
 import com.sukisu.ultra.ui.screen.builtinzygisk.BuiltinZygiskScreen
 import com.sukisu.ultra.ui.screen.sui.SuiPermissionRequestDialog
 import com.sukisu.ultra.ui.screen.sui.SuiPermissionsScreen
+import com.sukisu.ultra.media.MediaFeedback
 import com.sukisu.ultra.media.MusicConfig
 import com.sukisu.ultra.media.MusicManager
 import com.sukisu.ultra.media.SoundEffectConfig
@@ -238,6 +239,22 @@ class MainActivity : FragmentActivity() {
 
     override fun attachBaseContext(newBase: android.content.Context) {
         super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
+    // Touch sound (FinaSU parity): every tap plays the click sound when the scope is
+    // "global"; the bottom-bar/rail click handlers cover the "bottom_bar" scope.
+    // Without this, MediaFeedback.touch() has no caller and taps stay silent even
+    // though the settings preview (which calls SoundEffectManager directly) works.
+    override fun dispatchTouchEvent(event: android.view.MotionEvent?): Boolean {
+        if (event?.action == android.view.MotionEvent.ACTION_UP) {
+            MediaFeedback.touch(this)
+        }
+        return super.dispatchTouchEvent(event)
+    }
+
+    override fun onStop() {
+        SoundEffectManager.release()
+        super.onStop()
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
