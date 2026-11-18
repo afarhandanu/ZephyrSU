@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sukisu.ultra.Natives
+import com.sukisu.ultra.media.MediaFeedback
 import com.sukisu.ultra.ui.LocalMainPagerState
 import com.sukisu.ultra.ui.component.FloatingBottomBar
 import com.sukisu.ultra.ui.component.FloatingBottomBarItem
@@ -95,6 +96,7 @@ fun BottomBarMiuix(
                                 label = label,
                                 selected = selected,
                                 onClick = {
+                                    if (!selected) MediaFeedback.navigation()
                                     mainState.animateToPage(index)
                                 },
                                 // Badges key off the destination, not the visible index.
@@ -103,7 +105,7 @@ fun BottomBarMiuix(
                         } else {
                             MiuixCustomNavigationBarItem(
                                 selected = selected,
-                                onClick = { mainState.animateToPage(index) },
+                                onClick = { if (!selected) MediaFeedback.navigation(); mainState.animateToPage(index) },
                                 icon = destination.icon,
                                 iconPath = iconPath,
                                 label = label,
@@ -134,6 +136,7 @@ fun BottomBarMiuix(
                 FloatingBottomBarItem(
                     selected = mainState.selectedPage == index,
                     onClick = {
+                        if (mainState.selectedPage != index) MediaFeedback.navigation()
                         activateTab(index)
                     },
                     modifier = Modifier.defaultMinSize(minWidth = 76.dp)

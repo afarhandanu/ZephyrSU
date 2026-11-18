@@ -46,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import com.sukisu.ultra.Natives
+import com.sukisu.ultra.media.MediaFeedback
 import com.sukisu.ultra.R
 import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.ui.LocalMainPagerState
@@ -141,6 +142,7 @@ fun NavigationRailMaterial(
                 onClick = {
                     if (!selected) {
                         mainPagerState.animateToPage(index)
+                        MediaFeedback.navigation()
                     }
                 },
                 icon = {

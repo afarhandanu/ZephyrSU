@@ -75,6 +75,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.Natives
+import com.sukisu.ultra.media.MediaFeedback
 import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 import com.sukisu.ultra.ui.LocalMainPagerState
 import com.sukisu.ultra.ui.component.material.ChromeEdge
@@ -196,6 +197,7 @@ fun BottomBarMaterial(
                         progressiveBlur = progressiveBlur,
                         onClick = {
                             if (!selected) {
+                                MediaFeedback.navigation()
                                 mainPagerState.animateToPage(index)
                             }
                         },
@@ -234,6 +236,7 @@ private fun DockedBottomBarMaterial(
                     selected = selected,
                     onClick = {
                         if (!selected) {
+                            MediaFeedback.navigation()
                             mainPagerState.animateToPage(index)
                         }
                     },
@@ -292,7 +295,7 @@ private fun LiquidBottomBarMaterial(
             val destination = mainPagerState.destinations.getOrNull(index)
             FloatingBottomBarItem(
                 selected = selected,
-                onClick = { activateTab(index) },
+                onClick = { if (!selected) MediaFeedback.navigation(); activateTab(index) },
                 modifier = Modifier.defaultMinSize(minWidth = 76.dp)
             ) {
                 // The bar recolors its indicator copy through the Miuix content color; forward it to Material.
