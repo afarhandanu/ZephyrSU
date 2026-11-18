@@ -16,8 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.sukisu.ultra.ui.component.TopBarVeil
-import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
 import com.sukisu.ultra.ui.theme.LocalEnableProgressiveBlur
+import com.sukisu.ultra.ui.theme.isBackgroundActive
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.shader.isRuntimeShaderSupported
@@ -35,9 +36,13 @@ fun ExpressiveScaffold(
     contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
     content: @Composable (PaddingValues) -> Unit,
 ) {
+    // FinaSU wallpaper (M5.2): the page canvas is transparent whenever a background
+    // image is active behind it — Nova's custom background, or the FinaSU wallpaper
+    // for this page (the tokens are present exactly then). The M5.2 port only checked
+    // the Nova background, so a selected wallpaper stayed covered by the opaque canvas.
     val resolvedContainerColor = when {
         containerColor != Color.Unspecified -> containerColor
-        LocalBackgroundImagePath.current.isNotEmpty() -> Color.Transparent
+        isBackgroundActive() -> Color.Transparent
         else -> MaterialTheme.colorScheme.surfaceContainer
     }
     val containerContentColor = contentColorFor(resolvedContainerColor)
@@ -50,8 +55,7 @@ fun ExpressiveScaffold(
     // The progressive top bar samples what is drawn behind it. An opaque page container is the
     // only thing there, so paint it into the capture; a transparent one over a custom background
     // lets the wallpaper capture underneath show through instead.
-    val hasCustomBackground = LocalBackgroundImagePath.current.isNotEmpty()
-    val captureBaseColor = if (resolvedContainerColor.alpha > 0f || hasCustomBackground) {
+    val captureBaseColor = if (resolvedContainerColor.alpha > 0f || isBackgroundActive()) {
         resolvedContainerColor
     } else {
         // A transparent page color over no wallpaper has nothing opaque behind the layer; keep
@@ -67,15 +71,21 @@ fun ExpressiveScaffold(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopBarVeil(
-                // MD3E app bars sit on surfaceContainer; the progressive tint follows the bar.
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                blurBackdrop = if (progressiveBlur) contentBackdrop else null,
-            ) {
-                topBar()
+            // The chrome zone draws the wallpaper reading platform behind the bar; it
+            // is a no-op outside wallpaper mode, matching FinaSU's scaffold.
+            WallpaperChromeZone(ChromeEdge.Top) {
+                TopBarVeil(
+                    // MD3E app bars sit on surfaceContainer; the progressive tint follows the bar.
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    blurBackdrop = if (progressiveBlur) contentBackdrop else null,
+                ) {
+                    topBar()
+                }
             }
         },
-        bottomBar = bottomBar,
+        bottomBar = {
+            WallpaperChromeZone(ChromeEdge.Bottom) { bottomBar() }
+        },
         snackbarHost = snackbarHost,
         floatingActionButton = floatingActionButton,
         floatingActionButtonPosition = floatingActionButtonPosition,
@@ -100,9 +110,21 @@ fun expressiveTopAppBarColors(
     containerColor: Color = Color.Unspecified,
     scrolledContainerColor: Color = Color.Unspecified,
 ): TopAppBarColors {
+    // FinaSU parity: in wallpaper mode the bar itself is transparent and only needs
+    // its content colors — the reading platform comes from WallpaperChromeZone.
+    val wallpaperTokens = LocalFolkWallpaperTokens.current
+    if (wallpaperTokens != null) {
+        return TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            scrolledContainerColor = Color.Transparent,
+            titleContentColor = wallpaperTokens.chrome.contentColor,
+            navigationIconContentColor = wallpaperTokens.chrome.contentColor,
+            actionIconContentColor = wallpaperTokens.chrome.contentColor,
+        )
+    }
     val resolvedContainerColor = when {
         containerColor != Color.Unspecified -> containerColor
-        LocalBackgroundImagePath.current.isNotEmpty() -> Color.Transparent
+        isBackgroundActive() -> Color.Transparent
         else -> MaterialTheme.colorScheme.surfaceContainer
     }
     val resolvedScrolledContainerColor = if (scrolledContainerColor != Color.Unspecified) {

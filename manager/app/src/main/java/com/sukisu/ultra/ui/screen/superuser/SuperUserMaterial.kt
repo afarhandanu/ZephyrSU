@@ -85,7 +85,7 @@ import com.sukisu.ultra.ui.component.material.SegmentedColumn
 import com.sukisu.ultra.ui.component.material.SegmentedItem
 import com.sukisu.ultra.ui.component.material.SegmentedListItem
 import com.sukisu.ultra.ui.component.statustag.StatusTag
-import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
+import com.sukisu.ultra.ui.theme.isBackgroundActive
 import com.sukisu.ultra.ui.util.ownerNameForUid
 import com.sukisu.ultra.ui.viewmodel.AppSortType
 
@@ -164,10 +164,8 @@ fun SuperUserPagerMaterial(
 
     val haptic = LocalHapticFeedback.current
     val snackbarHostState = remember { SnackbarHostState() }
-    val hasCustomBackground = LocalBackgroundImagePath.current.isNotEmpty()
-
     ExpressiveScaffold(
-        containerColor = if (hasCustomBackground) Color.Transparent else colorScheme.surfaceContainer,
+        containerColor = if (isBackgroundActive()) Color.Transparent else colorScheme.surfaceContainer,
         topBar = {
             SearchAppBar(
                 snackbarHostState = snackbarHostState,

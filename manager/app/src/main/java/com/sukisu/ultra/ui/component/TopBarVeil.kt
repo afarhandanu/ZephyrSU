@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
 import com.sukisu.ultra.ui.theme.LocalCardBackgroundAlpha
 import com.sukisu.ultra.ui.theme.LocalEnableProgressiveBlur
+import com.sukisu.ultra.ui.theme.isBackgroundActive
 import com.sukisu.ultra.ui.util.OpaqueBarTintAlpha
 import com.sukisu.ultra.ui.util.rememberProgressiveBarBlurModifier
 import top.yukonga.miuix.kmp.blur.Backdrop
@@ -41,7 +42,9 @@ fun TopBarVeil(
             backdrop = blurBackdrop,
             gradient = ProgressiveBlur.Top,
             tint = color,
-            tintAlpha = if (hasCustomBackground) {
+            // In wallpaper mode the bar tint stays translucent so the wallpaper shows
+            // through the bar, same as Nova's custom background.
+            tintAlpha = if (isBackgroundActive()) {
                 LocalCardBackgroundAlpha.current
             } else {
                 OpaqueBarTintAlpha

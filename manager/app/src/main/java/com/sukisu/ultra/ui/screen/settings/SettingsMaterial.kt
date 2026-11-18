@@ -93,7 +93,7 @@ import com.sukisu.ultra.ui.component.rebootlistpopup.rememberRebootAction
 import com.sukisu.ultra.ui.component.rebootlistpopup.rememberRebootChoices
 import com.sukisu.ultra.ui.screen.builtinzygisk.problemMessage
 import com.sukisu.ultra.ui.screen.builtinzygisk.problemTitle
-import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
+import com.sukisu.ultra.ui.theme.isBackgroundActive
 import android.os.Build
 import androidx.compose.material.icons.filled.FontDownload
 import androidx.compose.material.icons.filled.MusicNote
@@ -218,9 +218,8 @@ fun SettingPagerMaterial(
         )
     }
 
-    val hasCustomBackground = LocalBackgroundImagePath.current.isNotEmpty()
     ExpressiveScaffold(
-        containerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = if (isBackgroundActive()) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             SearchAppBar(
                 title = { Text(customText(CustomTextKey.PAGE_SETTINGS)) },
