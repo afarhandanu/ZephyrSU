@@ -237,7 +237,7 @@ private fun DockedBottomBarMaterial(
                     },
                     label = { Text(text = customText(item.label)) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIndicatorColor = style.indicatorColor
+                        indicatorColor = style.indicatorColor
                             ?: MaterialTheme.colorScheme.secondaryContainer,
                     ),
                 )
