@@ -71,7 +71,12 @@ internal fun foldText(text: String): FoldedText {
             origins.add(index)
         }
     }
-    return FoldedText(folded.toString().trimEnd(), origins)
+    // trimEnd() shortens the text but not the origins: drop the trailing origins
+    // too, so every folded character keeps exactly one origin and a range can
+    // never point past the folded text. (The mismatch was harmless for matches —
+    // indexOf only searches the trimmed text — but the invariant should hold.)
+    val foldedText = folded.toString().trimEnd()
+    return FoldedText(foldedText, origins.take(foldedText.length).toMutableList())
 }
 
 /** The folded form alone, for callers that never need to point back at the original text. */
@@ -236,19 +241,25 @@ fun matchSettings(query: String, entries: List<ResolvedSettingsEntry>): List<Set
 
     return entries
         .mapNotNull { entry ->
-            val score = settingsMatchScore(
-                tokens = tokens,
-                foldedTitle = entry.foldedTitle,
-                foldedSummary = entry.foldedSummary,
-                foldedParent = entry.foldedParent,
-                foldedAliases = entry.foldedAliases,
-            ) ?: return@mapNotNull null
-            SettingsSearchResult(
-                entry = entry,
-                score = score,
-                titleMatches = settingsMatchRanges(entry.title, tokens),
-                summaryMatches = settingsMatchRanges(entry.summary, tokens),
-            )
+            try {
+                val score = settingsMatchScore(
+                    tokens = tokens,
+                    foldedTitle = entry.foldedTitle,
+                    foldedSummary = entry.foldedSummary,
+                    foldedParent = entry.foldedParent,
+                    foldedAliases = entry.foldedAliases,
+                ) ?: return@mapNotNull null
+                SettingsSearchResult(
+                    entry = entry,
+                    score = score,
+                    titleMatches = settingsMatchRanges(entry.title, tokens),
+                    summaryMatches = settingsMatchRanges(entry.summary, tokens),
+                )
+            } catch (_: Exception) {
+                // One bad row must never kill the whole search: skip it and keep
+                // the remaining results. (Typing any query runs this per keystroke.)
+                null
+            }
         }
         .sortedByDescending { it.score }
 }
