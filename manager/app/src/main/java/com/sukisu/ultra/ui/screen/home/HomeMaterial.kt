@@ -93,6 +93,7 @@ import com.sukisu.ultra.ui.component.statustag.StatusTag
 import com.sukisu.ultra.ui.theme.isBackgroundActive
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
 import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
+import com.sukisu.ultra.wallpaper.WallpaperConfig
 import com.sukisu.ultra.ui.util.CustomTextKey
 import com.sukisu.ultra.ui.util.HomeLayout
 import com.sukisu.ultra.ui.util.customText
@@ -329,6 +330,14 @@ private fun ActiveStatusCard(
     }
 
     val hideCardDecoration = state.homeCardImagePath.isNotEmpty() && state.hideHomeCardDecoration
+    // The Working-card opacity slider (Settings -> Wallpaper -> Work card). It multiplies
+    // whatever alpha the container color already carries (Nova custom-background card
+    // alpha), so at the default 1.0 nothing changes; the card-image case stays transparent.
+    val cardColor = if (cardImagePainter != null) {
+        Color.Transparent
+    } else {
+        containerColor.copy(alpha = containerColor.alpha * WallpaperConfig.workingCardOpacity)
+    }
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -340,7 +349,7 @@ private fun ActiveStatusCard(
                     Modifier
                 }
             ),
-        color = if (cardImagePainter != null) Color.Transparent else containerColor,
+        color = cardColor,
         contentColor = contentColor,
         shape = HeroShape,
         onClick = onClick,

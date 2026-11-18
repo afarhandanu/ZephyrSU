@@ -60,6 +60,7 @@
     <string name="wallpaper_work_card_change">Change work card image</string>
     <string name="wallpaper_work_card_clear">Remove work card image</string>
     <string name="wallpaper_work_card_opacity">Card opacity</string>
+    <string name="wallpaper_work_card_opacity_summary">How transparent the Working card on Home is</string>
     <string name="wallpaper_work_card_dim">Background dim</string>
     <string name="wallpaper_work_card_dual_opacity">Separate day/night opacity</string>
     <string name="wallpaper_work_card_day_opacity">Day opacity</string>

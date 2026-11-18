@@ -71,6 +71,7 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.sukisu.ultra.R
+import com.sukisu.ultra.data.model.HomeLayoutStyle
 import com.sukisu.ultra.data.repository.SettingsRepositoryImpl
 import com.sukisu.ultra.media.VisualMediaConfig
 import com.sukisu.ultra.ui.component.ImageCropPickerHost
@@ -79,6 +80,7 @@ import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.FolkWallpaperSurface
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
 import com.sukisu.ultra.ui.component.material.SegmentedListItem
+import com.sukisu.ultra.ui.component.material.SegmentedSliderItem
 import com.sukisu.ultra.ui.component.material.SliderTrackConfig
 import com.sukisu.ultra.ui.component.material.SegmentedSwitchItem
 import com.sukisu.ultra.ui.component.material.SliderCommitEffect
@@ -87,9 +89,11 @@ import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.component.material.snapToPercent
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
+import com.sukisu.ultra.ui.screen.home.LocalHomeLayoutStyle
 import com.sukisu.ultra.ui.screen.settings.ClearMediaRow
 import com.sukisu.ultra.ui.screen.settings.MediaFileRow
 import com.sukisu.ultra.ui.screen.settings.MediaSlider
+import com.sukisu.ultra.ui.util.HomeLayout
 import com.sukisu.ultra.wallpaper.FolkThemeIO
 import com.sukisu.ultra.wallpaper.WallpaperConfig
 import com.sukisu.ultra.wallpaper.WallpaperManager
@@ -116,6 +120,7 @@ data class WallpaperUiState(
     val dualDimEnabled: Boolean,
     val dayDim: Float,
     val nightDim: Float,
+    val workingCardOpacity: Float,
     val useWallpaperColor: Boolean,
     val multiBackgroundEnabled: Boolean,
     val homeBackgroundSelected: Boolean,
@@ -125,6 +130,7 @@ data class WallpaperUiState(
     val moduleBackgroundSelected: Boolean,
     val settingsBackgroundSelected: Boolean,
     val statsTopLayout: String,
+    val homeLayout: String,
     val videoEnabled: Boolean,
     val videoFilename: String?,
     val videoVolume: Float,
@@ -147,6 +153,7 @@ data class WallpaperScreenActions(
     val onToggleDualDim: (Boolean) -> Unit,
     val onSetDayDim: (Float) -> Unit,
     val onSetNightDim: (Float) -> Unit,
+    val onSetWorkingCardOpacity: (Float) -> Unit,
     val onToggleUseWallpaperColor: (Boolean) -> Unit,
     val onToggleMultiBackground: (Boolean) -> Unit,
     val onPickHomeBackground: () -> Unit,
@@ -373,6 +380,7 @@ fun WallpaperScreen() {
         dualDimEnabled = WallpaperConfig.dualDimEnabled,
         dayDim = WallpaperConfig.dayDim,
         nightDim = WallpaperConfig.nightDim,
+        workingCardOpacity = WallpaperConfig.workingCardOpacity,
         useWallpaperColor = WallpaperConfig.useWallpaperColor,
         multiBackgroundEnabled = WallpaperConfig.multiBackgroundEnabled,
         homeBackgroundSelected = !WallpaperConfig.homeBackgroundUri.isNullOrEmpty(),
@@ -383,6 +391,7 @@ fun WallpaperScreen() {
         settingsBackgroundSelected = !WallpaperConfig.settingsBackgroundUri.isNullOrEmpty(),
         // The Stats grid header draws the grid work card, so its settings belong to this page too.
         statsTopLayout = remember { SettingsRepositoryImpl().statsTopLayout },
+        homeLayout = remember { SettingsRepositoryImpl().homeLayout },
         videoEnabled = VisualMediaConfig.videoEnabled,
         videoFilename = VisualMediaConfig.videoFilename,
         videoVolume = VisualMediaConfig.videoVolume,
@@ -418,6 +427,9 @@ fun WallpaperScreen() {
         },
         onSetNightDim = {
             WallpaperConfig.updateNightDim(snapToPercent(it))
+        },
+        onSetWorkingCardOpacity = {
+            WallpaperConfig.updateWorkingCardOpacity(snapToPercent(it))
         },
         onToggleUseWallpaperColor = { enabled ->
             WallpaperConfig.updateUseWallpaperColor(enabled)
@@ -764,6 +776,36 @@ fun WallpaperScreenMaterial(
                                 summary = stringResource(R.string.wallpaper_dual_dim_summary),
                                 checked = state.dualDimEnabled,
                                 onCheckedChange = actions.onToggleDualDim,
+                            )
+                        }
+                    },
+                )
+            }
+
+            // The big Working card on Home is a different surface from the grid work card:
+            // Grid renders GridStatusCard with its own opacity in the surface group below
+            // (and its long-press dialog), while every other layout renders ActiveStatusCard.
+            // Hide this section on Grid so the two "Work card" sections never appear together,
+            // and on Immersive, whose status pill has no hero card for the opacity to apply to.
+            // Unlike the appearance sliders above, this one is always shown: the card exists
+            // with or without a wallpaper, and the opacity applies either way.
+            if (LocalHomeLayoutStyle.current != HomeLayoutStyle.GRID &&
+                HomeLayout.fromValue(state.homeLayout) != HomeLayout.IMMERSIVE
+            ) {
+                SegmentedColumn(
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
+                    title = stringResource(R.string.wallpaper_work_card_section),
+                    content = buildList {
+                        add {
+                            SegmentedSliderItem(
+                                icon = Icons.Filled.Opacity,
+                                title = stringResource(R.string.wallpaper_work_card_opacity),
+                                summary = stringResource(R.string.wallpaper_work_card_opacity_summary),
+                                value = state.workingCardOpacity,
+                                valueRange = 0f..1f,
+                                valueText = { "${(it * 100).roundToInt()}%" },
+                                onValueChange = actions.onSetWorkingCardOpacity,
+                                onValueChangeFinished = { actions.onCommitWallpaper() },
                             )
                         }
                     },
