@@ -4,7 +4,6 @@ import android.net.Uri
 import com.sukisu.ultra.ui.component.profile.TemporaryRootPreferences
 import com.sukisu.ultra.ui.util.customText
 import com.sukisu.ultra.ui.util.CustomTextKey
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -909,7 +908,13 @@ private fun SettingsAnchor(
 ) {
     val requester = remember { BringIntoViewRequester() }
     SideEffect { registry[anchor] = requester }
-    Box(modifier = Modifier.fillMaxWidth().bringIntoViewRequester(requester)) {
+    // NOTE: this must be a Column, not a Box. A Box stacks all of its children at the
+    // same position, and several anchors emit more than one section here (MODULE_BEHAVIOUR
+    // holds the behaviour list + Sui status + Folk Mount + Module banner; BACKUP holds the
+    // four columns emitted by BackupSettingsContent). With a Box those sections pile on
+    // top of each other — the "Module banner" label over "Folk Mount" and the backup
+    // action rows over the partition checkboxes (see screenshots 2026-11-18).
+    Column(modifier = Modifier.fillMaxWidth().bringIntoViewRequester(requester)) {
         content()
     }
 }
