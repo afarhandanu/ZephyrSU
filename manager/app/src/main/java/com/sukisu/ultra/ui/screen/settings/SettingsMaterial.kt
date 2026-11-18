@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.rounded.Animation
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.VerticalAlignBottom
@@ -57,6 +58,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -78,6 +80,8 @@ import com.sukisu.ultra.ui.component.KsuIsValid
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.IconTile
 import com.sukisu.ultra.ui.component.material.SearchAppBar
+import com.sukisu.ultra.ui.component.bottombar.NavIconAnimation
+import com.sukisu.ultra.ui.component.bottombar.NavIconAnimationConfig
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
 import com.sukisu.ultra.ui.component.material.SegmentedDropdownItem
 import com.sukisu.ultra.ui.component.material.SegmentedListItem
@@ -491,6 +495,27 @@ fun SettingPagerMaterial(
                             summary = stringResource(id = R.string.settings_bottom_bar_docked_summary),
                             checked = uiState.materialBottomBarDocked,
                             onCheckedChange = actions.onSetMaterialBottomBarDocked,
+                        )
+                    }
+                    add {
+                        // Nav icon animation (FinaSU 60a6572): Morph keeps the outlined
+                        // glyph and collapses its contours; Fade cross-fades into the
+                        // filled glyph. Read live from NavIconAnimationConfig so the
+                        // bar recomposes immediately on change.
+                        val iconAnimationRevision by NavIconAnimationConfig.revision.collectAsState()
+                        val iconAnimation = remember(iconAnimationRevision) { NavIconAnimationConfig.animation }
+                        val iconAnimations = NavIconAnimation.entries
+                        val iconAnimationLabels = listOf(
+                            stringResource(R.string.settings_nav_icon_animation_morph),
+                            stringResource(R.string.settings_nav_icon_animation_fade),
+                        )
+                        SegmentedDropdownItem(
+                            icon = Icons.Rounded.Animation,
+                            title = stringResource(R.string.settings_nav_icon_animation),
+                            summary = stringResource(R.string.settings_nav_icon_animation_summary),
+                            items = iconAnimationLabels,
+                            selectedIndex = iconAnimations.indexOf(iconAnimation).coerceAtLeast(0),
+                            onItemSelected = { NavIconAnimationConfig.animation = iconAnimations[it] },
                         )
                     }
                     add {

@@ -191,7 +191,8 @@ fun BottomBarMaterial(
                     FloatingNavItem(
                         selected = selected,
                         label = customText(item.label),
-                        icon = if (selected) item.selectedIcon else item.unselectedIcon,
+                        icon = item.unselectedIcon,
+                        filledIcon = item.selectedIcon,
                         iconPath = item.iconPath,
                         badge = destination?.let { badgeFor(it.ordinal, navigationBadge) },
                         progressiveBlur = progressiveBlur,
@@ -242,7 +243,8 @@ private fun DockedBottomBarMaterial(
                     },
                     icon = {
                         NavigationIconWithBadge(
-                            icon = if (selected) item.selectedIcon else item.unselectedIcon,
+                            icon = item.unselectedIcon,
+                            filledIcon = item.selectedIcon,
                             iconPath = item.iconPath,
                             contentDescription = customText(item.label),
                             badge = destination?.let { badgeFor(it.ordinal, navigationBadge) },
@@ -301,7 +303,8 @@ private fun LiquidBottomBarMaterial(
                 // The bar recolors its indicator copy through the Miuix content color; forward it to Material.
                 CompositionLocalProvider(LocalContentColor provides MiuixLocalContentColor.current) {
                     NavigationIconWithBadge(
-                        icon = if (selected) item.selectedIcon else item.unselectedIcon,
+                        icon = item.unselectedIcon,
+                        filledIcon = item.selectedIcon,
                         iconPath = item.iconPath,
                         contentDescription = customText(item.label),
                         badge = destination?.let { badgeFor(it.ordinal, navigationBadge) },
@@ -333,6 +336,7 @@ private fun FloatingNavItem(
     selected: Boolean,
     label: String,
     icon: ImageVector,
+    filledIcon: ImageVector? = null,
     iconPath: String?,
     badge: NavBadge?,
     progressiveBlur: Boolean = false,
@@ -369,6 +373,7 @@ private fun FloatingNavItem(
         ) {
             NavigationIconWithBadge(
                 icon = icon,
+                filledIcon = filledIcon,
                 iconPath = iconPath,
                 contentDescription = if (selected) null else label,
                 badge = badge,
@@ -398,6 +403,7 @@ internal fun NavigationIconWithBadge(
     badge: NavBadge?,
     iconPath: String? = null,
     selected: Boolean = false,
+    filledIcon: ImageVector? = null,
 ) {
     if (badge != null) {
         BadgedBox(
@@ -422,6 +428,7 @@ internal fun NavigationIconWithBadge(
                 contentDescription = contentDescription,
                 tint = LocalContentColor.current,
                 selected = selected,
+                filledIcon = filledIcon,
             )
         }
     } else {
@@ -431,6 +438,7 @@ internal fun NavigationIconWithBadge(
             contentDescription = contentDescription,
             tint = LocalContentColor.current,
             selected = selected,
+            filledIcon = filledIcon,
         )
     }
 }
