@@ -42,6 +42,7 @@ import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
 import com.sukisu.ultra.ui.theme.LocalEnableBlur
 import com.sukisu.ultra.ui.util.BlurredBar
 import com.sukisu.ultra.ui.util.rememberBlurBackdrop
+import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.FloatingActionButton
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
@@ -144,11 +145,19 @@ fun KernelFlashMiuix(
                 .scrollEndHaptic(),
         ) {
             FlashProgressIndicatorMiuix(state, kpmPatchEnabled, kpmUndoPatch)
+            // Kernel log card at 50% so the background behind shows through.
+            // PR #49 only did this for the module flash screen (LogConsole); this
+            // separate kernel screen was still fully opaque, which is why the log
+            // stayed black on kernel/AnyKernel3 installs.
             AppCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                colors = CardDefaults.defaultColors(
+                    color = colorScheme.surfaceContainer.copy(alpha = 0.5f),
+                    contentColor = colorScheme.onSurfaceContainer,
+                ),
             ) {
                 Box(modifier = Modifier.verticalScroll(scrollState)) {
                     LaunchedEffect(logText) {

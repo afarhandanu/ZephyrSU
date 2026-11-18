@@ -116,7 +116,11 @@ fun KernelFlashMaterial(
                     .weight(1f)
                     .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
                 shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                // Kernel log card at 50% so the background behind shows through.
+                // PR #49 only did this for the module flash screen; this separate
+                // kernel screen was still fully opaque, which is why the log stayed
+                // black on kernel/AnyKernel3 installs.
+                color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.5f),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
                 Box(modifier = Modifier.verticalScroll(scrollState)) {
