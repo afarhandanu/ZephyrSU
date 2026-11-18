@@ -2,6 +2,7 @@
 
 package com.sukisu.ultra.data.repository
 
+import com.sukisu.ultra.data.model.FeatureChange
 import com.sukisu.ultra.data.model.SuiApp
 import com.sukisu.ultra.data.model.SuiStatus
 import com.sukisu.ultra.data.model.FolkMountMode
@@ -173,6 +174,7 @@ interface SettingsRepository {
     fun getSuCompatModePref(): Int
 
     suspend fun getKernelUmountStatus(): String
+    suspend fun getExternalFeatureChanges(): List<FeatureChange>
     fun isKernelUmountEnabled(): Boolean
     fun setKernelUmountEnabled(enabled: Boolean): Boolean
 

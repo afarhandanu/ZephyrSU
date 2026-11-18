@@ -88,6 +88,10 @@ impl FeatureId {
             Self::AvcSpoof => "AVC Spoof - fix SELinux context leaks in AVC denial logs",
         }
     }
+
+    pub const fn has_dedicated_manager(self) -> bool {
+        matches!(self, Self::UtsView)
+    }
 }
 
 pub fn parse_feature_id(name: &str) -> Result<FeatureId> {

@@ -669,6 +669,9 @@ enum Feature {
         id: String,
     },
 
+    /// Show shared feature values changed outside ZephyrSU since boot
+    Changes,
+
     /// Load configuration from file and apply to kernel
     Load,
 
@@ -1461,6 +1464,7 @@ pub fn run() -> Result<()> {
                 Ok(())
             }
             Feature::Check { id } => crate::feature::check_feature(&id),
+            Feature::Changes => crate::feature::external_changes(),
             Feature::Load => crate::feature::load_config_and_apply(),
             Feature::Save => crate::feature::save_config(),
         },
