@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Memory
@@ -121,6 +122,10 @@ fun ToolsMiuix(
 
                     PluginSectionMiuix(
                         onOpen = actions.onOpenPlugin
+                    )
+
+                    KmodRegistrySectionMiuix(
+                        onOpen = actions.onOpenKmodRegistry
                     )
 
                     AllowlistBackupSectionMiuix(
@@ -256,6 +261,31 @@ private fun PluginSectionMiuix(
                     imageVector = Icons.Outlined.Widgets,
                     modifier = Modifier.padding(end = 6.dp),
                     contentDescription = stringResource(R.string.plugin),
+                    tint = colorScheme.onBackground
+                )
+            },
+            onClick = onOpen
+        )
+    }
+}
+
+@Composable
+private fun KmodRegistrySectionMiuix(
+    onOpen: () -> Unit,
+) {
+    AppCard(
+        modifier = Modifier
+            .padding(top = 12.dp)
+            .fillMaxWidth(),
+    ) {
+        ArrowPreference(
+            title = stringResource(R.string.kernel_modules),
+            summary = stringResource(R.string.kernel_modules_entry_hint),
+            startAction = {
+                Icon(
+                    imageVector = Icons.Outlined.Memory,
+                    modifier = Modifier.padding(end = 6.dp),
+                    contentDescription = stringResource(R.string.kernel_modules),
                     tint = colorScheme.onBackground
                 )
             },

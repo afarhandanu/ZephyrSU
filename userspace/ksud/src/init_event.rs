@@ -70,6 +70,9 @@ pub fn on_post_fs_data() -> Result<()> {
         if let Err(e) = crate::module::disable_all_modules() {
             warn!("disable all modules failed: {e}");
         }
+        if let Err(e) = crate::kernel_module::disable_all_for_safe_mode() {
+            warn!("disable managed kernel modules failed: {e}");
+        }
         return Ok(());
     }
 
@@ -124,6 +127,27 @@ pub fn on_post_fs_data() -> Result<()> {
     // Apply a persisted UTS View template (no-op without the kernel driver;
     // failures are recorded as a runtime error, never fail the boot).
     crate::uts_view::boot_apply();
+
+    match crate::kernel_module::autoload_with_startup_timeout() {
+        Ok(Some(report)) => {
+            if !report.failures.is_empty() {
+                for failure in &report.failures {
+                    warn!(
+                        "kernel module autoload {} failed: {}",
+                        failure.id, failure.message
+                    );
+                }
+            }
+            info!(
+                "kernel module autoload: {} attempted, {} loaded, {} skipped",
+                report.attempted.len(),
+                report.loaded.len(),
+                report.skipped.len()
+            );
+        }
+        Ok(None) => warn!("kernel module autoload is still running in the background"),
+        Err(e) => warn!("kernel module autoload scheduler failed: {e:#}"),
+    }
 
     #[cfg(target_arch = "aarch64")]
     if let Err(e) = kpm::booted_load() {

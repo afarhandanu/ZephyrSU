@@ -42,6 +42,7 @@ mod hot_install;
 mod init_event;
 #[cfg(target_arch = "aarch64")]
 mod kpm;
+mod kernel_module;
 #[cfg(target_os = "android")]
 mod ksucalls;
 #[cfg(target_os = "android")]

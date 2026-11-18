@@ -223,6 +223,10 @@ sealed interface Route : NavKey, Parcelable {
 
     @Parcelize
     @Serializable
+    data object KmodRegistry : Route
+
+    @Parcelize
+    @Serializable
     data object DynamicManagers : Route
 
     

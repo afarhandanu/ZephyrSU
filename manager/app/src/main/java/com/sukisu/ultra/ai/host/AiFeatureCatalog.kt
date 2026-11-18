@@ -593,6 +593,15 @@ object AiFeatureCatalog : AiFeatureService {
                 solution = ROOT_SOLUTION,
             ),
             entry(
+                id = "kernel_module_registry",
+                title = "Kernel module registry",
+                summary = "Install and autoload .ko kernel modules: import, load now, load on boot, parameters and last result.",
+                target = ManagerAiTarget.Push(Route.KmodRegistry),
+                supported = root,
+                reason = ROOT_REASON,
+                solution = ROOT_SOLUTION,
+            ),
+            entry(
                 id = "tools",
                 title = "Tools",
                 summary = "Root utilities: CPU information, CPU spoof presets, device and kernel diagnostics.",
