@@ -20,7 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
+import com.sukisu.ultra.ui.theme.isBackgroundActive
 
 @Composable
 fun ExpressiveTabRow(
@@ -32,7 +32,7 @@ fun ExpressiveTabRow(
 ) {
     val resolvedContainerColor = when {
         containerColor != Color.Unspecified -> containerColor
-        LocalBackgroundImagePath.current.isNotEmpty() -> Color.Transparent
+        isBackgroundActive() -> Color.Transparent
         else -> MaterialTheme.colorScheme.surfaceContainer
     }
     val safeIndex = selectedTabIndex.coerceIn(0, (tabs.size - 1).coerceAtLeast(0))

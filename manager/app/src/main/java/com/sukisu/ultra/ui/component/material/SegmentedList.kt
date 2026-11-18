@@ -87,7 +87,8 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
-import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
+import com.sukisu.ultra.ui.theme.isBackgroundActive
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -103,12 +104,23 @@ annotation class SegmentedColumnDsl
 
 @Composable
 private fun defaultSegmentedColors(): ListItemColors {
+    // FinaSU parity: in wallpaper mode the list rows use the wallpaper's group material,
+    // so the wallpaper shows through the content instead of an opaque surface.
+    val material = LocalFolkWallpaperTokens.current?.group
+    if (material != null) {
+        return ListItemDefaults.segmentedColors(
+            containerColor = material.fill,
+            contentColor = material.contentColor,
+            disabledContainerColor = material.fill,
+            supportingContentColor = material.supportingColor,
+        )
+    }
     val base = ListItemDefaults.segmentedColors(
         containerColor = backgroundAwareColor(colorScheme.surfaceBright),
         disabledContainerColor = backgroundAwareColor(colorScheme.surfaceBright),
         supportingContentColor = colorScheme.onSurfaceVariant
     )
-    if (LocalBackgroundImagePath.current.isEmpty()) return base
+    if (!isBackgroundActive()) return base
     // The default disabled foreground is ~38% alpha. On a translucent card above a custom
     // background that is hard to read, so keep the muted look but raise the contrast.
     return base.copy(

@@ -90,7 +90,7 @@ import com.sukisu.ultra.ui.component.material.TonalCard
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.component.rebootlistpopup.RebootListPopup
 import com.sukisu.ultra.ui.component.statustag.StatusTag
-import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
+import com.sukisu.ultra.ui.theme.isBackgroundActive
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
 import com.sukisu.ultra.ui.util.CustomTextKey
 import com.sukisu.ultra.ui.util.HomeLayout
@@ -109,10 +109,8 @@ fun HomePagerMaterial(
     bottomInnerPadding: Dp,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
-    val hasCustomBackground = LocalBackgroundImagePath.current.isNotEmpty()
-
     ExpressiveScaffold(
-        containerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = if (isBackgroundActive()) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
         topBar = { TopBar(scrollBehavior = scrollBehavior, onOpenThemeStore = actions.onOpenThemeStore) },
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
     ) { innerPadding ->
@@ -258,7 +256,6 @@ private fun TopBar(
     scrollBehavior: TopAppBarScrollBehavior? = null,
     onOpenThemeStore: () -> Unit = {},
 ) {
-    val hasCustomBackground = LocalBackgroundImagePath.current.isNotEmpty()
     val displayTitle = customText(CustomTextKey.HOME_TITLE)
     LargeFlexibleTopAppBar(
         title = {
@@ -278,8 +275,8 @@ private fun TopBar(
         },
         actions = { RebootListPopup() },
         colors = expressiveTopAppBarColors(
-            containerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
-            scrolledContainerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
+            containerColor = if (isBackgroundActive()) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
+            scrolledContainerColor = if (isBackgroundActive()) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
         ),
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         scrollBehavior = scrollBehavior

@@ -12,6 +12,7 @@ import com.sukisu.ultra.ui.LocalUiMode
 import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.util.AppearanceOverlayStore
 import com.sukisu.ultra.ui.util.ResolvedAppearance
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 
 enum class ColorMode(val value: Int) {
@@ -173,6 +174,17 @@ val LocalFloatingSwipeHide = staticCompositionLocalOf { true }
 val LocalModuleDescriptionMaxLines = staticCompositionLocalOf { 4 }
 
 val LocalBackgroundImagePath = staticCompositionLocalOf { "" }
+
+/**
+ * True when a background image is active behind the current page: Nova's custom
+ * background, or the FinaSU wallpaper (M5.2) for this page. The wallpaper tokens are
+ * provided by the theme exactly when the wallpaper is active for the page, so their
+ * presence is the signal — mirroring FinaSU's ExpressiveScaffold, which keys its
+ * transparency off the tokens instead of the background path.
+ */
+@Composable
+fun isBackgroundActive(): Boolean =
+    LocalBackgroundImagePath.current.isNotEmpty() || LocalFolkWallpaperTokens.current != null
 
 /**
  * Captures the app background image (and its scrim) exactly as drawn behind the navigation host.

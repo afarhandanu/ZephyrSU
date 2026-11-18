@@ -420,7 +420,9 @@ class MainActivity : FragmentActivity() {
                                 cornerClipRadius = rememberNavSystemCornerRadius(),
                                 // The dim scrim sits under the top destination even when idle; an
                                 // opaque page hid it, but a transparent one would stay darkened.
-                                dimAmount = if (backgroundActive) 0f else 0.5f,
+                                // Same for the FinaSU wallpaper: the page canvas is transparent
+                                // there too, so the dim must not darken the wallpaper.
+                                dimAmount = if (backgroundActive || wallpaperActive) 0f else 0.5f,
                             ),
                             onBack = {
                                 when (val top = navigator.current()) {

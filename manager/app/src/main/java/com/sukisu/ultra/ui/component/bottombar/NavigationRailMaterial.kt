@@ -37,7 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
-import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
+import com.sukisu.ultra.ui.theme.isBackgroundActive
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -89,13 +89,12 @@ fun NavigationRailMaterial(
             state.targetValue == WideNavigationRailValue.Expanded
     }
 
-    val hasCustomBackground = LocalBackgroundImagePath.current.isNotEmpty()
     // Wallpaper-aware rail surface (M5.4): transparent + chrome scrim in M5.2 wallpaper mode,
     // opaque otherwise. The M1 custom background keeps its own transparent rule. The
     // BottomBarControl indicator rule (transparent in wallpaper mode) is NOT applied here: the
     // rail's selected colors assume an opaque primary pill.
     val railStyle = BottomBarControl.style(BottomBarLayout.Rail)
-    val railContainerColor = if (hasCustomBackground) Color.Transparent else railStyle.containerColor
+    val railContainerColor = if (isBackgroundActive()) Color.Transparent else railStyle.containerColor
     WallpaperChromeZone(
         edge = ChromeEdge.Start,
         material = railStyle.scrim,

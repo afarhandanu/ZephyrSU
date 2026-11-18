@@ -23,6 +23,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
+import com.sukisu.ultra.wallpaper.WallpaperSurfaceRole
 
 @Composable
 fun TonalCard(
@@ -39,9 +41,25 @@ fun TonalCard(
     pressHapticEnabled: Boolean = true,
     content: @Composable () -> Unit,
 ) {
+    // FinaSU parity: in wallpaper mode a neutral card uses the wallpaper's group
+    // material, so the wallpaper shows through the content. Semantic container colors
+    // keep their own color (no wallpaper role), and Nova's press behavior is untouched.
+    val wallpaperTokens = LocalFolkWallpaperTokens.current
+    val wallpaperRole =
+        if (containerColor == MaterialTheme.colorScheme.surfaceBright) WallpaperSurfaceRole.Group else null
+    val effectiveContainerColor = if (wallpaperTokens != null && wallpaperRole != null) {
+        wallpaperTokens.material(wallpaperRole).fill
+    } else {
+        backgroundAwareColor(containerColor)
+    }
+    val effectiveContentColor = if (wallpaperTokens != null && wallpaperRole != null) {
+        wallpaperTokens.material(wallpaperRole).contentColor
+    } else {
+        contentColor
+    }
     val colors = CardDefaults.cardColors(
-        containerColor = backgroundAwareColor(containerColor),
-        contentColor = contentColor,
+        containerColor = effectiveContainerColor,
+        contentColor = effectiveContentColor,
     )
     when {
         onLongClick != null || onClick != null -> {

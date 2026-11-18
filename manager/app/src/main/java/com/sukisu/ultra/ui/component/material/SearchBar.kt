@@ -57,7 +57,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
-import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
+import com.sukisu.ultra.ui.theme.isBackgroundActive
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
 
 @Composable
@@ -183,16 +183,15 @@ fun SearchAppBar(
         }
     }
 
-    val hasCustomBackground = LocalBackgroundImagePath.current.isNotEmpty()
-    Surface(color = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer) {
+    Surface(color = if (isBackgroundActive()) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer) {
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
             LargeFlexibleTopAppBar(
                 title = title,
                 colors = expressiveTopAppBarColors(
-                    containerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
-                    scrolledContainerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor = if (isBackgroundActive()) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = if (isBackgroundActive()) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 navigationIcon = { if (navigationIcon != null) navigationIcon() },
                 actions = { if (actions != null) actions() },
