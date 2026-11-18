@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -61,15 +62,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
+import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.sukisu.ultra.R
@@ -132,6 +136,13 @@ data class WallpaperUiState(
     val superuserBackgroundSelected: Boolean,
     val moduleBackgroundSelected: Boolean,
     val settingsBackgroundSelected: Boolean,
+    /** The assigned image per page, so the row can show which photo each slot holds. */
+    val homeBackgroundUri: String?,
+    val kpmBackgroundUri: String?,
+    val pluginBackgroundUri: String?,
+    val superuserBackgroundUri: String?,
+    val moduleBackgroundUri: String?,
+    val settingsBackgroundUri: String?,
     val statsTopLayout: String,
     val homeLayout: String,
     val videoEnabled: Boolean,
@@ -392,6 +403,12 @@ fun WallpaperScreen() {
         superuserBackgroundSelected = !WallpaperConfig.superuserBackgroundUri.isNullOrEmpty(),
         moduleBackgroundSelected = !WallpaperConfig.moduleBackgroundUri.isNullOrEmpty(),
         settingsBackgroundSelected = !WallpaperConfig.settingsBackgroundUri.isNullOrEmpty(),
+        homeBackgroundUri = WallpaperConfig.homeBackgroundUri,
+        kpmBackgroundUri = WallpaperConfig.kpmBackgroundUri,
+        pluginBackgroundUri = WallpaperConfig.pluginBackgroundUri,
+        superuserBackgroundUri = WallpaperConfig.superuserBackgroundUri,
+        moduleBackgroundUri = WallpaperConfig.moduleBackgroundUri,
+        settingsBackgroundUri = WallpaperConfig.settingsBackgroundUri,
         // The Stats grid header draws the grid work card, so its settings belong to this page too.
         statsTopLayout = remember { SettingsRepositoryImpl().statsTopLayout },
         homeLayout = remember { SettingsRepositoryImpl().homeLayout },
@@ -623,6 +640,7 @@ fun WallpaperScreenMaterial(
                                 WallpaperPagePickItem(
                                     titleRes = R.string.wallpaper_select_home_background,
                                     selected = state.homeBackgroundSelected,
+                                    thumbnailUri = state.homeBackgroundUri,
                                     enabled = !state.isSaving,
                                     onClick = actions.onPickHomeBackground,
                                 )
@@ -631,6 +649,7 @@ fun WallpaperScreenMaterial(
                                 WallpaperPagePickItem(
                                     titleRes = R.string.wallpaper_select_kpm_background,
                                     selected = state.kpmBackgroundSelected,
+                                    thumbnailUri = state.kpmBackgroundUri,
                                     enabled = !state.isSaving,
                                     onClick = actions.onPickKpmBackground,
                                 )
@@ -639,6 +658,7 @@ fun WallpaperScreenMaterial(
                                 WallpaperPagePickItem(
                                     titleRes = R.string.wallpaper_select_plugin_background,
                                     selected = state.pluginBackgroundSelected,
+                                    thumbnailUri = state.pluginBackgroundUri,
                                     enabled = !state.isSaving,
                                     onClick = actions.onPickPluginBackground,
                                 )
@@ -647,6 +667,7 @@ fun WallpaperScreenMaterial(
                                 WallpaperPagePickItem(
                                     titleRes = R.string.wallpaper_select_superuser_background,
                                     selected = state.superuserBackgroundSelected,
+                                    thumbnailUri = state.superuserBackgroundUri,
                                     enabled = !state.isSaving,
                                     onClick = actions.onPickSuperuserBackground,
                                 )
@@ -655,6 +676,7 @@ fun WallpaperScreenMaterial(
                                 WallpaperPagePickItem(
                                     titleRes = R.string.wallpaper_select_module_background,
                                     selected = state.moduleBackgroundSelected,
+                                    thumbnailUri = state.moduleBackgroundUri,
                                     enabled = !state.isSaving,
                                     onClick = actions.onPickModuleBackground,
                                 )
@@ -663,6 +685,7 @@ fun WallpaperScreenMaterial(
                                 WallpaperPagePickItem(
                                     titleRes = R.string.wallpaper_select_settings_background,
                                     selected = state.settingsBackgroundSelected,
+                                    thumbnailUri = state.settingsBackgroundUri,
                                     enabled = !state.isSaving,
                                     onClick = actions.onPickSettingsBackground,
                                 )
@@ -934,6 +957,7 @@ private fun SliderSetting(
 private fun WallpaperPagePickItem(
     titleRes: Int,
     selected: Boolean,
+    thumbnailUri: String?,
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
@@ -946,7 +970,20 @@ private fun WallpaperPagePickItem(
         } else {
             null
         },
-        leadingContent = { Icon(Icons.Filled.Image, null) },
+        leadingContent = {
+            if (thumbnailUri != null) {
+                // The stored URI carries a ?revision= stamp for cache-busting; strip it so
+                // Coil loads the file itself instead of treating the query as part of the path.
+                AsyncImage(
+                    model = thumbnailUri.substringBefore('?'),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)),
+                )
+            } else {
+                Icon(Icons.Filled.Image, null)
+            }
+        },
         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) },
     )
 }
