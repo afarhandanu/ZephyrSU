@@ -40,6 +40,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import com.sukisu.ultra.R
+import com.sukisu.ultra.ui.LocalUiMode
+import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.AppIconImage
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
@@ -49,6 +51,7 @@ import com.sukisu.ultra.ui.component.material.SegmentedTextField
 import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
+import com.sukisu.ultra.ui.theme.MiuixSkinMaterialTheme
 import com.sukisu.ultra.ui.viewmodel.NomountViewModel
 
 /**
@@ -57,9 +60,19 @@ import com.sukisu.ultra.ui.viewmodel.NomountViewModel
  * The selection is a list of UIDs: an app with a shared UID selects every app
  * that reports it, which is why rows show the UID next to the label.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NomountExclusionsScreen() {
+    // The Miuix skin provides no Material theme, so this Material page would
+    // render white in dark mode without the wrapper (see MiuixSkinMaterialTheme).
+    when (LocalUiMode.current) {
+        UiMode.Material -> NomountExclusionsScreenContent()
+        UiMode.Miuix -> MiuixSkinMaterialTheme { NomountExclusionsScreenContent() }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NomountExclusionsScreenContent() {
     val viewModel = viewModel<NomountViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current

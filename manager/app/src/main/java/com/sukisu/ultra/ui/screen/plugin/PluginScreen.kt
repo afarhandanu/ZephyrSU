@@ -16,9 +16,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.sukisu.ultra.ui.LocalUiMode
+import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
 import com.sukisu.ultra.ui.navigation3.Route
 import com.sukisu.ultra.ui.theme.LocalThemePreview
+import com.sukisu.ultra.ui.theme.MiuixSkinMaterialTheme
 import com.sukisu.ultra.ui.viewmodel.PluginViewModel
 
 @Composable
@@ -81,9 +84,20 @@ fun PluginPager(
         )
     }
 
-    PluginPagerMaterial(
-        uiState = uiState,
-        actions = actions,
-        bottomInnerPadding = bottomInnerPadding,
-    )
+    // The Miuix skin provides no Material theme, so this Material page would
+    // render white in dark mode without the wrapper (see MiuixSkinMaterialTheme).
+    when (LocalUiMode.current) {
+        UiMode.Material -> PluginPagerMaterial(
+            uiState = uiState,
+            actions = actions,
+            bottomInnerPadding = bottomInnerPadding,
+        )
+        UiMode.Miuix -> MiuixSkinMaterialTheme {
+            PluginPagerMaterial(
+                uiState = uiState,
+                actions = actions,
+                bottomInnerPadding = bottomInnerPadding,
+            )
+        }
+    }
 }

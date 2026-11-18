@@ -1,14 +1,10 @@
 package com.sukisu.ultra.ui.screen.about
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialExpressiveTheme
-import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,18 +16,11 @@ import com.sukisu.ultra.ui.LocalUiMode
 import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.onboarding.FirstRunGuide
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
-import com.sukisu.ultra.ui.theme.Shapes
-import com.sukisu.ultra.ui.theme.ThemeController
-import com.sukisu.ultra.ui.theme.Typography
-import com.sukisu.ultra.ui.theme.animateAsState
-import com.sukisu.ultra.ui.theme.rememberKernelSUColorScheme
+import com.sukisu.ultra.ui.theme.MiuixSkinMaterialTheme
 import com.sukisu.ultra.ui.util.BuiltinAppIcons
 import com.sukisu.ultra.ui.util.customText
 import com.sukisu.ultra.ui.util.CustomTextKey
 import com.sukisu.ultra.ui.viewmodel.SettingsViewModel
-
-// Miuix's own default accent, used when the Miuix skin runs without Monet or a custom key color.
-private val MiuixDefaultSeed = Color(0xFF3482FF)
 
 @Composable
 fun AboutScreen() {
@@ -73,31 +62,4 @@ fun AboutScreen() {
     if (showGuide) {
         FirstRunGuide(onDismiss = { showGuide = false })
     }
-}
-
-@Composable
-private fun MiuixSkinMaterialTheme(content: @Composable () -> Unit) {
-    val appSettings = remember { ThemeController.getAppSettings() }
-    val colorMode = appSettings.colorMode
-    val darkTheme = colorMode.isDark || (colorMode.isSystem && isSystemInDarkTheme())
-    val seedColor = when {
-        appSettings.keyColor != 0 -> Color(appSettings.keyColor)
-        colorMode.isMonet -> Color.Unspecified
-        else -> MiuixDefaultSeed
-    }
-    val colorScheme = rememberKernelSUColorScheme(
-        seedColor = seedColor,
-        isDark = darkTheme,
-        isAmoled = colorMode.isAmoled,
-        paletteStyle = appSettings.paletteStyle,
-        colorSpec = appSettings.colorSpec,
-    )
-
-    MaterialExpressiveTheme(
-        colorScheme = colorScheme.animateAsState(),
-        motionScheme = MotionScheme.expressive(),
-        shapes = Shapes,
-        typography = Typography,
-        content = content,
-    )
 }

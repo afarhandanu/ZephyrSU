@@ -37,6 +37,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sukisu.ultra.R
 import com.sukisu.ultra.data.backup.BackupKind
+import com.sukisu.ultra.ui.LocalUiMode
+import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.material.ExpressiveDialog
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
@@ -44,6 +46,7 @@ import com.sukisu.ultra.ui.component.material.SegmentedListItem
 import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
+import com.sukisu.ultra.ui.theme.MiuixSkinMaterialTheme
 import com.sukisu.ultra.ui.viewmodel.BackupListItem
 import com.sukisu.ultra.ui.viewmodel.BackupListViewModel
 import com.sukisu.ultra.ui.viewmodel.BackupNotice
@@ -56,6 +59,16 @@ private val ListGroupModifier = Modifier.fillMaxWidth().padding(horizontal = 16.
  */
 @Composable
 fun BackupListScreen() {
+    // The Miuix skin provides no Material theme, so this Material page would
+    // render white in dark mode without the wrapper (see MiuixSkinMaterialTheme).
+    when (LocalUiMode.current) {
+        UiMode.Material -> BackupListScreenContent()
+        UiMode.Miuix -> MiuixSkinMaterialTheme { BackupListScreenContent() }
+    }
+}
+
+@Composable
+private fun BackupListScreenContent() {
     val navigator = LocalNavigator.current
     val viewModel = viewModel<BackupListViewModel>()
     val state by viewModel.state.collectAsStateWithLifecycle()
