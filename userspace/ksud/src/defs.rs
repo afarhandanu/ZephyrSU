@@ -124,5 +124,55 @@ pub const FULL_VERSION: &str = const_format::formatcp!(
     crate::ksu_uapi::KERNEL_SU_UAPI_VERSION
 );
 
+// Plugin package layout and limits. These do not depend on Android paths so
+// they stay available to host tests.
+// Consumed by the plugin runtime, which is gated to aarch64-android, so host
+// clippy sees them as unused; keep the allows (do not delete the constants).
+#[allow(dead_code)]
+pub const PLUGIN_DIR: &str = "/data/adb/plugins/";
+#[allow(dead_code)]
+pub const PLUGIN_MANIFEST: &str = "plugin.json";
+#[allow(dead_code)]
+pub const PLUGIN_ENTRY: &str = "main.lua";
+#[allow(dead_code)]
+pub const PLUGIN_DISABLE_FILE: &str = "disable";
+#[allow(dead_code)]
+pub const PLUGIN_CONFIG_FILE: &str = "config.json";
+#[allow(dead_code)]
+pub const PLUGIN_LOG_FILE: &str = "last_output.log";
+// Private state owned by this manager, so it stays out of the shared package
+// directory that may hold packages installed by another manager.
+#[allow(dead_code)]
+pub const PLUGIN_LOCK_DIR: &str = "/data/adb/ksu/plugin_locks/zephyrsu/";
+#[allow(dead_code)]
+pub const PLUGIN_STAGE_DIR: &str = "/data/adb/ksu/plugin_stage/zephyrsu/";
+#[allow(dead_code)]
+pub const PLUGIN_STATE_DIR: &str = "/data/adb/ksu/plugin_state/zephyrsu/";
+
+#[allow(dead_code)]
+pub const PLUGIN_MAX_ID_LEN: usize = 64;
+#[allow(dead_code)]
+pub const PLUGIN_MAX_ENTRY_LEN: usize = 128;
+#[allow(dead_code)]
+pub const PLUGIN_MAX_CALLBACK_LEN: usize = 64;
+#[allow(dead_code)]
+pub const PLUGIN_MAX_CONFIG_KEY_LEN: usize = 64;
+#[allow(dead_code)]
+pub const PLUGIN_MAX_MANIFEST_SIZE: u64 = 1024 * 1024;
+#[allow(dead_code)]
+pub const PLUGIN_MAX_CONFIG_SIZE: u64 = 4 * 1024 * 1024;
+#[allow(dead_code)]
+pub const PLUGIN_MAX_LOG_SIZE: u64 = 64 * 1024;
+
+// Package limits applied before anything is written to the plugin directory.
+#[allow(dead_code)]
+pub const PLUGIN_MAX_ARCHIVE_FILES: usize = 2048;
+#[allow(dead_code)]
+pub const PLUGIN_MAX_FILE_SIZE: u64 = 16 * 1024 * 1024;
+#[allow(dead_code)]
+pub const PLUGIN_MAX_TOTAL_SIZE: u64 = 64 * 1024 * 1024;
+#[allow(dead_code)]
+pub const PLUGIN_MAX_COMPRESSION_RATIO: u64 = 200;
+
 #[cfg(target_os = "android")]
 pub use android::*;

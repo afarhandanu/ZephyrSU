@@ -48,6 +48,8 @@ mod ksucalls;
 mod late_load;
 mod lkm_image;
 mod lkm_image_btf;
+#[cfg(all(target_os = "android", target_arch = "aarch64"))]
+mod lua_probe;
 #[cfg(target_os = "android")]
 mod magic_mount;
 #[cfg(target_os = "android")]
@@ -71,6 +73,8 @@ mod mount_ui;
 mod nomount;
 #[cfg(target_os = "android")]
 mod nomount_plan;
+#[cfg(all(target_os = "android", target_arch = "aarch64"))]
+mod plugin;
 #[cfg(target_os = "android")]
 mod preinit;
 #[cfg(target_os = "android")]

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Restore
@@ -83,6 +84,10 @@ fun ToolsMaterial(
 
                     NomountSectionMaterial(
                         onOpen = actions.onOpenNomount
+                    )
+
+                    PluginSectionMaterial(
+                        onOpen = actions.onOpenPlugin
                     )
 
                     AllowlistBackupSectionMaterial(
@@ -182,6 +187,28 @@ private fun NomountSectionMaterial(
                     IconTile(
                         Icons.Filled.Layers,
                         stringResource(R.string.settings_nomount),
+                    )
+                },
+                onClick = onOpen,
+            )
+        })
+    )
+}
+
+@Composable
+private fun PluginSectionMaterial(
+    onOpen: () -> Unit,
+) {
+    SegmentedColumn(
+        modifier = Modifier.padding(top = 12.dp),
+        content = listOf({
+            SegmentedListItem(
+                headlineContent = { Text(stringResource(R.string.plugin)) },
+                supportingContent = { Text(stringResource(R.string.settings_plugin_summary)) },
+                leadingContent = {
+                    IconTile(
+                        Icons.Outlined.Widgets,
+                        stringResource(R.string.plugin),
                     )
                 },
                 onClick = onOpen,
