@@ -51,6 +51,8 @@ import com.sukisu.ultra.R
 import com.sukisu.ultra.data.uts.UtsViewPhase
 import com.sukisu.ultra.data.uts.UtsViewMode
 import com.sukisu.ultra.data.uts.UtsViewStatus
+import com.sukisu.ultra.ui.LocalUiMode
+import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.kernel.BootSlotSource
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
@@ -62,6 +64,7 @@ import com.sukisu.ultra.ui.component.material.SnackBarHost
 import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
+import com.sukisu.ultra.ui.theme.MiuixSkinMaterialTheme
 import com.sukisu.ultra.ui.viewmodel.UtsViewViewModel
 
 private val primaryFields = listOf(2, 3)
@@ -78,6 +81,16 @@ private val fieldLabels = listOf(
 
 @Composable
 fun UtsViewScreen() {
+    // The Miuix skin provides no Material theme, so this Material page would
+    // render white in dark mode without the wrapper (see MiuixSkinMaterialTheme).
+    when (LocalUiMode.current) {
+        UiMode.Material -> UtsViewScreenContent()
+        UiMode.Miuix -> MiuixSkinMaterialTheme { UtsViewScreenContent() }
+    }
+}
+
+@Composable
+private fun UtsViewScreenContent() {
     val viewModel = viewModel<UtsViewViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current

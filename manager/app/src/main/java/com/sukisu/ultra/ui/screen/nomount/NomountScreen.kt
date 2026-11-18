@@ -36,6 +36,8 @@ import com.sukisu.ultra.R
 import com.sukisu.ultra.data.model.FolkMountMode
 import com.sukisu.ultra.data.model.NomountDriverState
 import com.sukisu.ultra.data.model.NomountStatus
+import com.sukisu.ultra.ui.LocalUiMode
+import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.dialog.ConfirmResult
 import com.sukisu.ultra.ui.component.dialog.rememberConfirmDialog
 import com.sukisu.ultra.ui.component.folkMountWarningText
@@ -47,6 +49,7 @@ import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
 import com.sukisu.ultra.ui.navigation3.Route
+import com.sukisu.ultra.ui.theme.MiuixSkinMaterialTheme
 import com.sukisu.ultra.ui.viewmodel.NomountUiState
 import com.sukisu.ultra.ui.viewmodel.NomountViewModel
 import com.sukisu.ultra.ui.viewmodel.shouldShowNomountSetup
@@ -58,9 +61,19 @@ import com.sukisu.ultra.ui.viewmodel.shouldShowNomountSetup
  * an unusable driver disables the controls instead of offering actions that
  * would silently do nothing.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NomountScreen() {
+    // The Miuix skin provides no Material theme, so this Material page would
+    // render white in dark mode without the wrapper (see MiuixSkinMaterialTheme).
+    when (LocalUiMode.current) {
+        UiMode.Material -> NomountScreenContent()
+        UiMode.Miuix -> MiuixSkinMaterialTheme { NomountScreenContent() }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NomountScreenContent() {
     val viewModel = viewModel<NomountViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current

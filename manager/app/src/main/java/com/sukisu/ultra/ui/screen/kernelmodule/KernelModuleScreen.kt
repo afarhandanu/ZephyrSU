@@ -84,6 +84,8 @@ import com.sukisu.ultra.data.model.KernelModuleLastResult
 import com.sukisu.ultra.data.model.LoadState
 import com.sukisu.ultra.data.modulebanner.LkmBannerSlot
 import com.sukisu.ultra.data.modulebanner.ModuleCardConfig
+import com.sukisu.ultra.ui.LocalUiMode
+import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.card.CardBannerDialog
 import com.sukisu.ultra.ui.component.card.CardSubject
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
@@ -109,10 +111,21 @@ import com.sukisu.ultra.ui.component.module.splicedLazyColumnGroup
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
 import com.sukisu.ultra.ui.component.module.ModuleButtonStyle
 import com.sukisu.ultra.ui.theme.LocalModuleDescriptionMaxLines
+import com.sukisu.ultra.ui.theme.MiuixSkinMaterialTheme
 import com.sukisu.ultra.ui.viewmodel.KernelModuleViewModel
 
 @Composable
 fun KernelModuleScreen() {
+    // The Miuix skin provides no Material theme, so this Material page would
+    // render white in dark mode without the wrapper (see MiuixSkinMaterialTheme).
+    when (LocalUiMode.current) {
+        UiMode.Material -> KernelModuleScreenContent()
+        UiMode.Miuix -> MiuixSkinMaterialTheme { KernelModuleScreenContent() }
+    }
+}
+
+@Composable
+private fun KernelModuleScreenContent() {
     val viewModel = viewModel<KernelModuleViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val actions = remember(viewModel) { createActions(viewModel) }

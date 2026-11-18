@@ -66,6 +66,8 @@ import com.sukisu.ultra.data.netisolate.mode
 import com.sukisu.ultra.data.netisolate.supportsMode
 import com.sukisu.ultra.data.uts.UtsTarget
 import com.sukisu.ultra.data.uts.UtsTargetApp
+import com.sukisu.ultra.ui.LocalUiMode
+import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.AppIconImage
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
@@ -79,6 +81,7 @@ import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.component.statustag.StatusTag
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
 import com.sukisu.ultra.ui.screen.uts.TargetAppSheet
+import com.sukisu.ultra.ui.theme.MiuixSkinMaterialTheme
 import com.sukisu.ultra.ui.viewmodel.NetIsolateViewModel
 import java.time.Instant
 import java.time.ZoneId
@@ -90,6 +93,16 @@ private val NETISOLATE_EVENT_TIME: DateTimeFormatter =
 
 @Composable
 fun NetIsolateScreen() {
+    // The Miuix skin provides no Material theme, so this Material page would
+    // render white in dark mode without the wrapper (see MiuixSkinMaterialTheme).
+    when (LocalUiMode.current) {
+        UiMode.Material -> NetIsolateScreenContent()
+        UiMode.Miuix -> MiuixSkinMaterialTheme { NetIsolateScreenContent() }
+    }
+}
+
+@Composable
+private fun NetIsolateScreenContent() {
     val viewModel = viewModel<NetIsolateViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current

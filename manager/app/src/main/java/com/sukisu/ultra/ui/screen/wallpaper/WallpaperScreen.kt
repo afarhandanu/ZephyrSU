@@ -95,6 +95,7 @@ import com.sukisu.ultra.ui.screen.home.LocalHomeLayoutStyle
 import com.sukisu.ultra.ui.screen.settings.ClearMediaRow
 import com.sukisu.ultra.ui.screen.settings.MediaFileRow
 import com.sukisu.ultra.ui.screen.settings.MediaSlider
+import com.sukisu.ultra.ui.theme.MiuixSkinMaterialTheme
 import com.sukisu.ultra.ui.util.HomeLayout
 import com.sukisu.ultra.wallpaper.FolkThemeIO
 import com.sukisu.ultra.wallpaper.WallpaperConfig
@@ -509,7 +510,16 @@ fun WallpaperScreen() {
         onResetTheme = { showResetDialog = true },
     )
 
-    WallpaperScreenMaterial(state, actions, snackbarHost)
+    // The Miuix skin provides no Material theme, so this Material page would
+    // render white in dark mode without the wrapper (see MiuixSkinMaterialTheme).
+    // Since PR #46 the canvas is opaque in Miuix (no wallpaper behind it), so the
+    // light default scheme would make the whole screen white.
+    when (LocalUiMode.current) {
+        UiMode.Material -> WallpaperScreenMaterial(state, actions, snackbarHost)
+        UiMode.Miuix -> MiuixSkinMaterialTheme {
+            WallpaperScreenMaterial(state, actions, snackbarHost)
+        }
+    }
 }
 
 @Composable
