@@ -113,6 +113,9 @@ void apply_kernelsu_rules()
     // our ksud triggered by init
     ksu_allow(db, "init", KERNEL_SU_DOMAIN, ALL, ALL);
 
+    // Allow init domain transitions across nosuid mounts (e.g. vendor HALs like wpa_supplicant mounted via magic mount)
+    ksu_allow(db, "init", "domain", "process2", "nosuid_transition");
+
     // copied from Magisk rules
     // suRights
     ksu_allow(db, "servicemanager", KERNEL_SU_DOMAIN, "dir", "search");

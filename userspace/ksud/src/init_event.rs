@@ -100,6 +100,10 @@ pub fn on_post_fs_data() -> Result<()> {
         warn!("load sepolicy.rule failed");
     }
 
+    if let Err(e) = crate::sepolicy::live_patch("allow init domain process2 nosuid_transition") {
+        warn!("apply nosuid_transition sepolicy failed: {e}");
+    }
+
     if let Err(e) = crate::builtin_zygisk::apply_sepolicy() {
         warn!("apply builtin zygisk sepolicy failed: {e}");
     }
