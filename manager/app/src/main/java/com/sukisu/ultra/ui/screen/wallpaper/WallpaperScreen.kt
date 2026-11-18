@@ -59,6 +59,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
@@ -505,13 +506,24 @@ fun WallpaperScreenMaterial(
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
+    // The wallpaper is painted behind this screen exactly when the Settings page
+    // has a background (or the video is on): Route.Wallpaper maps to PAGE_SETTINGS,
+    // so this is the image the sliders below adjust. The canvas must be transparent
+    // then, or the live wallpaper stays hidden behind an opaque surfaceContainer —
+    // in dark mode, a black screen the user cannot adjust against. PR #32 made the
+    // canvas unconditionally opaque to stop the Settings list bleeding through, but
+    // PR #33 now fades the covered page out whenever a wallpaper is active, so the
+    // opaque canvas is only needed when nothing is painted behind (wallpaper off,
+    // or no image for this page). Computed from the state directly (like
+    // MainActivity's wallpaperActive): the token-based isBackgroundActive() is only
+    // provided by the Material theme, so it would stay false in Miuix mode and the
+    // screen would stay black there.
+    val wallpaperBehind = state.enabled &&
+        ((state.videoEnabled && state.videoFilename != null) ||
+            if (state.multiBackgroundEnabled) state.settingsBackgroundSelected else state.hasImage)
+
     ExpressiveScaffold(
-        // The NavDisplay keeps the previous destination composed underneath this
-        // screen even when idle, so a transparent canvas in wallpaper mode lets
-        // the Settings list bleed through the rows and the two screens read as
-        // one jumbled list. This is a long settings page, so it takes the opaque
-        // canvas it already has with wallpaper off.
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = if (wallpaperBehind) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeFlexibleTopAppBar(
                 navigationIcon = { TopBarBackButton(onClick = actions.onBack) },
