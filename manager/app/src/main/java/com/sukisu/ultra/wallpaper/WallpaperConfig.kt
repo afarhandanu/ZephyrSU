@@ -27,6 +27,7 @@ object WallpaperConfig {
     private const val KEY_ENABLED = "wallpaper_enabled"
     private const val KEY_URI = "wallpaper_uri"
     private const val KEY_OPACITY = "wallpaper_opacity"
+    private const val KEY_WORKING_CARD_OPACITY = "working_card_opacity"
     private const val KEY_BLUR = "wallpaper_blur"
     private const val KEY_DIM = "wallpaper_dim"
     private const val KEY_DUAL_DIM = "wallpaper_dual_dim_enabled"
@@ -57,6 +58,7 @@ object WallpaperConfig {
     private const val KEY_SETTINGS_BACKGROUND_SEED = "settings_background_seed"
 
     const val DEFAULT_OPACITY = 0.6f
+    const val DEFAULT_WORKING_CARD_OPACITY = 1f
     const val DEFAULT_DIM = 0.2f
     const val DEFAULT_NIGHT_DIM = 0.4f
 
@@ -77,6 +79,13 @@ object WallpaperConfig {
 
     /** Alpha applied to the surface/container roles while the wallpaper is active. */
     var opacity by mutableFloatStateOf(DEFAULT_OPACITY)
+        private set
+
+    /**
+     * Alpha applied to the big Working status card on Home (every layout except Grid,
+     * whose work card has its own surface opacity). 1.0 keeps the card fully opaque.
+     */
+    var workingCardOpacity by mutableFloatStateOf(DEFAULT_WORKING_CARD_OPACITY)
         private set
 
     /** Background blur radius in dp. */
@@ -267,6 +276,10 @@ object WallpaperConfig {
         opacity = value.coerceIn(0f, 1f)
     }
 
+    fun updateWorkingCardOpacity(value: Float) {
+        workingCardOpacity = value.coerceIn(0f, 1f)
+    }
+
     fun updateBlur(value: Float) {
         blur = value.coerceIn(0f, 64f)
     }
@@ -411,6 +424,7 @@ object WallpaperConfig {
         enabled = prefs.getBoolean(KEY_ENABLED, false)
         uri = prefs.getString(KEY_URI, null)
         opacity = prefs.getFloat(KEY_OPACITY, DEFAULT_OPACITY)
+        workingCardOpacity = prefs.getFloat(KEY_WORKING_CARD_OPACITY, DEFAULT_WORKING_CARD_OPACITY)
         blur = prefs.getFloat(KEY_BLUR, 0f)
         dim = prefs.getFloat(KEY_DIM, DEFAULT_DIM)
         dualDimEnabled = prefs.getBoolean(KEY_DUAL_DIM, false)
@@ -453,6 +467,7 @@ object WallpaperConfig {
             putBoolean(KEY_ENABLED, enabled)
             putString(KEY_URI, uri)
             putFloat(KEY_OPACITY, opacity)
+            putFloat(KEY_WORKING_CARD_OPACITY, workingCardOpacity)
             putFloat(KEY_BLUR, blur)
             putFloat(KEY_DIM, dim)
             putBoolean(KEY_DUAL_DIM, dualDimEnabled)
@@ -489,6 +504,7 @@ object WallpaperConfig {
         enabled = false
         uri = null
         opacity = DEFAULT_OPACITY
+        workingCardOpacity = DEFAULT_WORKING_CARD_OPACITY
         blur = 0f
         dim = DEFAULT_DIM
         dualDimEnabled = false

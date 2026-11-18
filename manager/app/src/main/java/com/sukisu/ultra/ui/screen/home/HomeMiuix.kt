@@ -84,6 +84,7 @@ import com.sukisu.ultra.ui.util.BlurredBar
 import com.sukisu.ultra.ui.util.drawPainterCover
 import com.sukisu.ultra.ui.util.module.LatestVersionInfo
 import com.sukisu.ultra.ui.util.rememberBlurBackdrop
+import com.sukisu.ultra.wallpaper.WallpaperConfig
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
@@ -372,6 +373,23 @@ private fun ActiveStatusCard(
         )
     }
 
+    val baseCardColor = backgroundAwareColor(
+        when {
+            isDynamicColor -> colorScheme.secondaryContainer
+            isDark -> Color(0xFF1A3825)
+            else -> Color(0xFFDFFAE4)
+        }
+    )
+
+    // The Working-card opacity slider (Settings -> Wallpaper -> Work card). It multiplies
+    // whatever alpha the color already carries (Nova custom-background card alpha), so
+    // at the default 1.0 nothing changes; the card-image case stays transparent.
+    val cardColor = if (cardImagePainter != null) {
+        Color.Transparent
+    } else {
+        baseCardColor.copy(alpha = baseCardColor.alpha * WallpaperConfig.workingCardOpacity)
+    }
+
     AppCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -384,17 +402,7 @@ private fun ActiveStatusCard(
                 }
             ),
         colors = CardDefaults.defaultColors(
-            color = if (cardImagePainter != null) {
-                Color.Transparent
-            } else {
-                backgroundAwareColor(
-                    when {
-                        isDynamicColor -> colorScheme.secondaryContainer
-                        isDark -> Color(0xFF1A3825)
-                        else -> Color(0xFFDFFAE4)
-                    }
-                )
-            }
+            color = cardColor,
         ),
         onClick = onClick,
         showIndication = !state.isLateLoadMode,
