@@ -65,15 +65,31 @@ private val MatchEmphasis = SpanStyle(fontWeight = FontWeight.SemiBold)
  * keeps the search honest about what the pages actually contain. The filtering is deliberately not
  * remembered — the predicates read settings that live outside [uiState], and the matching itself is
  * far cheaper than getting that wrong.
+ *
+ * Hardened (PR #45): typing runs this on every keystroke, so a single bad row or query must never
+ * force-close the app. A throwing availability predicate hides its row, a throwing match skips its
+ * row, and any other unexpected failure degrades to "no results" instead of a crash.
  */
 fun settingsSearchGroups(
     query: String,
     uiState: SettingsUiState,
     entries: List<ResolvedSettingsEntry>,
 ): List<SettingsSearchGroup> =
-    groupSettingsResults(
-        matchSettings(query, entries.filter { it.entry.available(uiState) })
-    )
+    try {
+        groupSettingsResults(
+            matchSettings(query, entries.filter { entry ->
+                try {
+                    entry.entry.available(uiState)
+                } catch (_: Exception) {
+                    // A predicate that throws hides its row instead of crashing search.
+                    false
+                }
+            })
+        )
+    } catch (_: Exception) {
+        // Last resort: show the empty state, never a force-close.
+        emptyList()
+    }
 
 /**
  * The results under the search field: one group per section, in the settings page's own order.
