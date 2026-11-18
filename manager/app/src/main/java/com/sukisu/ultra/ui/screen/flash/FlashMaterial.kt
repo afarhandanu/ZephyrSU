@@ -153,7 +153,7 @@ fun FlashScreenMaterial(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.5f),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
                 Text(

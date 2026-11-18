@@ -7,6 +7,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sukisu.ultra.ui.theme.backgroundAwareCardColors
+import top.yukonga.miuix.kmp.basic.CardColors
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 
@@ -15,11 +17,13 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 fun LogConsole(
     text: String,
     modifier: Modifier = Modifier,
+    colors: CardColors = backgroundAwareCardColors(),
 ) {
     AppCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 8.dp),
+        colors = colors,
     ) {
         Text(
             modifier = Modifier.padding(16.dp),
