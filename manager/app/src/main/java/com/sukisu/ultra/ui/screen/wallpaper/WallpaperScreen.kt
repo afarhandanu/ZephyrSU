@@ -499,6 +499,12 @@ fun WallpaperScreenMaterial(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     ExpressiveScaffold(
+        // The NavDisplay keeps the previous destination composed underneath this
+        // screen even when idle, so a transparent canvas in wallpaper mode lets
+        // the Settings list bleed through the rows and the two screens read as
+        // one jumbled list. This is a long settings page, so it takes the opaque
+        // canvas it already has with wallpaper off.
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeFlexibleTopAppBar(
                 navigationIcon = { TopBarBackButton(onClick = actions.onBack) },

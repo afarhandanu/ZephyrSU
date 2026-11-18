@@ -40,6 +40,7 @@ import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 import com.sukisu.ultra.ui.viewmodel.KpmViewModel
 
 @Composable
@@ -143,10 +144,24 @@ fun KpmMaterial(viewModel: KpmViewModel, actions: KpmActions, bottomInnerPadding
                     }
                 }
                 item(key = "search") {
+                    // Same fill as the shared SearchAppBar: in wallpaper mode the
+                    // field uses the wallpaper's group material instead of the
+                    // default transparent container, so it matches the search bars
+                    // on the other tabs.
+                    val searchFill = LocalFolkWallpaperTokens.current?.group?.fill
                     OutlinedTextField(
                         value = state.searchQuery, onValueChange = actions.onSearchTextChange,
                         modifier = Modifier.fillMaxWidth(), singleLine = true,
                         shape = MaterialTheme.shapes.extraLarge,
+                        colors = if (searchFill != null) {
+                            OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = searchFill,
+                                unfocusedContainerColor = searchFill,
+                                disabledContainerColor = searchFill,
+                            )
+                        } else {
+                            OutlinedTextFieldDefaults.colors()
+                        },
                         label = { Text(stringResource(R.string.kpm_search)) },
                         leadingIcon = { Icon(Icons.Rounded.Search, null) },
                         trailingIcon = {
