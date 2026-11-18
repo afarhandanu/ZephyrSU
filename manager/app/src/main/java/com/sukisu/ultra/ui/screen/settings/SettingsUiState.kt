@@ -43,6 +43,7 @@ data class SettingsUiState(
     val enableNavigationBadge: Boolean = true,
     /** M5.4: show the SuperUser / Module tabs in the bottom bar / rail. */
     val showNavSuperuser: Boolean = true,
+    val showNavKpm: Boolean = true,
     val showNavModule: Boolean = true,
     /** M5.4: floating-bar auto-hide after 3 s idle / hide while scrolling down. */
     val floatingAutoHide: Boolean = true,
@@ -277,6 +278,7 @@ data class SettingsScreenActions(
     val onSetUiModeIndex: (Int) -> Unit,
     val onSetHomeLayoutStyle: (String) -> Unit = {},
     val onSetShowNavSuperuser: (Boolean) -> Unit = {},
+    val onSetShowNavKpm: (Boolean) -> Unit = {},
     val onSetShowNavModule: (Boolean) -> Unit = {},
     val onSetFloatingAutoHide: (Boolean) -> Unit = {},
     val onSetFloatingSwipeHide: (Boolean) -> Unit = {},

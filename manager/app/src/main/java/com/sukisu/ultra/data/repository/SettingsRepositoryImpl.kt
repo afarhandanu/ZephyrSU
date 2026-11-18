@@ -489,6 +489,10 @@ class SettingsRepositoryImpl : SettingsRepository {
         get() = prefs.getBoolean("show_nav_superuser", true)
         set(value) = prefs.edit { putBoolean("show_nav_superuser", value) }
 
+    override var showNavKpm: Boolean
+        get() = prefs.getBoolean("show_nav_kpm", true)
+        set(value) = prefs.edit { putBoolean("show_nav_kpm", value) }
+
     override var showNavModule: Boolean
         get() = prefs.getBoolean("show_nav_apm", true)
         set(value) = prefs.edit { putBoolean("show_nav_apm", value) }

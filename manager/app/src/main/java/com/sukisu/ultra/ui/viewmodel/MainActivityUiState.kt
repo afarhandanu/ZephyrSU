@@ -28,6 +28,7 @@ data class MainActivityUiState(
     val homeLayoutStyle: String = com.sukisu.ultra.data.model.HomeLayoutStyle.DEFAULT,
     /** M5.4: show the SuperUser / Module tabs in the bottom bar / rail. */
     val showNavSuperuser: Boolean = true,
+    val showNavKpm: Boolean = true,
     val showNavModule: Boolean = true,
     /** M5.4: floating-bar auto-hide after 3 s idle / hide while scrolling down. */
     val floatingAutoHide: Boolean = true,

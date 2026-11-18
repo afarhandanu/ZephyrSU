@@ -1636,6 +1636,7 @@ fun ColorPaletteScreenMaterial(
                 val bottomBarIconPaths = uiState.bottomBarIcons
                 val bottomBarSlots = listOf(
                     BottomBarIconSlot.Home to R.string.settings_bottom_bar_icon_home,
+                    BottomBarIconSlot.Kpm to R.string.kpm,
                     BottomBarIconSlot.SuperUser to R.string.settings_bottom_bar_icon_superuser,
                     BottomBarIconSlot.Module to R.string.settings_bottom_bar_icon_module,
                     BottomBarIconSlot.Setting to R.string.settings_bottom_bar_icon_setting,

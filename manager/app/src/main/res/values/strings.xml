@@ -350,6 +350,8 @@
     <string name="settings_nav_show_superuser_summary">Show the SuperUser tab in the bottom bar or navigation rail</string>
     <string name="settings_nav_show_module">Show Module tab</string>
     <string name="settings_nav_show_module_summary">Show the Module tab in the bottom bar or navigation rail</string>
+    <string name="settings_nav_show_kpm">Show KPM tab</string>
+    <string name="settings_nav_show_kpm_summary">Show the KPM tab in the bottom bar or navigation rail</string>
     <string name="settings_floating_auto_hide">Auto-hide floating bar</string>
     <string name="settings_floating_auto_hide_summary">Hide the floating bar automatically after 3 seconds idle</string>
     <string name="settings_floating_swipe_hide">Hide floating bar on scroll</string>
@@ -1484,6 +1486,7 @@
     <string name="extension_status_reboot_short">Needs reboot</string>
     <string name="extension_status_persistent_short">Survives reboot</string>
     <string name="extension_status_session_only_short">This boot only</string>
+    <string name="kpm">KPM</string>
     <string name="extension_kpm_title">KPM (Kernel Patch Module)</string>
     <string name="extension_kpm_summary">Load third-party .kpm modules at runtime. Requires a KPM-capable kernel build.</string>
     <string name="extension_cpu_spoof_title">CPU identity spoofing</string>

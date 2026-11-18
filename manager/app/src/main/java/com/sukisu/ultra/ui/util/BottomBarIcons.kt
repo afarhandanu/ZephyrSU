@@ -1,13 +1,14 @@
 package com.sukisu.ultra.ui.util
 
 /**
- * The four tabs that can carry a custom bottom bar icon image.
+ * The five tabs that can carry a custom bottom bar icon image.
  *
  * [key] is the stable identifier used by the settings store and by theme packages
  * (`bottom_bar_icon_<key>` entries), so it must not be renamed.
  */
 enum class BottomBarIconSlot(val key: String) {
     Home("home"),
+    Kpm("kpm"),
     SuperUser("superuser"),
     Module("module"),
     Setting("setting"),

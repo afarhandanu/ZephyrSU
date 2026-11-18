@@ -127,6 +127,8 @@ interface SettingsRepository {
     var enableNavigationBadge: Boolean
     /** M5.4: show the SuperUser tab in the bottom bar / rail (Home and Setting always stay). */
     var showNavSuperuser: Boolean
+    /** Show the KPM tab in the bottom bar / rail (FinaSU-style, 2nd position after Home). */
+    var showNavKpm: Boolean
     /** M5.4: show the Module tab in the bottom bar / rail (Home and Setting always stay). */
     var showNavModule: Boolean
     /** M5.4: hide the floating bar automatically after 3 s idle. */

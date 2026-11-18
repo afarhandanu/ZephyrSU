@@ -160,6 +160,8 @@ val LocalEnableNavigationBadge = staticCompositionLocalOf { true }
 /** M5.4: show the SuperUser / Module tabs in the bottom bar / rail (Home and Setting always stay). */
 val LocalShowNavSuperuser = staticCompositionLocalOf { true }
 
+val LocalShowNavKpm = staticCompositionLocalOf { true }
+
 val LocalShowNavModule = staticCompositionLocalOf { true }
 
 /** M5.4: hide the floating bar automatically after 3 s idle. */
