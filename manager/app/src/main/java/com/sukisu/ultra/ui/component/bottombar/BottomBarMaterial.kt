@@ -70,6 +70,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.Natives
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 import com.sukisu.ultra.ui.LocalMainPagerState
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
 import com.sukisu.ultra.ui.util.CustomTextKey
@@ -124,7 +125,17 @@ fun BottomBarMaterial(
             .padding(horizontal = 24.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        val pillColor = backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerHighest)
+        // In wallpaper mode the pill takes the floating style's wallpaper surface
+        // (the Raised material, translucent at the user's opacity) instead of the
+        // opaque surfaceContainerHighest, which renders as a solid white slab on
+        // light pages and a solid dark slab on dark-luminance pages. Outside
+        // wallpaper mode the color is exactly what it was.
+        val wallpaperTokens = LocalFolkWallpaperTokens.current
+        val pillColor = if (wallpaperTokens != null) {
+            BottomBarControl.style(BottomBarLayout.Floating).containerColor
+        } else {
+            backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerHighest)
+        }
         val progressiveModifier = if (progressiveBlur) {
             rememberProgressiveBarBlurModifier(
                 backdrop = backdrop,
@@ -256,11 +267,13 @@ private fun FloatingNavItem(
     onClick: () -> Unit,
 ) {
     // With the progressive pill the unselected items must not paint an opaque capsule, otherwise
-    // they would punch solid holes through the blur.
+    // they would punch solid holes through the blur. The same holds in wallpaper mode, where the
+    // pill itself is translucent: an opaque capsule would read as a solid white blob on it.
+    val wallpaperActive = LocalFolkWallpaperTokens.current != null
     val containerColor by animateColorAsState(
         targetValue = when {
             selected -> MaterialTheme.colorScheme.primary
-            progressiveBlur -> Color.Transparent
+            progressiveBlur || wallpaperActive -> Color.Transparent
             else -> MaterialTheme.colorScheme.surfaceContainerHighest
         },
         label = "nav_item_container"

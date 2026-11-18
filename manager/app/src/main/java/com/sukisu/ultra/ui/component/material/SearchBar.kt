@@ -59,6 +59,7 @@ import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 import com.sukisu.ultra.ui.theme.isBackgroundActive
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 
 @Composable
 fun SearchAppBar(
@@ -145,6 +146,12 @@ fun SearchAppBar(
         }
     }
 
+    // In wallpaper mode the bar uses the wallpaper's group material, like the
+    // rows around it, instead of the opaque surfaceContainerHighest. The KPM
+    // search field is a transparent OutlinedTextField, so without this the two
+    // bars disagreed: transparent on KPM, solid white everywhere else.
+    val searchFill = LocalFolkWallpaperTokens.current?.group?.fill
+
     val inputField: @Composable () -> Unit = {
         CompositionLocalProvider(LocalDensity provides scaledDensity) {
             SearchBarDefaults.InputField(
@@ -160,7 +167,8 @@ fun SearchAppBar(
                             modifier = Modifier.padding(end = 8.dp),
                             onClick = { collapseAndClear() },
                             colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                containerColor = searchFill
+                                    ?: MaterialTheme.colorScheme.surfaceContainerHighest,
                                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             ),
                         ) {
@@ -208,7 +216,8 @@ fun SearchAppBar(
 
                 state = searchBarState,
                 inputField = inputField,
-                colors = SearchBarDefaults.colors(containerColor = backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerHighest)),
+                colors = SearchBarDefaults.colors(containerColor = searchFill
+                    ?: backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerHighest)),
             )
         }
     }

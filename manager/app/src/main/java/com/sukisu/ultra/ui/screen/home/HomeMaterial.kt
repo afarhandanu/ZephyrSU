@@ -92,6 +92,7 @@ import com.sukisu.ultra.ui.component.rebootlistpopup.RebootListPopup
 import com.sukisu.ultra.ui.component.statustag.StatusTag
 import com.sukisu.ultra.ui.theme.isBackgroundActive
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 import com.sukisu.ultra.ui.util.CustomTextKey
 import com.sukisu.ultra.ui.util.HomeLayout
 import com.sukisu.ultra.ui.util.customText
@@ -421,12 +422,17 @@ private fun InactiveStatusCard(
     notInstalled: Boolean,
     onClick: () -> Unit,
 ) {
+    // Same rule as SpecSheet below: in wallpaper mode the card uses the
+    // wallpaper's group material instead of the opaque surfaceBright.
+    val wallpaperTokens = LocalFolkWallpaperTokens.current
+    val group = wallpaperTokens?.group
     val outlineColor = MaterialTheme.colorScheme.outline
     val accentColor = MaterialTheme.colorScheme.error
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright),
+        color = group?.fill ?: backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright),
+        contentColor = group?.contentColor ?: contentColorFor(backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright)),
         shape = HeroShape,
         onClick = onClick,
     ) {
@@ -544,6 +550,13 @@ private fun StatTile(
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
+    // Same rule as SpecSheet below: in wallpaper mode the tile uses the
+    // wallpaper's group material instead of the opaque surfaceBright, which
+    // renders as a solid dark block on a dark-luminance page.
+    val wallpaperTokens = LocalFolkWallpaperTokens.current
+    val group = wallpaperTokens?.group
+    val tileColor = group?.fill ?: backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright)
+    val tileContentColor = group?.contentColor ?: contentColorFor(backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright))
     val content = @Composable {
         Column(
             modifier = Modifier
@@ -569,14 +582,16 @@ private fun StatTile(
             onClick = onClick,
             modifier = modifier,
             shape = TileShape,
-            color = backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright),
+            color = tileColor,
+            contentColor = tileContentColor,
             content = content,
         )
     } else {
         Surface(
             modifier = modifier,
             shape = TileShape,
-            color = backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright),
+            color = tileColor,
+            contentColor = tileContentColor,
             content = content,
         )
     }
@@ -711,10 +726,17 @@ private fun SpecSheet(
     rows: List<Pair<String, String>>,
     modifier: Modifier = Modifier,
 ) {
+    // Same rule as TonalCard: in wallpaper mode a neutral sheet uses the
+    // wallpaper's group material, so the wallpaper shows through at the user's
+    // opacity. The opaque surfaceBright otherwise renders as a solid black
+    // block on a dark-luminance page, hiding the wallpaper entirely.
+    val wallpaperTokens = LocalFolkWallpaperTokens.current
+    val group = wallpaperTokens?.group
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = TileShape,
-        color = backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright),
+        color = group?.fill ?: backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright),
+        contentColor = group?.contentColor ?: contentColorFor(backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright)),
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
             rows.forEachIndexed { index, (label, value) ->
