@@ -275,6 +275,58 @@ private suspend fun stageModuleInstallers(flashIt: FlashIt): List<ModuleInstalle
     }
 }
 
+/**
+ * The "SukiSU Ultra" FIGlet banner (Standard) ksud prints at the start of a module
+ * install (userspace/ksud/src/module.rs) and boot patch (userspace/ksud/src/boot_patch.rs),
+ * from userspace/ksud/src/banner. The manager rewrites it to the ZephyrSU banner in the
+ * displayed log (and the saved log) so installs still running the old ksud read ZephyrSU;
+ * the banner file itself was rebranded too, so new ksud builds print ZephyrSU natively
+ * and this becomes a no-op. Matching ignores trailing whitespace; leading whitespace is
+ * significant (the "Ultra" block is indented). Only the exact 10-line block is replaced;
+ * every other log line passes through untouched.
+ */
+private val SUKISU_ULTRA_BANNER_LINES = listOf(
+    " ____        _    _ ____  _   _",
+    "/ ___| _   _| | _(_) ___|| | | |",
+    "\\___ \\| | | | |/ / \\___ \\| | | |",
+    " ___) | |_| |   <| |___) | |_| |",
+    "|____/ \\__,_|_|\\_\\_|____/ \\___/",
+    "     _   _ _ _",
+    "    | | | | | |_ _ __ __ _",
+    "    | | | | | __| '__/ _\\ |",
+    "    | |_| | | |_| | | (_| |",
+    "     \\___/|_|\\__|_|  \\__,_|",
+)
+
+private val ZEPHYRSU_BANNER_LINES = listOf(
+    " _____          _                ____  _   _",
+    "|__  /___ _ __ | |__  _   _ _ __/ ___|| | | |",
+    "  / // _ \\ '_ \\| '_ \\| | | | '__\\___ \\| | | |",
+    " / /|  __/ |_) | | | | |_| | |   ___) | |_| |",
+    "/____\\___| .__/|_| |_|\\__, |_|  |____/ \\___/",
+    "         |_|          |___/",
+)
+
+private fun replaceSukisuUltraBanner(log: String): String {
+    val lines = log.split("\n")
+    if (lines.size < SUKISU_ULTRA_BANNER_LINES.size) return log
+    val out = lines.toMutableList()
+    var i = 0
+    while (i + SUKISU_ULTRA_BANNER_LINES.size <= out.size) {
+        val matches = SUKISU_ULTRA_BANNER_LINES.indices.all { j ->
+            out[i + j].trimEnd() == SUKISU_ULTRA_BANNER_LINES[j]
+        }
+        if (matches) {
+            repeat(SUKISU_ULTRA_BANNER_LINES.size) { out.removeAt(i) }
+            out.addAll(i, ZEPHYRSU_BANNER_LINES)
+            i += ZEPHYRSU_BANNER_LINES.size
+        } else {
+            i++
+        }
+    }
+    return out.joinToString("\n")
+}
+
 @Composable
 fun FlashEffect(
     flashIt: FlashIt,
@@ -299,7 +351,7 @@ fun FlashEffect(
                 currentText += tempText
             }
             mainHandler.post {
-                onTextUpdate(currentText)
+                onTextUpdate(replaceSukisuUltraBanner(currentText))
             }
             logContent.append(it).append("\n")
         }
@@ -312,13 +364,13 @@ fun FlashEffect(
                 if (code != 0) {
                     currentText += "Error code: $code.\n $err Please save and check the log.\n"
                     mainHandler.post {
-                        onTextUpdate(currentText)
+                        onTextUpdate(replaceSukisuUltraBanner(currentText))
                     }
                 }
                 if (showReboot) {
                     currentText += "\n\n\n"
                     mainHandler.post {
-                        onTextUpdate(currentText)
+                        onTextUpdate(replaceSukisuUltraBanner(currentText))
                         onShowRebootChange(true)
                     }
                 }
@@ -343,7 +395,7 @@ fun saveLog(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                 "SukiSU_install_log_${date}.log"
             )
-            file.writeText(logContent.toString())
+            file.writeText(replaceSukisuUltraBanner(logContent.toString()))
             showMessage("Log saved to ${file.absolutePath}")
         }
     }

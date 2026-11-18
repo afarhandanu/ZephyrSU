@@ -44,6 +44,7 @@ import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
 import com.sukisu.ultra.ui.theme.LocalEnableBlur
 import com.sukisu.ultra.ui.util.BlurredBar
 import com.sukisu.ultra.ui.util.rememberBlurBackdrop
+import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.FloatingActionButton
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
@@ -148,7 +149,14 @@ fun FlashScreenMiuix(
                     scrollState.animateScrollTo(scrollState.maxValue)
                 }
                 Spacer(Modifier.height(innerPadding.calculateTopPadding()))
-                LogConsole(text = state.text)
+                // Flash log card at 50% so the background behind shows through (was solid).
+                LogConsole(
+                    text = state.text,
+                    colors = CardDefaults.defaultColors(
+                        color = colorScheme.surfaceContainer.copy(alpha = 0.5f),
+                        contentColor = colorScheme.onSurfaceContainer,
+                    ),
+                )
                 Spacer(
                     Modifier.height(
                         12.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
