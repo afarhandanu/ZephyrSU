@@ -451,6 +451,15 @@ fun SettingPagerMaterial(
                 content = buildList {
                     add {
                         SegmentedSwitchItem(
+                            icon = Icons.Filled.Memory,
+                            title = stringResource(id = R.string.settings_nav_show_kpm),
+                            summary = stringResource(id = R.string.settings_nav_show_kpm_summary),
+                            checked = uiState.showNavKpm,
+                            onCheckedChange = actions.onSetShowNavKpm,
+                        )
+                    }
+                    add {
+                        SegmentedSwitchItem(
                             icon = Icons.Filled.Shield,
                             title = stringResource(id = R.string.settings_nav_show_superuser),
                             summary = stringResource(id = R.string.settings_nav_show_superuser_summary),

@@ -122,12 +122,12 @@ fun rememberMainPagerState(
 
 /**
  * The destinations the bottom bar shows, from the visibility prefs (M5.4). Home and Setting
- * always stay; SuperUser and Module can be hidden. FinaSU's list also holds the Plugin page,
- * which Nova's pager does not have.
+ * always stay; Kpm, SuperUser and Module can be hidden.
  */
-fun visibleDestinations(showSuperuser: Boolean, showModule: Boolean): List<BottomBarDestination> =
+fun visibleDestinations(showSuperuser: Boolean, showModule: Boolean, showKpm: Boolean): List<BottomBarDestination> =
     BottomBarDestination.entries.filter { destination ->
         when (destination) {
+            BottomBarDestination.Kpm -> showKpm
             BottomBarDestination.SuperUser -> showSuperuser
             BottomBarDestination.Module -> showModule
             else -> true

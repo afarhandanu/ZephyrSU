@@ -161,6 +161,7 @@ class MainActivityViewModel(
             supportLinksStyle = settingRepo.supportLinksStyle,
             homeLayoutStyle = settingRepo.homeLayoutStyle,
             showNavSuperuser = settingRepo.showNavSuperuser,
+            showNavKpm = settingRepo.showNavKpm,
             showNavModule = settingRepo.showNavModule,
             floatingAutoHide = settingRepo.floatingAutoHide,
             floatingSwipeHide = settingRepo.floatingSwipeHide,
@@ -248,8 +249,8 @@ private class MainPageState(
 }
 
 object MainPagerConfig {
-    /** Number of destinations in the main pager (Home, SuperUser, Module, Setting). */
-    const val PAGE_COUNT = 4
+    /** Number of destinations in the main pager (Home, Kpm, SuperUser, Module, Setting). */
+    const val PAGE_COUNT = 5
     const val LAST_PAGE_INDEX = PAGE_COUNT - 1
 
     /** Coerce a persisted destination ordinal into range (M5.4: ordinals, not pager slots). */

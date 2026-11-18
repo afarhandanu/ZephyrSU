@@ -177,6 +177,7 @@ class SettingsViewModel(
             val enableFloatingBottomBarBlur = repo.enableFloatingBottomBarBlur
             val enableNavigationBadge = repo.enableNavigationBadge
             val showNavSuperuser = repo.showNavSuperuser
+            val showNavKpm = repo.showNavKpm
             val showNavModule = repo.showNavModule
             val floatingAutoHide = repo.floatingAutoHide
             val floatingSwipeHide = repo.floatingSwipeHide
@@ -312,6 +313,7 @@ homePillScale = HomeStatusStyle.coercePillScale(repo.homePillScale),
                     enableFloatingBottomBarBlur = enableFloatingBottomBarBlur,
                     enableNavigationBadge = enableNavigationBadge,
                     showNavSuperuser = showNavSuperuser,
+                    showNavKpm = showNavKpm,
                     showNavModule = showNavModule,
                     floatingAutoHide = floatingAutoHide,
                     floatingSwipeHide = floatingSwipeHide,
@@ -2934,6 +2936,11 @@ homePillScale = repo.homePillScale,
     fun setShowNavSuperuser(enabled: Boolean) {
         repo.showNavSuperuser = enabled
         _uiState.update { it.copy(showNavSuperuser = enabled) }
+    }
+
+    fun setShowNavKpm(enabled: Boolean) {
+        repo.showNavKpm = enabled
+        _uiState.update { it.copy(showNavKpm = enabled) }
     }
 
     fun setShowNavModule(enabled: Boolean) {

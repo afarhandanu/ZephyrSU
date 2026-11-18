@@ -98,6 +98,7 @@ fun SettingPager(
         },
         onSetHomeLayoutStyle = viewModel::setHomeLayoutStyle,
         onSetShowNavSuperuser = viewModel::setShowNavSuperuser,
+        onSetShowNavKpm = viewModel::setShowNavKpm,
         onSetShowNavModule = viewModel::setShowNavModule,
         onSetFloatingAutoHide = viewModel::setFloatingAutoHide,
         onSetFloatingSwipeHide = viewModel::setFloatingSwipeHide,

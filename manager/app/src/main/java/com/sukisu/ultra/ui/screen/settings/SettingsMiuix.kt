@@ -545,6 +545,15 @@ fun SettingPagerMiuix(
                         colors = backgroundAwareCardColors(),
                     ) {
                         SwitchPreference(
+                            title = stringResource(R.string.settings_nav_show_kpm),
+                            summary = stringResource(R.string.settings_nav_show_kpm_summary),
+                            startAction = {
+                                Icon(Icons.Rounded.Memory, modifier = Modifier.padding(end = 6.dp), contentDescription = stringResource(R.string.settings_nav_show_kpm), tint = colorScheme.onBackground)
+                            },
+                            checked = uiState.showNavKpm,
+                            onCheckedChange = actions.onSetShowNavKpm,
+                        )
+                        SwitchPreference(
                             title = stringResource(R.string.settings_nav_show_superuser),
                             summary = stringResource(R.string.settings_nav_show_superuser_summary),
                             startAction = {

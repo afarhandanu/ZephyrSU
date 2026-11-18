@@ -9,10 +9,10 @@ import com.sukisu.ultra.wallpaper.WallpaperConfig
  * Routes without a section of their own inherit the nearest route below them, so editors and flash
  * flows keep their parent page's wallpaper.
  *
- * Adapted from FinaSU (M5.2): Nova's main pager has only four pages (Home/SuperUser/Module/
- * Setting) — there is no Plugin page, so `PAGE_PLUGIN` has no pager slot to paint on. It is
- * kept as a constant for `.fpt` import/export compatibility (a theme's plugin background
- * round-trips through the archive), but it never renders. FinaSU-only routes
+ * Adapted from FinaSU (M5.2): Nova's main pager has five pages (Home/Kpm/SuperUser/Module/
+ * Setting) — the Kpm tab occupies FinaSU's Plugin slot, so `PAGE_PLUGIN` paints behind it.
+ * It is also kept as a constant for `.fpt` import/export compatibility (a theme's plugin
+ * background round-trips through the archive). FinaSU-only routes
  * (PluginStore, MyThemes, Language, WebDavBrowser, SettingsCategory)
  * are dropped; Nova-only routes (SuSFS, Tool,
  * UmountManager, AppearanceOverlay, CustomTexts, FptThemeStore, FptMyThemes) map to
@@ -63,12 +63,13 @@ private val NavKey.wallpaperPage: Int?
     }
 
 /**
- * Nova's main-pager slot to the FinaSU wallpaper page it paints. Pager 1 is SuperUser
- * (FinaSU's pager 1 is the Plugin page, which Nova does not have).
+ * Nova's main-pager slot to the FinaSU wallpaper page it paints. Pager 1 is Kpm, which
+ * occupies FinaSU's Plugin slot (PAGE_PLUGIN) — the KPM tab paints the Plugin wallpaper.
  */
 internal fun mainPageToWallpaperPage(page: Int): Int = when (page) {
-    1 -> WallpaperConfig.PAGE_SUPERUSER
-    2 -> WallpaperConfig.PAGE_MODULE
-    3 -> WallpaperConfig.PAGE_SETTINGS
+    1 -> WallpaperConfig.PAGE_PLUGIN
+    2 -> WallpaperConfig.PAGE_SUPERUSER
+    3 -> WallpaperConfig.PAGE_MODULE
+    4 -> WallpaperConfig.PAGE_SETTINGS
     else -> WallpaperConfig.PAGE_HOME
 }

@@ -194,6 +194,7 @@ import com.sukisu.ultra.ui.theme.LocalEnableNavigationBadge
 import com.sukisu.ultra.ui.theme.LocalEnableProgressiveBlur
 import com.sukisu.ultra.ui.theme.LocalFloatingAutoHide
 import com.sukisu.ultra.ui.theme.LocalFloatingSwipeHide
+import com.sukisu.ultra.ui.theme.LocalShowNavKpm
 import com.sukisu.ultra.ui.theme.LocalShowNavModule
 import com.sukisu.ultra.ui.theme.LocalShowNavSuperuser
 import com.sukisu.ultra.ui.theme.LocalModuleDescriptionMaxLines
@@ -355,6 +356,7 @@ class MainActivity : FragmentActivity() {
                 LocalEnableFloatingBottomBarBlur provides uiState.enableFloatingBottomBarBlur,
                 LocalEnableNavigationBadge provides uiState.enableNavigationBadge,
                 LocalShowNavSuperuser provides uiState.showNavSuperuser,
+                LocalShowNavKpm provides uiState.showNavKpm,
                 LocalShowNavModule provides uiState.showNavModule,
                 LocalFloatingAutoHide provides uiState.floatingAutoHide,
                 LocalFloatingSwipeHide provides uiState.floatingSwipeHide,
@@ -729,13 +731,14 @@ fun MainScreen(
     val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
     val useNavigationRail = useNavigationRail(enableFloatingBottomBar)
     // M5.4: the visible destinations, from the visibility prefs. Home and Setting always
-    // stay; SuperUser and Module can be hidden in Settings. The pager holds only these, so
+    // stay; Kpm, SuperUser and Module can be hidden in Settings. The pager holds only these, so
     // hiding a tab shifts the pager indices — the persisted page is a destination ordinal,
     // not a slot, and is mapped onto the visible index here.
     val showNavSuperuser = LocalShowNavSuperuser.current
+    val showNavKpm = LocalShowNavKpm.current
     val showNavModule = LocalShowNavModule.current
-    val destinations = remember(showNavSuperuser, showNavModule) {
-        visibleDestinations(showNavSuperuser, showNavModule)
+    val destinations = remember(showNavSuperuser, showNavKpm, showNavModule) {
+        visibleDestinations(showNavSuperuser, showNavModule, showNavKpm)
     }
     val initialDestination = BottomBarDestination.entries.getOrElse(initialPage) { BottomBarDestination.Home }
     val initialVisiblePage = destinations.indexOf(initialDestination).coerceAtLeast(0)
@@ -937,6 +940,7 @@ fun MainScreen(
                     val isCurrentPage = page == settledPage
                     when (destinations.getOrNull(page)) {
                         BottomBarDestination.Home -> if (contentReady || isCurrentPage) HomePager(navController, bottomInnerPadding, isCurrentPage)
+                        BottomBarDestination.Kpm -> if (contentReady || isCurrentPage) KpmScreen(bottomInnerPadding)
                         BottomBarDestination.SuperUser -> if (contentReady || isCurrentPage) SuperUserPager(navController, bottomInnerPadding, isCurrentPage)
                         BottomBarDestination.Module -> if (contentReady || isCurrentPage) ModulePager(bottomInnerPadding, isCurrentPage)
                         BottomBarDestination.Setting -> if (contentReady || isCurrentPage) SettingPager(navController, bottomInnerPadding, isCurrentPage)

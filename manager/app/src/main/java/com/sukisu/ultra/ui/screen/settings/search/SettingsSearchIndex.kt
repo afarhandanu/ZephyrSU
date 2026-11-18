@@ -465,6 +465,18 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
         sectionRow(
             groupKey = SettingsSection.NAVIGATION,
             groupTitleRes = R.string.settings_search_section_navigation,
+            id = "navigation.show_kpm",
+            titleRes = R.string.settings_nav_show_kpm,
+            summaryRes = R.string.settings_nav_show_kpm_summary,
+            icon = Icons.Filled.Memory,
+            anchor = SettingsSection.NAVIGATION,
+            aliases = listOf("kpm", "tab", "show", "hide", "sembunyi", "tampilkan"),
+        )
+    )
+    add(
+        sectionRow(
+            groupKey = SettingsSection.NAVIGATION,
+            groupTitleRes = R.string.settings_search_section_navigation,
             id = "navigation.show_superuser",
             titleRes = R.string.settings_nav_show_superuser,
             summaryRes = R.string.settings_nav_show_superuser_summary,
