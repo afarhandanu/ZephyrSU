@@ -152,7 +152,8 @@ object SuSFSCommands {
             "CONFIG_KSU_SUSFS_ENABLE_LOG" to context.getString(R.string.enable_log_feature_label),
             "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS" to context.getString(R.string.hide_symbols_feature_label),
             "CONFIG_KSU_SUSFS_SUS_KSTAT" to context.getString(R.string.sus_kstat_feature_label),
-            "CONFIG_KSU_SUSFS_SUS_MAP" to context.getString(R.string.sus_map_feature_label)
+            "CONFIG_KSU_SUSFS_SUS_MAP" to context.getString(R.string.sus_map_feature_label),
+            "CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER" to context.getString(R.string.susfs_priority_uid_filter)
         )
         return featureMap.map { (configKey, displayName) ->
             val isEnabled = enabledConfigs.contains(configKey)
@@ -171,7 +172,8 @@ object SuSFSCommands {
             R.string.enable_log_feature_label,
             R.string.hide_symbols_feature_label,
             R.string.sus_kstat_feature_label,
-            R.string.sus_map_feature_label
+            R.string.sus_map_feature_label,
+            R.string.susfs_priority_uid_filter
         )
         return defaults.map { resId ->
             val displayName = context.getString(resId)
