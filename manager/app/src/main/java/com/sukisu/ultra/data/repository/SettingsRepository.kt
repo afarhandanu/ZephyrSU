@@ -129,12 +129,19 @@ interface SettingsRepository {
     var showNavSuperuser: Boolean
     /** Show the KPM tab in the bottom bar / rail (FinaSU-style, 2nd position after Home). */
     var showNavKpm: Boolean
+    /** Show the Plugin tab in the bottom bar / rail (3rd position, after KPM). */
+    var showNavPlugin: Boolean
     /** M5.4: show the Module tab in the bottom bar / rail (Home and Setting always stay). */
     var showNavModule: Boolean
     /** M5.4: hide the floating bar automatically after 3 s idle. */
     var floatingAutoHide: Boolean
     /** M5.4: hide the floating bar while scrolling down, show it while scrolling up. */
     var floatingSwipeHide: Boolean
+    /**
+     * Material bottom bar pinned to the screen edge (Docked) instead of the floating pill.
+     * Floating stays the default; Miuix keeps its own floating toggle and ignores this.
+     */
+    var materialBottomBarDocked: Boolean
     var navigationRailExpanded: Boolean
     var pageScale: Float
     var moduleDescriptionMaxLines: Int

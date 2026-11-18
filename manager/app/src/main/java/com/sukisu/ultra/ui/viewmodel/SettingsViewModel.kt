@@ -178,9 +178,11 @@ class SettingsViewModel(
             val enableNavigationBadge = repo.enableNavigationBadge
             val showNavSuperuser = repo.showNavSuperuser
             val showNavKpm = repo.showNavKpm
+            val showNavPlugin = repo.showNavPlugin
             val showNavModule = repo.showNavModule
             val floatingAutoHide = repo.floatingAutoHide
             val floatingSwipeHide = repo.floatingSwipeHide
+            val materialBottomBarDocked = repo.materialBottomBarDocked
             val pageScale = repo.pageScale
             val bottomBarIcons = repo.bottomBarIcons
             val moduleDescriptionMaxLines = repo.moduleDescriptionMaxLines
@@ -314,9 +316,11 @@ homePillScale = HomeStatusStyle.coercePillScale(repo.homePillScale),
                     enableNavigationBadge = enableNavigationBadge,
                     showNavSuperuser = showNavSuperuser,
                     showNavKpm = showNavKpm,
+                    showNavPlugin = showNavPlugin,
                     showNavModule = showNavModule,
                     floatingAutoHide = floatingAutoHide,
                     floatingSwipeHide = floatingSwipeHide,
+                    materialBottomBarDocked = materialBottomBarDocked,
                     pageScale = pageScale,
                     moduleDescriptionMaxLines = moduleDescriptionMaxLines,
                     enableWebDebugging = enableWebDebugging,
@@ -2943,6 +2947,11 @@ homePillScale = repo.homePillScale,
         _uiState.update { it.copy(showNavKpm = enabled) }
     }
 
+    fun setShowNavPlugin(enabled: Boolean) {
+        repo.showNavPlugin = enabled
+        _uiState.update { it.copy(showNavPlugin = enabled) }
+    }
+
     fun setShowNavModule(enabled: Boolean) {
         repo.showNavModule = enabled
         _uiState.update { it.copy(showNavModule = enabled) }
@@ -2956,6 +2965,11 @@ homePillScale = repo.homePillScale,
     fun setFloatingSwipeHide(enabled: Boolean) {
         repo.floatingSwipeHide = enabled
         _uiState.update { it.copy(floatingSwipeHide = enabled) }
+    }
+
+    fun setMaterialBottomBarDocked(enabled: Boolean) {
+        repo.materialBottomBarDocked = enabled
+        _uiState.update { it.copy(materialBottomBarDocked = enabled) }
     }
 
     fun setPageScale(scale: Float) {

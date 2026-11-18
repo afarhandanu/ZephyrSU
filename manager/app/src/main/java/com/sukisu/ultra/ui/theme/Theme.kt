@@ -163,7 +163,12 @@ val LocalShowNavSuperuser = staticCompositionLocalOf { true }
 
 val LocalShowNavKpm = staticCompositionLocalOf { true }
 
+val LocalShowNavPlugin = staticCompositionLocalOf { true }
+
 val LocalShowNavModule = staticCompositionLocalOf { true }
+
+/** Material bottom bar pinned to the screen edge instead of the floating pill. */
+val LocalMaterialBottomBarDocked = staticCompositionLocalOf { false }
 
 /** M5.4: hide the floating bar automatically after 3 s idle. */
 val LocalFloatingAutoHide = staticCompositionLocalOf { true }

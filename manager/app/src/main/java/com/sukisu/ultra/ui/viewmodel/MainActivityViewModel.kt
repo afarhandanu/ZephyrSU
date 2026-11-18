@@ -162,9 +162,11 @@ class MainActivityViewModel(
             homeLayoutStyle = settingRepo.homeLayoutStyle,
             showNavSuperuser = settingRepo.showNavSuperuser,
             showNavKpm = settingRepo.showNavKpm,
+            showNavPlugin = settingRepo.showNavPlugin,
             showNavModule = settingRepo.showNavModule,
             floatingAutoHide = settingRepo.floatingAutoHide,
             floatingSwipeHide = settingRepo.floatingSwipeHide,
+            materialBottomBarDocked = settingRepo.materialBottomBarDocked,
             supportLinksCustomTitle = settingRepo.supportLinksCustomTitle,
             supportLinksCustomSubtitle = settingRepo.supportLinksCustomSubtitle,
             supportLinksCustomUrl = settingRepo.supportLinksCustomUrl,
@@ -206,9 +208,12 @@ class MainActivityViewModel(
             "support_links_style",
             "home_layout_style",
             "show_nav_superuser",
+            "show_nav_kpm",
+            "show_nav_plugin",
             "show_nav_apm",
             "floating_auto_hide",
             "floating_swipe_hide",
+            "material_bottom_bar_docked",
             "support_links_custom_title",
             "support_links_custom_subtitle",
             "support_links_custom_url",
@@ -249,10 +254,14 @@ private class MainPageState(
 }
 
 object MainPagerConfig {
-    /** Number of destinations in the main pager (Home, Kpm, SuperUser, Module, Setting). */
-    const val PAGE_COUNT = 5
+    /** Number of destinations in the main pager (Home, Kpm, Plugin, SuperUser, Module, Setting). */
+    const val PAGE_COUNT = 6
     const val LAST_PAGE_INDEX = PAGE_COUNT - 1
 
-    /** Coerce a persisted destination ordinal into range (M5.4: ordinals, not pager slots). */
+    /**
+     * Coerce a persisted destination ordinal into range (M5.4: ordinals, not pager slots).
+     * Inserting Plugin at ordinal 2 shifts a saved SuperUser/Module/Setting start page by
+     * one (start-tab-only effect, same caveat as the KPM insertion in PR #26).
+     */
     fun coercePage(page: Int): Int = page.coerceIn(0, LAST_PAGE_INDEX)
 }

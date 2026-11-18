@@ -57,6 +57,7 @@ import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -477,6 +478,18 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
         sectionRow(
             groupKey = SettingsSection.NAVIGATION,
             groupTitleRes = R.string.settings_search_section_navigation,
+            id = "navigation.show_plugin",
+            titleRes = R.string.settings_nav_show_plugin,
+            summaryRes = R.string.settings_nav_show_plugin_summary,
+            icon = Icons.Filled.GridView,
+            anchor = SettingsSection.NAVIGATION,
+            aliases = listOf("plugin", "tab", "show", "hide", "sembunyi", "tampilkan"),
+        )
+    )
+    add(
+        sectionRow(
+            groupKey = SettingsSection.NAVIGATION,
+            groupTitleRes = R.string.settings_search_section_navigation,
             id = "navigation.show_superuser",
             titleRes = R.string.settings_nav_show_superuser,
             summaryRes = R.string.settings_nav_show_superuser_summary,
@@ -495,6 +508,18 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
             icon = Icons.Filled.Extension,
             anchor = SettingsSection.NAVIGATION,
             aliases = listOf("module", "tab", "show", "hide", "sembunyi", "tampilkan"),
+        )
+    )
+    add(
+        sectionRow(
+            groupKey = SettingsSection.NAVIGATION,
+            groupTitleRes = R.string.settings_search_section_navigation,
+            id = "navigation.bottom_bar_docked",
+            titleRes = R.string.settings_bottom_bar_docked,
+            summaryRes = R.string.settings_bottom_bar_docked_summary,
+            icon = Icons.Filled.VerticalAlignBottom,
+            anchor = SettingsSection.NAVIGATION,
+            aliases = listOf("docked", "nempel", "bottom", "bar", "floating", "bawah"),
         )
     )
     add(

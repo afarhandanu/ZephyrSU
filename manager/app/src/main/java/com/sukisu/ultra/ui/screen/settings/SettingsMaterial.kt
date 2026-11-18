@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -458,6 +459,15 @@ fun SettingPagerMaterial(
                     }
                     add {
                         SegmentedSwitchItem(
+                            icon = Icons.Filled.GridView,
+                            title = stringResource(id = R.string.settings_nav_show_plugin),
+                            summary = stringResource(id = R.string.settings_nav_show_plugin_summary),
+                            checked = uiState.showNavPlugin,
+                            onCheckedChange = actions.onSetShowNavPlugin,
+                        )
+                    }
+                    add {
+                        SegmentedSwitchItem(
                             icon = Icons.Filled.Shield,
                             title = stringResource(id = R.string.settings_nav_show_superuser),
                             summary = stringResource(id = R.string.settings_nav_show_superuser_summary),
@@ -472,6 +482,15 @@ fun SettingPagerMaterial(
                             summary = stringResource(id = R.string.settings_nav_show_module_summary),
                             checked = uiState.showNavModule,
                             onCheckedChange = actions.onSetShowNavModule,
+                        )
+                    }
+                    add {
+                        SegmentedSwitchItem(
+                            icon = Icons.Filled.VerticalAlignBottom,
+                            title = stringResource(id = R.string.settings_bottom_bar_docked),
+                            summary = stringResource(id = R.string.settings_bottom_bar_docked_summary),
+                            checked = uiState.materialBottomBarDocked,
+                            onCheckedChange = actions.onSetMaterialBottomBarDocked,
                         )
                     }
                     add {
