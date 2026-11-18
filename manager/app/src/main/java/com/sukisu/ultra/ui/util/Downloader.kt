@@ -59,7 +59,7 @@ fun checkNewCiVersion(): LatestVersionInfo = checkReleaseVersion("tags/manager-c
 
 private fun checkReleaseVersion(endpoint: String, isCi: Boolean): LatestVersionInfo {
     if (!isNetworkAvailable(ksuApp)) return LatestVersionInfo()
-    val url = "https://api.github.com/repos/SukiSU-Ultra/SukiSU-Ultra/releases/$endpoint"
+    val url = "https://api.github.com/repos/afarhandanu/ZephyrSU/releases/$endpoint"
     return runCatching {
         ksuApp.okhttpClient.newCall(Request.Builder().url(url).build()).execute().use { response ->
             if (!response.isSuccessful) {
@@ -74,7 +74,7 @@ private fun checkReleaseVersion(endpoint: String, isCi: Boolean): LatestVersionI
                     ?.groupValues?.get(1)?.toLongOrNull() ?: return LatestVersionInfo()
                 val abi = Build.SUPPORTED_ABIS.firstOrNull() ?: return LatestVersionInfo()
                 val apkPattern = Regex(
-                    """^SukiSU_.+_${versionCode}-${Regex.escape(abi)}-release\.apk$"""
+                    """^ZephyrSU_.+_${versionCode}-${Regex.escape(abi)}-release\.apk$"""
                 )
                 val apk = (0 until assets.length()).asSequence()
                     .mapNotNull { assets.optJSONObject(it) }
@@ -84,13 +84,13 @@ private fun checkReleaseVersion(endpoint: String, isCi: Boolean): LatestVersionI
                         return LatestVersionInfo()
                     }
                 val downloadUrl = apk.optString("browser_download_url")
-                    .takeIf { it.startsWith("https://github.com/SukiSU-Ultra/SukiSU-Ultra/releases/download/manager-ci/") }
+                    .takeIf { it.startsWith("https://github.com/afarhandanu/ZephyrSU/releases/download/manager-ci/") }
                     ?: return LatestVersionInfo()
                 return LatestVersionInfo(versionCode, downloadUrl, changelog)
             }
             val abi = Build.SUPPORTED_ABIS.firstOrNull() ?: return LatestVersionInfo()
-            val archPattern = Regex("""^SukiSU_v(.+?)_(\d+)-${Regex.escape(abi)}-release\.apk$""")
-            val universalPattern = Regex("""^SukiSU_v(.+?)_(\d+)-release\.apk$""")
+            val archPattern = Regex("""^ZephyrSU_v(.+?)_(\d+)-${Regex.escape(abi)}-release\.apk$""")
+            val universalPattern = Regex("""^ZephyrSU_v(.+?)_(\d+)-release\.apk$""")
             val apkAssets = (0 until assets.length()).map { assets.getJSONObject(it) }
             // Prefer the device-specific asset, falling back to an actual universal APK only.
             for (pattern in listOf(archPattern, universalPattern)) {
