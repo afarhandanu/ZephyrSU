@@ -33,6 +33,7 @@ import com.sukisu.ultra.ui.theme.MaterialExpressivePalette
 import com.sukisu.ultra.ui.theme.LocalBackgroundImagePath
 import com.sukisu.ultra.ui.theme.LocalCardBackgroundAlpha
 import com.sukisu.ultra.ui.theme.appearanceImageEffects
+import com.sukisu.ultra.ui.theme.isBackgroundActive
 import java.io.File
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -874,8 +875,15 @@ fun MainScreen(
         (uiMode == UiMode.Material || enableFloatingBottomBar) &&
         (enableFloatingBottomBarBlur || enableProgressiveBlur)
 
+    // The capture is painted to the screen as well as sampled by the floating bar's blur, so
+    // the opaque rect must not cover a background that is meant to show through: Nova's custom
+    // background gets the translucent tint, and so does the FinaSU wallpaper (PR #28 only fixed
+    // the page scaffolds — with a blur option on, this rect alone re-hid the main pages).
+    // Read here, not inside the draw block: the block is a DrawScope lambda, not a
+    // @Composable context, so it can only capture the already-resolved value.
+    val backgroundActive = isBackgroundActive()
     val backdrop = rememberLayerBackdrop {
-        if (!hasCustomBackground) {
+        if (!backgroundActive) {
             drawRect(surfaceColor)
         } else {
             drawRect(surfaceColor.copy(alpha = cardAlpha))
@@ -959,7 +967,11 @@ fun MainScreen(
 
             when (uiMode) {
                 UiMode.Material -> androidx.compose.material3.Scaffold(
-                    containerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer
+                    // PR #28 made the page scaffolds transparent for the FinaSU wallpaper but
+                    // missed this outer pager Scaffold: it only knew Nova's custom background,
+                    // so it painted opaque surfaceContainer over the wallpaper on every main
+                    // page (sub-screens sit outside it, which is why they showed the image).
+                    containerColor = if (isBackgroundActive()) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer
                 ) {
                     Row {
                         SideRail(navigationBadge)
@@ -1018,7 +1030,9 @@ fun MainScreen(
             when (uiMode) {
                 UiMode.Material -> androidx.compose.material3.Scaffold(
                     bottomBar = bottomBar,
-                    containerColor = if (hasCustomBackground) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer
+                    // Same miss as the rail Scaffold above: the pager canvas must also go
+                    // transparent for the FinaSU wallpaper, not only Nova's custom background.
+                    containerColor = if (isBackgroundActive()) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer
                 ) { innerPadding ->
                     pagerContent(innerPadding.calculateBottomPadding())
                 }
