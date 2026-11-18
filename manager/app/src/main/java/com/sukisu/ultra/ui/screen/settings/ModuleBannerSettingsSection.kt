@@ -69,6 +69,12 @@ fun ModuleBannerSettingsSection() {
     // API controls follow the same parent gates used by card rendering.
     val apiRowsVisible = policy.apiActive
     val apiConfigured = ModuleBannerConfig.effectiveApiSource.isNotEmpty()
+    // Local drag state for the opacity slider (same pattern as the Miuix
+    // section, PR #42): ModuleBannerConfig is only written on release, never
+    // on every drag tick — see the slider item below.
+    var sliderValue by remember(ModuleBannerConfig.customOpacity) {
+        mutableFloatStateOf(ModuleBannerConfig.customOpacity)
+    }
 
     SegmentedColumn(
         modifier = SectionModifier,
@@ -143,14 +149,29 @@ fun ModuleBannerSettingsSection() {
             )
         }
         item(visible = ModuleBannerConfig.enabled && ModuleBannerConfig.customOpacityEnabled) {
+            // Commit on release, like the Miuix section (PR #42). The Material
+            // Slider drives its drag from its own SliderState, and M3's
+            // contract is that onValueChange writes the value back into that
+            // state — SegmentedSliderItem only re-syncs it from the hoisted
+            // value on recomposition. Writing the snapped value into the
+            // state-backed ModuleBannerConfig.customOpacity on every tick made
+            // the recomposition-time re-sync fight the in-flight drag (the
+            // 0.1..1 range with 19 steps lands on 0.045-spaced ticks that
+            // never equal a whole percent, so the re-sync never settled), and
+            // the thumb stayed pinned at 100%. During the drag only the local
+            // sliderValue moves — the % label still follows live — and the
+            // config is written once on release.
             SegmentedSliderItem(
                 icon = Icons.Filled.Wallpaper,
                 title = stringResource(R.string.module_banner_opacity),
-                value = ModuleBannerConfig.customOpacity,
+                value = sliderValue,
                 valueRange = 0.1f..1f,
                 valueText = { "${(it * 100f).roundToInt()}%" },
-                onValueChange = { ModuleBannerConfig.editCustomOpacity(snapToPercent(it)) },
-                onValueChangeFinished = { ModuleBannerConfig.persist() },
+                onValueChange = { sliderValue = it },
+                onValueChangeFinished = {
+                    ModuleBannerConfig.editCustomOpacity(snapToPercent(sliderValue))
+                    ModuleBannerConfig.persist()
+                },
             )
         }
     }
