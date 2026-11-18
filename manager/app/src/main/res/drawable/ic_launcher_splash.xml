@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:drawable="@drawable/ic_launcher_foreground">
-    <target
-        android:name="splash_main_body"
-        android:animation="@animator/anim_splash_main" />
-    <target
-        android:name="splash_accent_heart"
-        android:animation="@animator/anim_splash_accent" />
-</animated-vector>
+<!-- Static Wind Spirit mark (was: animated-vector over the SukiSU mascot).
+     The system splash screen shows a static drawable as-is; no animation.
+     Art is the 864px full-bleed teal splash PNG so it stays crisp at the
+     larger splash icon size. -->
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/ic_launcher_splash_icon"
+    android:gravity="center" />

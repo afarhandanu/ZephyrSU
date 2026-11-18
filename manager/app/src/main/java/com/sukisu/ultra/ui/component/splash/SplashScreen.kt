@@ -214,7 +214,7 @@ private fun Context.withNightMode(isDark: Boolean): Context {
 }
 
 private fun loadAppIcon(themedContext: Context): ImageBitmap? =
-    listOf(R.mipmap.ic_launcher, R.drawable.ic_launcher_foreground).firstNotNullOfOrNull { resId ->
+    listOf(R.mipmap.ic_launcher, R.drawable.ic_launcher_foreground_windspirit).firstNotNullOfOrNull { resId ->
         runCatching {
             ContextCompat.getDrawable(themedContext, resId)
                 ?.toBitmap(width = ICON_SIZE_PX, height = ICON_SIZE_PX)
