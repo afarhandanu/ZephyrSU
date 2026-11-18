@@ -339,13 +339,19 @@ fun ModuleBannerSettingsSectionMiuix() {
                 },
                 onClick = {},
                 bottomAction = {
+                    // Commit on release, like the page-scale slider in
+                    // ColorPaletteScreenMiuix: updating ModuleBannerConfig
+                    // on every tick mutates ModuleBannerConfig.customOpacity,
+                    // which is the remember() key of sliderValue above, so
+                    // the local state was re-initialized mid-drag and the
+                    // thumb could not move.
                     Slider(
                         value = sliderValue,
-                        onValueChange = {
-                            sliderValue = it
-                            ModuleBannerConfig.editCustomOpacity(snapToPercent(it))
+                        onValueChange = { sliderValue = it },
+                        onValueChangeFinished = {
+                            ModuleBannerConfig.editCustomOpacity(snapToPercent(sliderValue))
+                            ModuleBannerConfig.persist()
                         },
-                        onValueChangeFinished = { ModuleBannerConfig.persist() },
                         valueRange = 0.1f..1f,
                         showKeyPoints = true,
                         keyPoints = listOf(0.1f, 0.25f, 0.5f, 0.75f, 1f),
