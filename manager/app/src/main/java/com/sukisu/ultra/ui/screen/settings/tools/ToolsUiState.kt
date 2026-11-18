@@ -18,6 +18,7 @@ data class ToolsActions(
     val onOpenUtsView: () -> Unit = {},
     val onOpenNomount: () -> Unit = {},
     val onOpenPlugin: () -> Unit = {},
+    val onOpenKmodRegistry: () -> Unit = {},
 )
 
 @Immutable

@@ -63,6 +63,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.outlined.Cloud
+import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.rounded.AspectRatio
 import androidx.compose.material.icons.rounded.Description
@@ -589,6 +590,20 @@ val settingsSearchIndex: List<SettingsSearchEntry> = buildList {
             icon = Icons.Outlined.Widgets,
             route = Route.Plugin,
             aliases = listOf("plugin", "lua", "plugins", "skrip"),
+        )
+    )
+
+    // Kernel module registry (.ko install/autoload), reached from the Tools page
+    add(
+        pageRow(
+            groupKey = SettingsSection.TOOLS,
+            groupTitleRes = R.string.settings_search_section_tools,
+            id = "tools.kmod_registry",
+            titleRes = R.string.kernel_modules,
+            summaryRes = R.string.kernel_modules_entry_hint,
+            icon = Icons.Outlined.Memory,
+            route = Route.KmodRegistry,
+            aliases = listOf("kmod", "kernel module", "ko", "lkm", "autoload", "modul kernel"),
         )
     )
 

@@ -5,8 +5,7 @@ package com.sukisu.ultra.data.modulebanner
  *
  * Everything that stores or resolves a banner works against this seam instead of a hardcoded
  * directory, so a new family (script, plugin, ...) only adds an instance. FinaSU ships the APM
- * slot today; ZephyrSU ports only that one — the LKM (M6.2) and plugin (M6.4) slots are skipped
- * because those screens do not exist here yet.
+ * slot today; ZephyrSU also has the plugin slot (M6.4) and the LKM slot (M6.5).
  *
  * Ported from FinaSU (Milestone 3.5); package adapted to ZephyrSU.
  */

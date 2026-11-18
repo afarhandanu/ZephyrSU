@@ -44,6 +44,13 @@ enum Commands {
         command: crate::plugin::Command,
     },
 
+    /// Manage installed Linux kernel modules
+    #[cfg(target_os = "android")]
+    Kmod {
+        #[command(subcommand)]
+        command: crate::kernel_module::Command,
+    },
+
     /// Manage built-in Zygisk
     Zygisk {
         #[command(subcommand)]
@@ -1363,6 +1370,8 @@ pub fn run() -> Result<()> {
             utils::switch_mnt_ns(1)?;
             crate::plugin::run(command)
         }
+        #[cfg(target_os = "android")]
+        Commands::Kmod { command } => crate::kernel_module::run(command),
         Commands::TemporaryRoot { command } => match command {
             TemporaryRoot::Set {
                 uid,

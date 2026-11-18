@@ -112,6 +112,9 @@ fun ToolsScreen() {
         onOpenPlugin = {
             navigator.push(Route.Plugin)
         },
+        onOpenKmodRegistry = {
+            navigator.push(Route.KmodRegistry)
+        },
     )
 
     val state = ToolsUiState(

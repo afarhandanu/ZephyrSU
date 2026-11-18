@@ -15,6 +15,7 @@ mod android {
     pub const BINARY_DIR: &str = concatcp!(WORKING_DIR, "bin/");
     pub const LIBRARY_DIR: &str = concatcp!(WORKING_DIR, "lib/");
     pub const LOG_DIR: &str = concatcp!(WORKING_DIR, "log/");
+    pub const LKM_DIR: &str = concatcp!(WORKING_DIR, "lkm/");
     pub const SULOGD_LOCK_PATH: &str = concatcp!(WORKING_DIR, "sulogd.lock");
 
     pub const PROFILE_DIR: &str = concatcp!(WORKING_DIR, "profile/");

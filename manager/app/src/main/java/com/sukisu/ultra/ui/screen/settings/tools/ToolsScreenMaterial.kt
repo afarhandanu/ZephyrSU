@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Memory
@@ -88,6 +89,10 @@ fun ToolsMaterial(
 
                     PluginSectionMaterial(
                         onOpen = actions.onOpenPlugin
+                    )
+
+                    KmodRegistrySectionMaterial(
+                        onOpen = actions.onOpenKmodRegistry
                     )
 
                     AllowlistBackupSectionMaterial(
@@ -209,6 +214,28 @@ private fun PluginSectionMaterial(
                     IconTile(
                         Icons.Outlined.Widgets,
                         stringResource(R.string.plugin),
+                    )
+                },
+                onClick = onOpen,
+            )
+        })
+    )
+}
+
+@Composable
+private fun KmodRegistrySectionMaterial(
+    onOpen: () -> Unit,
+) {
+    SegmentedColumn(
+        modifier = Modifier.padding(top = 12.dp),
+        content = listOf({
+            SegmentedListItem(
+                headlineContent = { Text(stringResource(R.string.kernel_modules)) },
+                supportingContent = { Text(stringResource(R.string.kernel_modules_entry_hint)) },
+                leadingContent = {
+                    IconTile(
+                        Icons.Outlined.Memory,
+                        stringResource(R.string.kernel_modules),
                     )
                 },
                 onClick = onOpen,
