@@ -412,7 +412,16 @@ class MainActivity : FragmentActivity() {
                         val backgroundActive = uiState.customBackgroundUri.isNotEmpty()
                         NavDisplay(
                             backStack = navigator.backStack,
-                            transition = if (backgroundActive) {
+                            // The covered page must fade out whenever a background image sits
+                            // behind the pages, not only for Nova's custom background: with the
+                            // FinaSU wallpaper active the page canvas is transparent too, so
+                            // MiuixDefault would leave MainScreen — its bottom bar and the Home
+                            // content — visible behind/around the pushed page (seen on Install:
+                            // the Main bottom bar and the Home "Support Us" footer overlapping
+                            // the Install content). BackgroundNavTransition keeps the same
+                            // slide/parallax but fades the covered page out on push; the dim
+                            // below already keys off both backgrounds the same way.
+                            transition = if (backgroundActive || wallpaperActive) {
                                 BackgroundNavTransition
                             } else {
                                 NavTransitions.MiuixDefault
