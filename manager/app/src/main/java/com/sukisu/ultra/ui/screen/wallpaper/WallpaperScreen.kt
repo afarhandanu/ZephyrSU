@@ -93,6 +93,7 @@ import com.sukisu.ultra.ui.component.material.SliderCommitEffect
 import com.sukisu.ultra.ui.component.material.SnackBarHost
 import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
+import com.sukisu.ultra.ui.component.material.miuixPageContainerColor
 import com.sukisu.ultra.ui.component.material.snapToPercent
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
 import com.sukisu.ultra.ui.screen.home.LocalHomeLayoutStyle
@@ -128,6 +129,7 @@ data class WallpaperUiState(
     val dayDim: Float,
     val nightDim: Float,
     val workingCardOpacity: Float,
+    val searchOpacity: Float,
     val useWallpaperColor: Boolean,
     val multiBackgroundEnabled: Boolean,
     val homeBackgroundSelected: Boolean,
@@ -168,6 +170,7 @@ data class WallpaperScreenActions(
     val onSetDayDim: (Float) -> Unit,
     val onSetNightDim: (Float) -> Unit,
     val onSetWorkingCardOpacity: (Float) -> Unit,
+    val onSetSearchOpacity: (Float) -> Unit,
     val onToggleUseWallpaperColor: (Boolean) -> Unit,
     val onToggleMultiBackground: (Boolean) -> Unit,
     val onPickHomeBackground: () -> Unit,
@@ -395,6 +398,7 @@ fun WallpaperScreen() {
         dayDim = WallpaperConfig.dayDim,
         nightDim = WallpaperConfig.nightDim,
         workingCardOpacity = WallpaperConfig.workingCardOpacity,
+        searchOpacity = WallpaperConfig.searchOpacity,
         useWallpaperColor = WallpaperConfig.useWallpaperColor,
         multiBackgroundEnabled = WallpaperConfig.multiBackgroundEnabled,
         homeBackgroundSelected = !WallpaperConfig.homeBackgroundUri.isNullOrEmpty(),
@@ -450,6 +454,9 @@ fun WallpaperScreen() {
         },
         onSetWorkingCardOpacity = {
             WallpaperConfig.updateWorkingCardOpacity(snapToPercent(it))
+        },
+        onSetSearchOpacity = {
+            WallpaperConfig.updateSearchOpacity(snapToPercent(it))
         },
         onToggleUseWallpaperColor = { enabled ->
             WallpaperConfig.updateUseWallpaperColor(enabled)
@@ -568,7 +575,9 @@ fun WallpaperScreenMaterial(
             if (state.multiBackgroundEnabled) state.settingsBackgroundSelected else state.hasImage)
 
     ExpressiveScaffold(
-        containerColor = if (wallpaperBehind) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
+        // Same page canvas as the scaffold default (PR #57): under Miuix this is the
+        // Miuix `surface` — black like KPM in dark mode — not `surfaceContainer`.
+        containerColor = if (wallpaperBehind) Color.Transparent else miuixPageContainerColor(),
         topBar = {
             LargeFlexibleTopAppBar(
                 navigationIcon = { TopBarBackButton(onClick = actions.onBack) },
@@ -850,6 +859,28 @@ fun WallpaperScreenMaterial(
                     },
                 )
             }
+
+            // The full-screen search (SearchAppBar) paints its own surface over the
+            // wallpaper; its opacity is a separate knob from the page surfaces, default
+            // transparent so the wallpaper shows through like the pages around it.
+            SegmentedColumn(
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
+                title = stringResource(R.string.wallpaper_search_section),
+                content = buildList {
+                    add {
+                        SegmentedSliderItem(
+                            icon = Icons.Filled.Opacity,
+                            title = stringResource(R.string.wallpaper_search_opacity),
+                            summary = stringResource(R.string.wallpaper_search_opacity_summary),
+                            value = state.searchOpacity,
+                            valueRange = 0f..1f,
+                            valueText = { "${(it * 100).roundToInt()}%" },
+                            onValueChange = actions.onSetSearchOpacity,
+                            onValueChangeFinished = { actions.onCommitWallpaper() },
+                        )
+                    }
+                },
+            )
 
             SurfaceSettingsHost(state = state, actions = actions)
 

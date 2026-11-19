@@ -28,6 +28,7 @@ object WallpaperConfig {
     private const val KEY_URI = "wallpaper_uri"
     private const val KEY_OPACITY = "wallpaper_opacity"
     private const val KEY_WORKING_CARD_OPACITY = "working_card_opacity"
+    private const val KEY_SEARCH_OPACITY = "search_opacity"
     private const val KEY_BLUR = "wallpaper_blur"
     private const val KEY_DIM = "wallpaper_dim"
     private const val KEY_DUAL_DIM = "wallpaper_dual_dim_enabled"
@@ -59,6 +60,8 @@ object WallpaperConfig {
 
     const val DEFAULT_OPACITY = 0.6f
     const val DEFAULT_WORKING_CARD_OPACITY = 1f
+    /** The full-screen search starts transparent so the wallpaper shows through (PR #57). */
+    const val DEFAULT_SEARCH_OPACITY = 0f
     const val DEFAULT_DIM = 0.2f
     const val DEFAULT_NIGHT_DIM = 0.4f
 
@@ -86,6 +89,15 @@ object WallpaperConfig {
      * whose work card has its own surface opacity). 1.0 keeps the card fully opaque.
      */
     var workingCardOpacity by mutableFloatStateOf(DEFAULT_WORKING_CARD_OPACITY)
+        private set
+
+    /**
+     * Alpha of the full-screen search surface while a wallpaper is active. 0.0 keeps the
+     * search fully transparent so the wallpaper shows through like the pages around it;
+     * 1.0 restores the opaque surface. Outside wallpaper mode the search keeps its
+     * default surface and this value is ignored.
+     */
+    var searchOpacity by mutableFloatStateOf(DEFAULT_SEARCH_OPACITY)
         private set
 
     /** Background blur radius in dp. */
@@ -280,6 +292,10 @@ object WallpaperConfig {
         workingCardOpacity = value.coerceIn(0f, 1f)
     }
 
+    fun updateSearchOpacity(value: Float) {
+        searchOpacity = value.coerceIn(0f, 1f)
+    }
+
     fun updateBlur(value: Float) {
         blur = value.coerceIn(0f, 64f)
     }
@@ -425,6 +441,7 @@ object WallpaperConfig {
         uri = prefs.getString(KEY_URI, null)
         opacity = prefs.getFloat(KEY_OPACITY, DEFAULT_OPACITY)
         workingCardOpacity = prefs.getFloat(KEY_WORKING_CARD_OPACITY, DEFAULT_WORKING_CARD_OPACITY)
+        searchOpacity = prefs.getFloat(KEY_SEARCH_OPACITY, DEFAULT_SEARCH_OPACITY)
         blur = prefs.getFloat(KEY_BLUR, 0f)
         dim = prefs.getFloat(KEY_DIM, DEFAULT_DIM)
         dualDimEnabled = prefs.getBoolean(KEY_DUAL_DIM, false)
@@ -468,6 +485,7 @@ object WallpaperConfig {
             putString(KEY_URI, uri)
             putFloat(KEY_OPACITY, opacity)
             putFloat(KEY_WORKING_CARD_OPACITY, workingCardOpacity)
+            putFloat(KEY_SEARCH_OPACITY, searchOpacity)
             putFloat(KEY_BLUR, blur)
             putFloat(KEY_DIM, dim)
             putBoolean(KEY_DUAL_DIM, dualDimEnabled)
@@ -505,6 +523,7 @@ object WallpaperConfig {
         uri = null
         opacity = DEFAULT_OPACITY
         workingCardOpacity = DEFAULT_WORKING_CARD_OPACITY
+        searchOpacity = DEFAULT_SEARCH_OPACITY
         blur = 0f
         dim = DEFAULT_DIM
         dualDimEnabled = false
