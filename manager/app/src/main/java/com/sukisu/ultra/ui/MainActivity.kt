@@ -116,6 +116,7 @@ import com.sukisu.ultra.ui.screen.wallpaper.WallpaperScreen
 import com.sukisu.ultra.wallpaper.LocalWallpaperPage
 import com.sukisu.ultra.wallpaper.WallpaperBackgroundLayer
 import com.sukisu.ultra.wallpaper.WallpaperConfig
+import com.sukisu.ultra.wallpaper.WallpaperManager
 import com.sukisu.ultra.ui.screen.about.AboutScreen
 import com.sukisu.ultra.ui.screen.bannerapi.ApiMarketplaceScreen
 import com.sukisu.ultra.ai.api.AiFeatureBridge
@@ -409,6 +410,11 @@ class MainActivity : FragmentActivity() {
                     LaunchedEffect(Unit) {
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                             SuiPermissionHost.register(this@MainActivity)
+                            // Heal per-page wallpaper metadata: re-derive each slot's luminance
+                            // + seed from its stored file, so a page whose stored value was
+                            // computed with an older metric stops darkening by itself. Runs once
+                            // per launch; saves prefs only when a value actually changed.
+                            WallpaperManager.refreshPageDerived(this@MainActivity)
                         }
                     }
                     SuiPermissionRequestDialog()

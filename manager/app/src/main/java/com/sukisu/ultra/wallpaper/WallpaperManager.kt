@@ -295,6 +295,77 @@ object WallpaperManager {
         if (changed) WallpaperConfig.save(context)
     }
 
+    /**
+     * Re-derives luminance + seed for every per-page background slot from its stored file.
+     *
+     * The stored values were computed at pick time with whatever metric was current then;
+     * when the metric changes, a stored number can disagree with its image and the page's
+     * polarity flips wrong — the page darkens by itself while its siblings stay bright,
+     * with no re-pick ever healing it, because nothing re-reads the file after the pick
+     * ([refreshDerivedIfMissing] only covers the single wallpaper). This runs at startup
+     * so an existing install heals without the user re-picking anything. Only derived
+     * metadata is rewritten, never the images or the user's settings; prefs are saved
+     * only when a value actually changed. Slots whose file is gone are skipped, not cleared.
+     */
+    fun refreshPageDerived(context: Context) {
+        var changed = false
+        for (page in listOf(
+            WallpaperConfig.PAGE_HOME,
+            WallpaperConfig.PAGE_KPM,
+            WallpaperConfig.PAGE_PLUGIN,
+            WallpaperConfig.PAGE_SUPERUSER,
+            WallpaperConfig.PAGE_MODULE,
+            WallpaperConfig.PAGE_SETTINGS,
+        )) {
+            val uri = pageStoredUri(page) ?: continue
+            val path = uri.toUri().path ?: continue
+            val file = File(path)
+            if (!file.exists() || file.length() == 0L) continue
+            val luminance = computeLuminance(file) ?: -1f
+            val seed = computeSeed(file) ?: 0
+            if (luminance != pageStoredLuminance(page)) {
+                updatePageLuminance(page, luminance)
+                changed = true
+            }
+            if (seed != pageStoredSeed(page)) {
+                updatePageSeed(page, seed)
+                changed = true
+            }
+        }
+        if (changed) WallpaperConfig.save(context)
+    }
+
+    /** Stored per-page background URI, bypassing the master switch (the backfill heals stored data). */
+    private fun pageStoredUri(page: Int): String? = when (page) {
+        WallpaperConfig.PAGE_HOME -> WallpaperConfig.homeBackgroundUri
+        WallpaperConfig.PAGE_KPM -> WallpaperConfig.kpmBackgroundUri
+        WallpaperConfig.PAGE_PLUGIN -> WallpaperConfig.pluginBackgroundUri
+        WallpaperConfig.PAGE_SUPERUSER -> WallpaperConfig.superuserBackgroundUri
+        WallpaperConfig.PAGE_MODULE -> WallpaperConfig.moduleBackgroundUri
+        WallpaperConfig.PAGE_SETTINGS -> WallpaperConfig.settingsBackgroundUri
+        else -> null
+    }
+
+    private fun pageStoredLuminance(page: Int): Float = when (page) {
+        WallpaperConfig.PAGE_HOME -> WallpaperConfig.homeBackgroundLuminance
+        WallpaperConfig.PAGE_KPM -> WallpaperConfig.kpmBackgroundLuminance
+        WallpaperConfig.PAGE_PLUGIN -> WallpaperConfig.pluginBackgroundLuminance
+        WallpaperConfig.PAGE_SUPERUSER -> WallpaperConfig.superuserBackgroundLuminance
+        WallpaperConfig.PAGE_MODULE -> WallpaperConfig.moduleBackgroundLuminance
+        WallpaperConfig.PAGE_SETTINGS -> WallpaperConfig.settingsBackgroundLuminance
+        else -> -1f
+    }
+
+    private fun pageStoredSeed(page: Int): Int = when (page) {
+        WallpaperConfig.PAGE_HOME -> WallpaperConfig.homeBackgroundSeed
+        WallpaperConfig.PAGE_KPM -> WallpaperConfig.kpmBackgroundSeed
+        WallpaperConfig.PAGE_PLUGIN -> WallpaperConfig.pluginBackgroundSeed
+        WallpaperConfig.PAGE_SUPERUSER -> WallpaperConfig.superuserBackgroundSeed
+        WallpaperConfig.PAGE_MODULE -> WallpaperConfig.moduleBackgroundSeed
+        WallpaperConfig.PAGE_SETTINGS -> WallpaperConfig.settingsBackgroundSeed
+        else -> 0
+    }
+
     /** Copies [source] into app storage (replacing any existing wallpaper) without touching config. */
     fun replaceFile(context: Context, source: File, extension: String): File {
         clearOldFiles(context)
@@ -418,7 +489,19 @@ object WallpaperManager {
         }
     }
 
-    /** Average perceived luminance (0..1) of [file], or null when it cannot be decoded. */
+    /**
+     * Average perceived luminance (0..1) of [file], or null when it cannot be decoded.
+     *
+     * Sampled over the CENTER of the image, not the whole frame: the polarity decision
+     * ("does this wallpaper read as bright?") must follow what the user sees behind the
+     * content — the subject in the middle, where the cards and titles render. A whole-frame
+     * mean lets dark edges (dark clothing, bedding, shadows at the top/bottom of a portrait
+     * photo) drag a bright-subject photo below the 0.5 polarity threshold, which flips the
+     * whole page to dark-neutral roles and makes the contrast guard crush the wallpaper
+     * with a ~0.8 scrim — the page darkens by itself while sibling pages whose means sit
+     * above 0.5 stay bright. The central 60% in each dimension matches the region the
+     * content actually sits on; the seed color is unaffected (see [computeSeed]).
+     */
     fun computeLuminance(file: File): Float? {
         val bitmap = decodeSampled(file, 64) ?: return null
         val width = bitmap.width
@@ -427,8 +510,16 @@ object WallpaperManager {
             bitmap.recycle()
             return null
         }
-        val pixels = IntArray(width * height)
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        // Central 60% in each dimension (20%..80%); falls back to the whole frame when
+        // the image is too small to crop meaningfully.
+        val left = (width * 0.2f).toInt().coerceIn(0, width - 1)
+        val top = (height * 0.2f).toInt().coerceIn(0, height - 1)
+        val right = (width * 0.8f).toInt().coerceIn(left + 1, width)
+        val bottom = (height * 0.8f).toInt().coerceIn(top + 1, height)
+        val regionWidth = (right - left).coerceAtLeast(1)
+        val regionHeight = (bottom - top).coerceAtLeast(1)
+        val pixels = IntArray(regionWidth * regionHeight)
+        bitmap.getPixels(pixels, 0, regionWidth, left, top, regionWidth, regionHeight)
         bitmap.recycle()
         var sum = 0.0
         for (pixel in pixels) {
