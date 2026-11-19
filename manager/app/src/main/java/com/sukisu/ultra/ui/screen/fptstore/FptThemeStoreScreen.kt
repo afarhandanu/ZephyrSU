@@ -72,6 +72,8 @@ import com.sukisu.ultra.data.themestore.DownloadStatus
 import com.sukisu.ultra.data.themestore.LocalTheme
 import com.sukisu.ultra.data.themestore.RemoteTheme
 import com.sukisu.ultra.data.themestore.ThemeStoreMode
+import com.sukisu.ultra.ui.LocalUiMode
+import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.SearchAppBar
 import com.sukisu.ultra.ui.component.material.SnackBarHost
@@ -79,6 +81,7 @@ import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.themeimport.rememberFptThemeImportRequest
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
 import com.sukisu.ultra.ui.navigation3.Route
+import com.sukisu.ultra.ui.theme.MiuixSkinMaterialTheme
 import com.sukisu.ultra.ui.viewmodel.FptThemeStoreViewModel
 
 /**
@@ -92,6 +95,16 @@ import com.sukisu.ultra.ui.viewmodel.FptThemeStoreViewModel
  */
 @Composable
 fun FptThemeStoreScreen() {
+    // The Miuix skin provides no Material theme, so this Material page would
+    // render white in dark mode without the wrapper (see MiuixSkinMaterialTheme).
+    when (LocalUiMode.current) {
+        UiMode.Material -> FptThemeStoreScreenContent()
+        UiMode.Miuix -> MiuixSkinMaterialTheme { FptThemeStoreScreenContent() }
+    }
+}
+
+@Composable
+private fun FptThemeStoreScreenContent() {
     val navigator = LocalNavigator.current
     val viewModel = viewModel<FptThemeStoreViewModel>()
     val scope = rememberCoroutineScope()

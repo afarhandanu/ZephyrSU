@@ -326,9 +326,14 @@ fun SegmentedItemContainer(
     content: @Composable () -> Unit,
 ) {
     val shapes = LocalListItemShapes.current ?: ListItemDefaults.segmentedShapes(0, 1)
+    // Same fill as the sibling list rows (defaultSegmentedColors): the wallpaper
+    // group material in wallpaper mode, background-aware surfaceBright otherwise.
+    // A hardcoded surfaceBright was opaque over a FinaSU wallpaper while the rows
+    // next to it showed the wallpaper through (the music seek row in Multimedia
+    // vs the volume slider rows).
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = colorScheme.surfaceBright,
+        color = defaultSegmentedColors().containerColor,
         shape = shapes.shape,
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {

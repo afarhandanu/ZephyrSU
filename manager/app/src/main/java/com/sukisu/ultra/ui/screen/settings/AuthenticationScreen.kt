@@ -15,19 +15,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import com.sukisu.ultra.R
+import com.sukisu.ultra.ui.LocalUiMode
+import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
+import com.sukisu.ultra.ui.theme.MiuixSkinMaterialTheme
 
 /**
  * App Lock settings screen (ported from FinaSU, Milestone 2).
  * Thin host around [AuthenticationSettingsContent]: PIN / pattern / password /
  * fingerprint setup plus per-target protection (app launch, module actions, flash, reboot).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthenticationScreen() {
+    // The Miuix skin provides no Material theme, so this Material page would
+    // render white in dark mode without the wrapper (see MiuixSkinMaterialTheme).
+    when (LocalUiMode.current) {
+        UiMode.Material -> AuthenticationScreenContent()
+        UiMode.Miuix -> MiuixSkinMaterialTheme { AuthenticationScreenContent() }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AuthenticationScreenContent() {
     val navigator = LocalNavigator.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 

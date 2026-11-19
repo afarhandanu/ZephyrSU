@@ -50,19 +50,32 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import com.sukisu.ultra.R
+import com.sukisu.ultra.ui.LocalUiMode
+import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.SnackBarHost
 import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
+import com.sukisu.ultra.ui.theme.MiuixSkinMaterialTheme
 import com.sukisu.ultra.ui.viewmodel.WallpaperGalleryViewModel
 import com.sukisu.ultra.wallpaper.gallery.WallpaperDevice
 import com.sukisu.ultra.wallpaper.gallery.WallpaperDownloader
 import com.sukisu.ultra.wallpaper.gallery.WallpaperItem
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WallpaperGalleryScreen() {
+    // The Miuix skin provides no Material theme, so this Material page would
+    // render white in dark mode without the wrapper (see MiuixSkinMaterialTheme).
+    when (LocalUiMode.current) {
+        UiMode.Material -> WallpaperGalleryScreenContent()
+        UiMode.Miuix -> MiuixSkinMaterialTheme { WallpaperGalleryScreenContent() }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WallpaperGalleryScreenContent() {
     val navigator = LocalNavigator.current
     val context = LocalContext.current
     val app = context.applicationContext as Application

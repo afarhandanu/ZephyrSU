@@ -24,6 +24,7 @@ import com.sukisu.ultra.wallpaper.resolveFolkWallpaperTokens
 import com.sukisu.ultra.wallpaper.useDarkNeutral
 import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.webui.MonetColorsProvider
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * Wraps assistant entry points that can render inside the Miuix shell. In the
@@ -68,8 +69,21 @@ fun MaterialExpressivePalette(
     val overlaidScheme = remember(colorScheme, overlayTokens) {
         colorScheme.withAppearance(overlayTokens)
     }
+    // Under the Miuix shell the page must read like a native Miuix screen (KPM):
+    // remap the surface family from the live Miuix palette (key colour / Monet /
+    // appearance overlay already baked into it). The AMOLED force-black is
+    // re-applied after the remap so AMOLED mode keeps its pure-black surfaces.
+    // Material mode is untouched: the gate keeps the palette exactly as before.
+    // (This also covers the AI assistant pages: they stay MD3 in layout and
+    // components, only their surfaces now match the Miuix shell around them.)
+    val finalScheme = if (LocalUiMode.current == UiMode.Miuix) {
+        overlaidScheme.withMiuixSurfaces(MiuixTheme.colorScheme)
+            .amoledBackground(appSettings.colorMode.isAmoled)
+    } else {
+        overlaidScheme
+    }
     MaterialExpressiveTheme(
-        colorScheme = overlaidScheme,
+        colorScheme = finalScheme,
         motionScheme = MotionScheme.expressive(),
         shapes = Shapes,
         typography = typography,
