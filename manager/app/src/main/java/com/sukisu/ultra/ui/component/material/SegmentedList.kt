@@ -273,7 +273,16 @@ fun SegmentedColumn(
                             CompositionLocalProvider(
                                 LocalListItemShapes provides ListItemDefaults.segmentedShapes(0, 1).copy(shape = shape)
                             ) {
-                                Column(modifier = Modifier.padding(top = gap)) {
+                                // The gap spring is underdamped (dampingRatio 0.9), so
+                                // when a row becomes the first entry its gap animates
+                                // 2.dp -> 0.dp and overshoots below zero for a few
+                                // frames. Modifier.padding() throws "Padding must be
+                                // non-negative" on a negative value, which force-closed
+                                // Settings search while typing (logcat, 3 identical
+                                // crashes: PaddingElement.<init> <- PaddingKt.padding
+                                // <- SegmentedColumn:276). Clamp at the use site: the
+                                // overshoot is ~0.003 dp, invisible.
+                                Column(modifier = Modifier.padding(top = gap.coerceAtLeast(0.dp))) {
                                     entry.content()
                                 }
                             }
