@@ -71,6 +71,9 @@
     <string name="wallpaper_work_card_saved">Work card image updated</string>
     <string name="wallpaper_work_card_save_failed">Failed to load the image</string>
     <string name="wallpaper_work_card_removed">Work card image removed</string>
+    <string name="wallpaper_search_section">Search</string>
+    <string name="wallpaper_search_opacity">Search opacity</string>
+    <string name="wallpaper_search_opacity_summary">How opaque the full-screen search is when a wallpaper is set — 0% shows the wallpaper through</string>
     <string name="wallpaper_gallery_device_phone">Phone</string>
     <string name="wallpaper_gallery_device_tablet">Tablet</string>
     <string name="wallpaper_gallery_device_mixed">Mixed</string>

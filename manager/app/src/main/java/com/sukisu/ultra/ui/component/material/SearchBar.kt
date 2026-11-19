@@ -60,6 +60,7 @@ import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 import com.sukisu.ultra.ui.theme.isBackgroundActive
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
 import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
+import com.sukisu.ultra.wallpaper.WallpaperConfig
 
 @Composable
 fun SearchAppBar(
@@ -225,6 +226,20 @@ fun SearchAppBar(
     ExpandedFullScreenContainedSearchBar(
         state = searchBarState,
         inputField = inputField,
+        // Wallpaper mode (PR #57): the expanded search paints its default
+        // surfaceContainerHigh over the wallpaper — white in light mode, which is the
+        // "emang putih?" the user saw with a wallpaper set. Fade that surface by the
+        // Search opacity slider (default 0 = fully transparent, so the wallpaper
+        // shows through like the pages around it). Outside wallpaper mode the
+        // default colors are kept exactly.
+        colors = if (isBackgroundActive()) {
+            SearchBarDefaults.colors(
+                containerColor = SearchBarDefaults.fullScreenContainedSearchBarColor
+                    .copy(alpha = WallpaperConfig.searchOpacity),
+            )
+        } else {
+            SearchBarDefaults.containedColors(searchBarState)
+        },
         windowInsets = { SearchBarDefaults.fullScreenWindowInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal) },
         content = {
             WindowNavigationEventBridge()

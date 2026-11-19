@@ -15,6 +15,8 @@ import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.sukisu.ultra.ui.LocalUiMode
+import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.component.TopBarVeil
 import com.sukisu.ultra.ui.theme.LocalEnableProgressiveBlur
 import com.sukisu.ultra.ui.theme.isBackgroundActive
@@ -22,6 +24,19 @@ import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.shader.isRuntimeShaderSupported
+
+/**
+ * Page-canvas color (PR #57): KPM's native pages sit on Miuix `surface` — pure black in
+ * dark mode, #F7F7F7 in light — while every Material page sat on `surfaceContainer`
+ * (#242424 dark / white light), which is why the PR #56 screens read as dark grey next
+ * to KPM's black. Cards keep `surfaceContainer` (KPM's own cards are #242424 too), so
+ * the remap in `withMiuixSurfaces` is untouched — only the page chrome moves to
+ * `surface`, and only under Miuix; Material mode keeps `surfaceContainer`.
+ */
+@Composable
+internal fun miuixPageContainerColor(): Color =
+    if (LocalUiMode.current == UiMode.Miuix) MaterialTheme.colorScheme.surface
+    else MaterialTheme.colorScheme.surfaceContainer
 
 @Composable
 fun ExpressiveScaffold(
@@ -43,7 +58,7 @@ fun ExpressiveScaffold(
     val resolvedContainerColor = when {
         containerColor != Color.Unspecified -> containerColor
         isBackgroundActive() -> Color.Transparent
-        else -> MaterialTheme.colorScheme.surfaceContainer
+        else -> miuixPageContainerColor()
     }
     val containerContentColor = contentColorFor(resolvedContainerColor)
     val resolvedContentColor = when {
@@ -60,7 +75,7 @@ fun ExpressiveScaffold(
     } else {
         // A transparent page color over no wallpaper has nothing opaque behind the layer; keep
         // the capture opaque so blurring it cannot bleed black into the bar.
-        MaterialTheme.colorScheme.surfaceContainer
+        miuixPageContainerColor()
     }
     val contentBackdrop = rememberLayerBackdrop {
         if (captureBaseColor.alpha > 0f) {
@@ -75,8 +90,8 @@ fun ExpressiveScaffold(
             // is a no-op outside wallpaper mode, matching FinaSU's scaffold.
             WallpaperChromeZone(ChromeEdge.Top) {
                 TopBarVeil(
-                    // MD3E app bars sit on surfaceContainer; the progressive tint follows the bar.
-                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    // MD3E app bars sit on the page canvas; the progressive tint follows the bar.
+                    color = miuixPageContainerColor(),
                     blurBackdrop = if (progressiveBlur) contentBackdrop else null,
                 ) {
                     topBar()
@@ -125,7 +140,7 @@ fun expressiveTopAppBarColors(
     val resolvedContainerColor = when {
         containerColor != Color.Unspecified -> containerColor
         isBackgroundActive() -> Color.Transparent
-        else -> MaterialTheme.colorScheme.surfaceContainer
+        else -> miuixPageContainerColor()
     }
     val resolvedScrolledContainerColor = if (scrolledContainerColor != Color.Unspecified) {
         scrolledContainerColor
