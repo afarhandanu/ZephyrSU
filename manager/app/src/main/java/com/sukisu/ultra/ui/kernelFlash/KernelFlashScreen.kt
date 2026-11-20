@@ -1,7 +1,7 @@
 package com.sukisu.ultra.ui.kernelFlash
 
 import android.net.Uri
-import android.os.Environment
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,11 +15,11 @@ import com.sukisu.ultra.ui.UiMode
 import com.sukisu.ultra.ui.kernelFlash.state.HorizonKernelState
 import com.sukisu.ultra.ui.kernelFlash.state.HorizonKernelWorker
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
+import com.sukisu.ultra.ui.util.DownloadDestination
 import com.sukisu.ultra.ui.util.reboot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -101,11 +101,31 @@ fun KernelFlashScreen(
             scope.launch(Dispatchers.IO) {
                 val format = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.getDefault())
                 val date = format.format(Date())
-                val file = File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    "SukiSU_kernel_flash_log_${date}.log"
-                )
-                file.writeText(logContentValue)
+                // Scoped storage (Android 11+) blocks direct java.io.File writes to
+                // public Downloads, so the old File.writeText() here always threw
+                // EACCES and failed silently with no feedback. Use the app's
+                // MediaStore helper instead — the file lands in Downloads with
+                // no permission needed.
+                val fileName = "SukiSU_kernel_flash_log_${date}.log"
+                try {
+                    val destination = DownloadDestination.create(context, fileName, "text/plain")
+                    try {
+                        destination.openOutputStream().use { stream ->
+                            stream.write(logContentValue.toByteArray(Charsets.UTF_8))
+                        }
+                        destination.publish()
+                    } catch (e: Exception) {
+                        destination.delete()
+                        throw e
+                    }
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Log saved to Downloads/$fileName", Toast.LENGTH_LONG).show()
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Failed to save log: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
             }
         },
         onReboot = {
