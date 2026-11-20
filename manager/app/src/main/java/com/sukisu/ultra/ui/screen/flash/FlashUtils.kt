@@ -393,7 +393,7 @@ fun saveLog(
             val date = format.format(Date())
             val file = File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                "SukiSU_install_log_${date}.log"
+                "ZephyrSU_install_log_${date}.log"
             )
             file.writeText(replaceSukisuUltraBanner(logContent.toString()))
             showMessage("Log saved to ${file.absolutePath}")
