@@ -106,7 +106,7 @@ fun KernelFlashScreen(
                 // EACCES and failed silently with no feedback. Use the app's
                 // MediaStore helper instead — the file lands in Downloads with
                 // no permission needed.
-                val fileName = "SukiSU_kernel_flash_log_${date}.log"
+                val fileName = "ZephyrSU_kernel_flash_log_${date}.log"
                 try {
                     val destination = DownloadDestination.create(context, fileName, "text/plain")
                     try {
