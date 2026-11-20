@@ -318,7 +318,7 @@ val downloadKpmTools = tasks.register("downloadKpmTools") {
                     connection.connectTimeout = 10_000
                     connection.readTimeout = 20_000
                     connection.useCaches = false
-                    connection.setRequestProperty("User-Agent", "SukiSU-Manager-build")
+                    connection.setRequestProperty("User-Agent", "ZephyrSU-Manager-build")
                     check(connection.responseCode == HttpURLConnection.HTTP_OK) {
                         "Cannot download $name: HTTP ${connection.responseCode}"
                     }

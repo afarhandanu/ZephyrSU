@@ -179,7 +179,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- 切换图标：SukiSU 标志 -->
+        <!-- 切换图标：ZephyrSU 标志 -->
         <activity-alias
             android:name=".ui.MainActivityAliasLogo"
             android:targetActivity=".ui.MainActivity"
@@ -193,7 +193,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- 切换图标：SukiSU 线稿 -->
+        <!-- 切换图标：ZephyrSU 线稿 -->
         <activity-alias
             android:name=".ui.MainActivityAliasZako"
             android:targetActivity=".ui.MainActivity"
