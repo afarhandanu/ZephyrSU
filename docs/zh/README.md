@@ -1,4 +1,4 @@
-# SukiSU Ultra
+# ZephyrSU
 <img align='right' src='SukiSU-mini.svg' width='220px' alt="sukisu logo">
 
 > 当前分支：`main`（活跃开发中）· 基于 KernelSU 分叉，独立演进
@@ -22,7 +22,7 @@
 
 ## 兼容状态
 
-- SukiSU Ultra 支持 GKI 2.0 设备（内核版本 5.10 以上）。
+- ZephyrSU 支持 GKI 2.0 设备（内核版本 5.10 以上）。
 - 旧内核也可兼容（最低 4.14+），但需要自行编译内核。
 - 通过更多反向移植，可支持 3.x 内核（3.4–3.18）。
 - 目前支持架构：`arm64-v8a`、`armeabi-v7a (bare)`、`X86_64`。
@@ -73,7 +73,7 @@
 
 ## 参与翻译
 
-要将 SukiSU 翻译成您的语言，或完善现有的翻译，请使用 [Weblate](https://hosted.weblate.org/projects/sukisu-ultra/)。
+要将 ZephyrSU 翻译成您的语言，或完善现有的翻译，请使用 [Weblate](https://hosted.weblate.org/projects/sukisu-ultra/)。
 
 <a href="https://hosted.weblate.org/engage/sukisu-ultra/"><img src="https://hosted.weblate.org/widget/sukisu-ultra/multi-auto.svg" alt="翻译状态"></a>
 

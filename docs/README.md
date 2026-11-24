@@ -1,4 +1,4 @@
-# SukiSU Ultra
+# ZephyrSU
 <img align='right' src='SukiSU-mini.svg' width='220px' alt="sukisu logo">
 
 > Current branch: `main` (active development) · Forked from KernelSU, independently maintained
@@ -22,7 +22,7 @@ A kernel-based root solution for Android devices, forked from [`tiann/KernelSU`]
 
 ## Compatibility Status
 
-- SukiSU Ultra supports Android GKI 2.0 devices (kernel 5.10+).
+- ZephyrSU supports Android GKI 2.0 devices (kernel 5.10+).
 - Older kernels (4.14+) are also compatible, but the kernel will have to be built manually.
 - With more backports, kernels 3.x (3.4–3.18) can be supported.
 - Currently, only `arm64-v8a`, `armeabi-v7a (bare)` and `X86_64` (some) are supported.

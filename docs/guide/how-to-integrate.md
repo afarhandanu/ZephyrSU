@@ -1,6 +1,6 @@
 # Integrate
 
-SukiSU-Ultra can be integrated into both GKI and non-GKI kernels. The prerequisite is an open-source, bootable kernel.
+ZephyrSU can be integrated into both GKI and non-GKI kernels. The prerequisite is an open-source, bootable kernel.
 
 > [!TIP]
 > **Just want to use it on a GKI device?** You do not need to build a kernel. Install it as a Loadable Kernel Module with the Manager: see [LKM installation](https://sukisu.org/guide/installation#method-1-lkm-via-the-manager-recommended).
@@ -12,7 +12,7 @@ Some OEM customizations can result in a large share of the kernel code being out
 | Branch | How it hooks the kernel | Typical use |
 |--------|-------------------------|-------------|
 | `main` | Kprobes / kretprobes and the `sys_enter` syscall tracepoint, registered at runtime. No hook calls have to be added to the kernel source. | GKI kernels, and building as a module (LKM) or built in |
-| `builtin` | No kprobes. The kernel source calls SukiSU-Ultra's hook entry points (manual hooks). | Kernels you patch by hand |
+| `builtin` | No kprobes. The kernel source calls ZephyrSU's hook entry points (manual hooks). | Kernels you patch by hand |
 
 > [!WARNING]
 > `CONFIG_KSU_MANUAL_HOOK` and `CONFIG_KSU_TRACEPOINT_HOOK` no longer exist in either branch, and the `ksu_trace.h` header used by the old *Tracepoint Hook* guide is gone. Guides that tell you to enable them are out of date.
@@ -40,7 +40,7 @@ The script clones the repository, links it into `drivers/kernelsu` and adds the 
 | Option | Meaning |
 |--------|---------|
 | `CONFIG_KSU_MANUAL_SU` (default `y`) | Use manual su: authorize the command line and application via `prctl`. |
-| `CONFIG_KPM` | Enable SukiSU KPM. Requires a 64-bit kernel and selects `CONFIG_KALLSYMS` and `CONFIG_KALLSYMS_ALL`. May affect system stability. |
+| `CONFIG_KPM` | Enable ZephyrSU KPM. Requires a 64-bit kernel and selects `CONFIG_KALLSYMS` and `CONFIG_KALLSYMS_ALL`. May affect system stability. |
 | `CONFIG_KSU_DISABLE_MANAGER` | Disable manager APK detection and manager-specific handling. |
 | `CONFIG_KSU_DISABLE_POLICY` | Disable per-app profiles. Escalation always uses the default full root profile. |
 | `CONFIG_KSU_X86_PATCH_SYSCALL_DISPATCHER` | x86_64 only. Dynamically patches the hardened syscall dispatcher so syscall hooks work, replacing a kernel source patch. Useful for x86_64 LKM mode. |

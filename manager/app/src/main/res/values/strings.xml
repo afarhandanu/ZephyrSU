@@ -615,7 +615,7 @@
     <string name="kpm_args">Parameters</string>
     <string name="kpm_control">Execute</string>
     <string name="close_notice">Close</string>
-    <string name="kernel_module_notice">The following kernel module functions were developed by KernelPatch and modified to include the kernel module functions of SukiSU</string>
+    <string name="kernel_module_notice">The following kernel module functions were developed by KernelPatch and modified to include the kernel module functions of ZephyrSU</string>
     <string name="kpm_control_success">Success</string>
     <string name="not_supported">Unsupported</string>
     <string name="kpm_install_mode">KPM Install</string>

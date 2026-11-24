@@ -276,7 +276,7 @@ private suspend fun stageModuleInstallers(flashIt: FlashIt): List<ModuleInstalle
 }
 
 /**
- * The "SukiSU Ultra" FIGlet banner (Standard) ksud prints at the start of a module
+ * The upstream FIGlet banner (Standard) ksud prints at the start of a module
  * install (userspace/ksud/src/module.rs) and boot patch (userspace/ksud/src/boot_patch.rs),
  * from userspace/ksud/src/banner. The manager rewrites it to the ZephyrSU banner in the
  * displayed log (and the saved log) so installs still running the old ksud read ZephyrSU;
@@ -285,7 +285,7 @@ private suspend fun stageModuleInstallers(flashIt: FlashIt): List<ModuleInstalle
  * significant (the "Ultra" block is indented). Only the exact 10-line block is replaced;
  * every other log line passes through untouched.
  */
-private val SUKISU_ULTRA_BANNER_LINES = listOf(
+private val UPSTREAM_BANNER_LINES = listOf(
     " ____        _    _ ____  _   _",
     "/ ___| _   _| | _(_) ___|| | | |",
     "\\___ \\| | | | |/ / \\___ \\| | | |",
@@ -307,17 +307,17 @@ private val ZEPHYRSU_BANNER_LINES = listOf(
     "         |_|          |___/",
 )
 
-private fun replaceSukisuUltraBanner(log: String): String {
+private fun replaceUpstreamBanner(log: String): String {
     val lines = log.split("\n")
-    if (lines.size < SUKISU_ULTRA_BANNER_LINES.size) return log
+    if (lines.size < UPSTREAM_BANNER_LINES.size) return log
     val out = lines.toMutableList()
     var i = 0
-    while (i + SUKISU_ULTRA_BANNER_LINES.size <= out.size) {
-        val matches = SUKISU_ULTRA_BANNER_LINES.indices.all { j ->
-            out[i + j].trimEnd() == SUKISU_ULTRA_BANNER_LINES[j]
+    while (i + UPSTREAM_BANNER_LINES.size <= out.size) {
+        val matches = UPSTREAM_BANNER_LINES.indices.all { j ->
+            out[i + j].trimEnd() == UPSTREAM_BANNER_LINES[j]
         }
         if (matches) {
-            repeat(SUKISU_ULTRA_BANNER_LINES.size) { out.removeAt(i) }
+            repeat(UPSTREAM_BANNER_LINES.size) { out.removeAt(i) }
             out.addAll(i, ZEPHYRSU_BANNER_LINES)
             i += ZEPHYRSU_BANNER_LINES.size
         } else {
@@ -351,7 +351,7 @@ fun FlashEffect(
                 currentText += tempText
             }
             mainHandler.post {
-                onTextUpdate(replaceSukisuUltraBanner(currentText))
+                onTextUpdate(replaceUpstreamBanner(currentText))
             }
             logContent.append(it).append("\n")
         }
@@ -364,13 +364,13 @@ fun FlashEffect(
                 if (code != 0) {
                     currentText += "Error code: $code.\n $err Please save and check the log.\n"
                     mainHandler.post {
-                        onTextUpdate(replaceSukisuUltraBanner(currentText))
+                        onTextUpdate(replaceUpstreamBanner(currentText))
                     }
                 }
                 if (showReboot) {
                     currentText += "\n\n\n"
                     mainHandler.post {
-                        onTextUpdate(replaceSukisuUltraBanner(currentText))
+                        onTextUpdate(replaceUpstreamBanner(currentText))
                         onShowRebootChange(true)
                     }
                 }
@@ -395,7 +395,7 @@ fun saveLog(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                 "ZephyrSU_install_log_${date}.log"
             )
-            file.writeText(replaceSukisuUltraBanner(logContent.toString()))
+            file.writeText(replaceUpstreamBanner(logContent.toString()))
             showMessage("Log saved to ${file.absolutePath}")
         }
     }
