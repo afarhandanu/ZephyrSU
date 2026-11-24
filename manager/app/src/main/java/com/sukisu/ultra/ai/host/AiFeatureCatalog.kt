@@ -193,7 +193,7 @@ object AiFeatureCatalog : AiFeatureService {
             }
             if (!availability.isManager) {
                 return AiOpenPageResult(
-                    "NOT SUPPORTED: App root profiles need a SukiSU kernel. $KERNEL_SOLUTION"
+                    "NOT SUPPORTED: App root profiles need a ZephyrSU kernel. $KERNEL_SOLUTION"
                 )
             }
             if (packageName == ksuApp.packageName) {
@@ -338,7 +338,7 @@ object AiFeatureCatalog : AiFeatureService {
             entry(
                 id = "home",
                 title = "Home",
-                summary = "Dashboard: KernelSU/SukiSU status, version warnings, stats, AI assistant card and support links.",
+                summary = "Dashboard: KernelSU/ZephyrSU status, version warnings, stats, AI assistant card and support links.",
                 target = ManagerAiTarget.Tab(BottomBarDestination.Home),
             ),
             entry(
@@ -400,7 +400,7 @@ object AiFeatureCatalog : AiFeatureService {
             entry(
                 id = "install",
                 title = "Install / update",
-                summary = "Install or update SukiSU, LKM, patch boot/init_boot images, and configure optional KPM or shell policy.",
+                summary = "Install or update ZephyrSU, LKM, patch boot/init_boot images, and configure optional KPM or shell policy.",
                 target = ManagerAiTarget.Push(Route.Install()),
             ),
             entry(
@@ -1014,12 +1014,12 @@ object AiFeatureCatalog : AiFeatureService {
         "priority_uid", "enabled_features",
     )
 
-    private const val KERNEL_REASON = "No SukiSU kernel is active (preview mode)."
+    private const val KERNEL_REASON = "No ZephyrSU kernel is active (preview mode)."
     private const val KERNEL_SOLUTION =
-        "Install the SukiSU kernel or LKM from the Install page, reboot, then reopen the manager."
+        "Install the ZephyrSU kernel or LKM from the Install page, reboot, then reopen the manager."
     private const val ROOT_REASON = "Root access is not available to the manager."
     private const val ROOT_SOLUTION =
-        "Grant root to the manager in Superuser. If root is still unavailable, install or repair SukiSU from the Install page and reboot."
+        "Grant root to the manager in Superuser. If root is still unavailable, install or repair ZephyrSU from the Install page and reboot."
     private const val AI_ROOT_REASON = "Root access for the AI assistant is disabled in assistant settings."
     private const val AI_ROOT_SOLUTION =
         "Enable 'Allow root access' in the AI assistant settings, or use 'Allow for this request' on the permission card in the chat."
@@ -1027,7 +1027,7 @@ object AiFeatureCatalog : AiFeatureService {
     private const val NETWORK_SOLUTION = "Connect to Wi-Fi or mobile data and retry."
     private const val KPM_REASON = "This kernel does not report KPM support."
     private const val KPM_SOLUTION =
-        "Use a kernel built with KPM support (the built-in SukiSU kernel) or load a compatible LKM; check Extensions for support."
+        "Use a kernel built with KPM support (the built-in ZephyrSU kernel) or load a compatible LKM; check Extensions for support."
     private const val SUSFS_REASON = "This kernel does not report SuSFS support."
     private const val SUSFS_SOLUTION =
         "Flash a SuSFS-enabled kernel or a supported LKM, reboot, then check Extensions."

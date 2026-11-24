@@ -1,5 +1,5 @@
-#ifndef __SUKISU_SUPER_ACCESS_H
-#define __SUKISU_SUPER_ACCESS_H
+#ifndef __ZEPHYRSU_SUPER_ACCESS_H
+#define __ZEPHYRSU_SUPER_ACCESS_H
 
 #include <linux/types.h>
 #include <linux/stddef.h>

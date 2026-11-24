@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SUKISU_KPM_BRIDGE_H_
-#define _SUKISU_KPM_BRIDGE_H_
+#ifndef _ZEPHYRSU_KPM_BRIDGE_H_
+#define _ZEPHYRSU_KPM_BRIDGE_H_
 
 /* Kernel-only ABI v2, mirrored in KernelPatch patch/sukisu/supercall.h.
  * op 1..7 are the existing SUKISU_KPM_* extension operations. Op 8 is an

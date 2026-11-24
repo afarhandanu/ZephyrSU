@@ -166,7 +166,7 @@ object Natives {
         external get
 
     /**
-     * Root through some other means, no SukiSU kernel. Kernel calls just return defaults here,
+     * Root through some other means, no ZephyrSU kernel. Kernel calls just return defaults here,
      * so the pages can be opened and browsed.
      */
     fun isPreviewMode(): Boolean = !isManager && rootAvailable()

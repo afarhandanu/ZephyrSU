@@ -239,7 +239,7 @@ object ThemePackageStorage {
 
     fun packageFileName(): String {
         val stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm"))
-        return "SukiSU-theme-$stamp.sukisu"
+        return "ZephyrSU-theme-$stamp.sukisu"
     }
 
     suspend fun export(
