@@ -989,8 +989,13 @@ fun MainScreen(
                         .pagerGestureOverride(
                             pagerState = mainPagerState.pagerState,
                             mode = pagerMode,
+                            // Gate on the settled page, not currentPage: currentPage
+                            // flips to Settings halfway through a swipe from Module,
+                            // which removed the interceptor mid-gesture, cancelled
+                            // its drag/settle job and left the pager stuck between
+                            // the two pages.
                             enabled = userScrollEnabled &&
-                                destinations.getOrNull(currentPage) != BottomBarDestination.Setting,
+                                destinations.getOrNull(settledPage) != BottomBarDestination.Setting,
                         )
                         // Material always floats its bar, so only the glass/progressive band matters there.
                         .then(if (needsBottomBarBackdrop) Modifier.layerBackdrop(backdrop) else Modifier),
