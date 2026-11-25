@@ -64,6 +64,21 @@ fun InstallScreen(
 
     val installMethodState = rememberSaveable { mutableStateOf<InstallMethod?>(null) }
     var installMethod by installMethodState
+    // LKM and AnyKernel3 are separate flows; each tab keeps its own selection.
+    // installMethodState always holds the visible tab's method (AnyKernel3State
+    // writes to it), the other tab's method is parked here.
+    var installModeChoice by rememberSaveable { mutableStateOf<InstallMode?>(null) }
+    var inactiveModeMethod by rememberSaveable { mutableStateOf<InstallMethod?>(null) }
+    // LKM has nothing to offer on non-GKI kernels, and an incoming kernel zip
+    // belongs to the AnyKernel3 flow, so start there in both cases.
+    val defaultInstallMode = remember(preselectedKernelUri) {
+        if (preselectedKernelUri != null || !getKernelVersion().isGKI()) InstallMode.AnyKernel else InstallMode.Lkm
+    }
+    val installMode = if (installMethod is InstallMethod.HorizonKernel) {
+        InstallMode.AnyKernel
+    } else {
+        installModeChoice ?: defaultInstallMode
+    }
     var downloadDialogShown by rememberSaveable { mutableStateOf(false) }
     var remotePartitions by rememberSaveable { mutableStateOf(emptyList<String>()) }
     var remotePartitionSelectionIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -131,7 +146,7 @@ fun InstallScreen(
     val downloadFileMsg = stringResource(id = R.string.download_dialog_msg)
 
     val horizonKernelSummary = stringResource(R.string.horizon_kernel_summary)
-    val installMethodOptions = remember(rootAvailable, isAbDevice, isGkiDevice, selectFileTip, downloadFileMsg, horizonKernelSummary) {
+    val allInstallMethodOptions = remember(rootAvailable, isAbDevice, isGkiDevice, selectFileTip, downloadFileMsg, horizonKernelSummary) {
         buildList {
             // LKM boot-image patching needs a GKI 5.10+ kernel. Pre-5.10
             // kernels cannot load the bundled module, so only AnyKernel3
@@ -149,6 +164,10 @@ fun InstallScreen(
             }
         }
     }
+    val installMethodOptions = allInstallMethodOptions.filter {
+        (it is InstallMethod.HorizonKernel) == (installMode == InstallMode.AnyKernel)
+    }
+    val anyKernelAvailable = allInstallMethodOptions.any { it is InstallMethod.HorizonKernel }
 
     // AnyKernel3 状态
     val anyKernel3State = rememberAnyKernel3State(
@@ -362,7 +381,9 @@ fun InstallScreen(
     }
 
     val state = InstallUiState(
+        installMode = installMode,
         installMethod = installMethod,
+        anyKernelAvailable = anyKernelAvailable,
         lkmSelection = lkmSelection,
         partitionSelectionIndex = partitionSelectionIndex,
         displayPartitions = displayPartitions,
@@ -392,6 +413,14 @@ fun InstallScreen(
     )
     val actions = InstallScreenActions(
         onBack = dropUnlessResumed { navigator.pop() },
+        onSelectMode = { mode ->
+            if (mode != installMode) {
+                val parked = inactiveModeMethod
+                inactiveModeMethod = installMethod
+                installMethod = parked
+                installModeChoice = mode
+            }
+        },
         onSelectMethod = { method ->
             if (method is InstallMethod.HorizonKernel && method.uri != null) {
                 anyKernel3State.onHorizonKernelSelected(method)

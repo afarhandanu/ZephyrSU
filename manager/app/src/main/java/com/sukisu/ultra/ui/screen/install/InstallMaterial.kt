@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,6 +49,7 @@ import com.sukisu.ultra.getKernelVersion
 import com.sukisu.ultra.ui.kernelFlash.KpmPatchOption
 import com.sukisu.ultra.ui.component.dialog.rememberConfirmDialog
 import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
+import com.sukisu.ultra.ui.component.material.ExpressiveTabRow
 import com.sukisu.ultra.ui.component.material.SegmentedCheckboxItem
 import com.sukisu.ultra.ui.component.material.IconTile
 import com.sukisu.ultra.ui.component.material.SegmentedColumn
@@ -99,6 +101,8 @@ internal fun InstallScreenMaterial(
             TopBar(
                 onBack = actions.onBack,
                 scrollBehavior = scrollBehavior,
+                selectedMode = uiState.installMode,
+                onModeSelected = actions.onSelectMode,
             )
         },
         snackbarHost = { SnackBarHost(hostState = snackBarHost, modifier = Modifier.safeDrawingPadding()) },
@@ -107,6 +111,7 @@ internal fun InstallScreenMaterial(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
+                .padding(top = 16.dp)
                 .fillMaxHeight()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .verticalScroll(rememberScrollState()),
@@ -118,6 +123,25 @@ internal fun InstallScreenMaterial(
                 onDownloadFile = actions.onDownloadFile,
                 onSelectBootImage = actions.onSelectBootImage,
             )
+            if (uiState.installMode == InstallMode.AnyKernel) {
+                if (uiState.anyKernelAvailable) {
+                    SegmentedColumn(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        item {
+                            SegmentedListItem(
+                                leadingContent = { IconTile(Icons.Filled.Warning, null) },
+                                headlineContent = { Text(stringResource(R.string.install_anykernel_page_hint)) },
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        text = stringResource(R.string.root_required),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
+            }
 
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -133,7 +157,7 @@ internal fun InstallScreenMaterial(
                     } else {
                         uiState.partitionSelectionIndex
                     }
-                    if (isGkiDevice && partitionItems.isNotEmpty() && uiState.installMethod !is InstallMethod.HorizonKernel) add {
+                    if (isGkiDevice && partitionItems.isNotEmpty() && uiState.installMode == InstallMode.Lkm) add {
                         SegmentedDropdownItem(
                             enabled = uiState.canSelectPartition,
                             items = partitionItems,
@@ -155,7 +179,7 @@ internal fun InstallScreenMaterial(
                             checked = uiState.forceBackup,
                         )
                     }
-                    if (isGkiDevice && uiState.installMethod !is InstallMethod.HorizonKernel) add {
+                    if (isGkiDevice && uiState.installMode == InstallMode.Lkm) add {
                         SegmentedListItem(
                             leadingContent = {
                                 IconTile(Icons.AutoMirrored.Filled.DriveFileMove, null)
@@ -463,15 +487,29 @@ private fun InstallMethodCard(
 @Composable
 private fun TopBar(
     onBack: () -> Unit = {},
-    scrollBehavior: TopAppBarScrollBehavior? = null
+    scrollBehavior: TopAppBarScrollBehavior? = null,
+    selectedMode: InstallMode,
+    onModeSelected: (InstallMode) -> Unit,
 ) {
-    LargeFlexibleTopAppBar(
-        title = { Text(customText(CustomTextKey.PAGE_INSTALL)) },
-        navigationIcon = {
-            TopBarBackButton(onClick = onBack)
-        },
-        colors = expressiveTopAppBarColors(),
-        windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
-        scrollBehavior = scrollBehavior
-    )
+    Column {
+        LargeFlexibleTopAppBar(
+            title = { Text(customText(CustomTextKey.PAGE_INSTALL)) },
+            navigationIcon = {
+                TopBarBackButton(onClick = onBack)
+            },
+            colors = expressiveTopAppBarColors(),
+            windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
+            scrollBehavior = scrollBehavior
+        )
+        ExpressiveTabRow(
+            selectedTabIndex = selectedMode.ordinal,
+            tabs = listOf(
+                stringResource(R.string.install_mode_lkm),
+                stringResource(R.string.install_mode_anykernel),
+            ),
+            onTabClick = {
+                onModeSelected(if (it == 0) InstallMode.Lkm else InstallMode.AnyKernel)
+            },
+        )
+    }
 }

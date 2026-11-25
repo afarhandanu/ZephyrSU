@@ -117,6 +117,9 @@
 \nBu seçeneği yalnızca OTA tamamlandıktan sonra kullanın.
 \nDevam edilsin mi?</string>
     <string name="install_next">Sonraki</string>
+    <string name="install_mode_lkm">LKM kurulumu</string>
+    <string name="install_mode_anykernel">AnyKernel3</string>
+    <string name="install_anykernel_page_hint">Bu harici ZIP root yetkisiyle çalışır. Hangi bölümlerin yazılacağını yükleyici belirler; yalnızca bu cihaz için güvenilir bir paket kullanın.</string>
     <string name="select_kmi">KMI seçin</string>
     <string name="select_file_tip">%1$s bölüm imajı önerilir</string>
     <string name="settings_uninstall_temporary">Geçici olarak kaldır</string>

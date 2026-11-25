@@ -4,9 +4,16 @@ import androidx.compose.runtime.Immutable
 import com.sukisu.ultra.ui.kernelFlash.KpmPatchOption
 import com.sukisu.ultra.ui.util.LkmSelection
 
+internal enum class InstallMode {
+    Lkm,
+    AnyKernel,
+}
+
 @Immutable
 internal data class InstallUiState(
+    val installMode: InstallMode,
     val installMethod: InstallMethod?,
+    val anyKernelAvailable: Boolean,
     val lkmSelection: LkmSelection,
     val partitionSelectionIndex: Int,
     val displayPartitions: List<String>,
@@ -42,6 +49,7 @@ internal data class InstallUiState(
 @Immutable
 internal data class InstallScreenActions(
     val onBack: () -> Unit,
+    val onSelectMode: (InstallMode) -> Unit,
     val onDownloadFile: () -> Unit,
     val onSelectMethod: (InstallMethod) -> Unit,
     val onSelectBootImage: (InstallMethod) -> Unit,

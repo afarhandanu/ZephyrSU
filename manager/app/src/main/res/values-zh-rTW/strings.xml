@@ -143,6 +143,9 @@
     <string name="jailbreak_flash_warning_countdown">繼續 (%1$d)</string>
     <string name="direct_install">直接安裝（推薦）</string>
     <string name="install_next">繼續</string>
+    <string name="install_mode_lkm">LKM 安裝</string>
+    <string name="install_mode_anykernel">AnyKernel3</string>
+    <string name="install_anykernel_page_hint">此外部 ZIP 將以 root 執行，實際寫入哪些分割區由安裝程式決定；請只使用確認相容本裝置的可信套件。</string>
     <string name="install_select_partition">選擇分區</string>
     <string name="install_upload_lkm_file">使用本機 LKM 檔案</string>
     <string name="select_kmi">選擇 KMI</string>

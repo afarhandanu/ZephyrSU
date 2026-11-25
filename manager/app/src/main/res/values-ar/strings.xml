@@ -105,6 +105,9 @@
     <string name="enable_web_debugging">تمكين تصحيح أخطاء WebView</string>
     <string name="enable_web_debugging_summary">يمكن استخدامه لتصحيح أخطاء WebUI، يرجى تمكينه فقط عند الحاجة.</string>
     <string name="install_next">التالي</string>
+    <string name="install_mode_lkm">تثبيت LKM</string>
+    <string name="install_mode_anykernel">AnyKernel3</string>
+    <string name="install_anykernel_page_hint">يعمل ملف ZIP الخارجي هذا بصلاحية root، ويحدد المثبّت الأقسام التي تُكتب؛ استخدم فقط حزمة موثوقة لهذا الجهاز.</string>
     <string name="select_file">اختيار ملف وتصحيحه</string>
     <string name="download_file">تنزيل ملف وتصحيحه</string>
     <string name="download_dialog_title">أدخل رابط الملف</string>

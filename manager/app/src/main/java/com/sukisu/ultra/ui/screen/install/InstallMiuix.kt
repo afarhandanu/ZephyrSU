@@ -2,6 +2,7 @@ package com.sukisu.ultra.ui.screen.install
 
 import com.sukisu.ultra.ui.component.miuix.AppCard
 import com.sukisu.ultra.ui.component.miuix.AppScaffold
+import com.sukisu.ultra.ui.component.miuix.deferredTopPadding
 import com.sukisu.ultra.ui.kernelFlash.KpmPatchOption
 import com.sukisu.ultra.ui.util.customText
 import com.sukisu.ultra.ui.util.CustomTextKey
@@ -41,6 +42,7 @@ import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -76,6 +78,8 @@ import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.basic.SnackbarHost
 import top.yukonga.miuix.kmp.basic.SnackbarHostState
+import top.yukonga.miuix.kmp.basic.TabRow
+import top.yukonga.miuix.kmp.basic.TabRowDefaults
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TopAppBar
@@ -127,6 +131,8 @@ internal fun InstallScreenMiuix(
                 scrollBehavior = scrollBehavior,
                 backdrop = backdrop,
                 barColor = barColor,
+                selectedMode = uiState.installMode,
+                onModeSelected = actions.onSelectMode,
             )
         },
         popupHost = { },
@@ -151,15 +157,31 @@ internal fun InstallScreenMiuix(
                 overscrollEffect = null,
             ) {
                 item {
-                    AppCard(
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        SelectInstallMethod(
-                            state = uiState,
-                            onSelected = actions.onSelectMethod,
-                            onDownloadFile = actions.onDownloadFile,
-                            onSelectBootImage = actions.onSelectBootImage,
-                        )
+                    if (uiState.installMethodOptions.isNotEmpty()) {
+                        AppCard(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            SelectInstallMethod(
+                                state = uiState,
+                                onSelected = actions.onSelectMethod,
+                                onDownloadFile = actions.onDownloadFile,
+                                onSelectBootImage = actions.onSelectBootImage,
+                            )
+                        }
+                    }
+                    if (uiState.installMode == InstallMode.AnyKernel) {
+                        AppCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = if (uiState.anyKernelAvailable) 12.dp else 0.dp),
+                        ) {
+                            BasicComponent(
+                                summary = stringResource(
+                                    if (uiState.anyKernelAvailable) R.string.install_anykernel_page_hint
+                                    else R.string.root_required
+                                ),
+                            )
+                        }
                     }
                     AnimatedVisibility(
                         visible = isGkiDevice && uiState.canSelectPartition,
@@ -222,7 +244,7 @@ internal fun InstallScreenMiuix(
                     }
 
                     // LKM 上传（仅 GKI）
-                    if (isGkiDevice && uiState.installMethod !is InstallMethod.HorizonKernel) {
+                    if (isGkiDevice && uiState.installMode == InstallMode.Lkm) {
                         AppCard(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -574,7 +596,12 @@ private fun TopBar(
     scrollBehavior: ScrollBehavior,
     backdrop: LayerBackdrop?,
     barColor: Color,
+    selectedMode: InstallMode,
+    onModeSelected: (InstallMode) -> Unit,
 ) {
+    val dynamicTopPadding = remember(scrollBehavior) {
+        { 12.dp * (1f - scrollBehavior.state.collapsedFraction) }
+    }
     BlurredBar(backdrop) {
         TopAppBar(
             color = barColor,
@@ -591,6 +618,30 @@ private fun TopBar(
                         imageVector = MiuixIcons.Back,
                         tint = colorScheme.onSurface,
                         contentDescription = null,
+                    )
+                }
+            },
+            bottomContent = {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp)
+                        .padding(bottom = 6.dp)
+                        .deferredTopPadding(dynamicTopPadding)
+                ) {
+                    TabRow(
+                        tabs = listOf(
+                            stringResource(R.string.install_mode_lkm),
+                            stringResource(R.string.install_mode_anykernel),
+                        ),
+                        selectedTabIndex = selectedMode.ordinal,
+                        onTabSelected = {
+                            onModeSelected(if (it == 0) InstallMode.Lkm else InstallMode.AnyKernel)
+                        },
+                        colors = TabRowDefaults.tabRowColors(
+                            backgroundColor = barColor,
+                            selectedBackgroundColor = backgroundAwareColor(colorScheme.surfaceContainer),
+                        ),
+                        height = 40.dp,
                     )
                 }
             },
