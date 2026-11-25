@@ -6,6 +6,7 @@ import android.net.Uri
 import com.sukisu.ultra.R
 import com.sukisu.ultra.ui.kernelFlash.util.AssetsUtil
 import com.sukisu.ultra.ui.kernelFlash.util.KpmTools
+import com.sukisu.ultra.ui.kernelFlash.util.GzipKernelImage
 import com.sukisu.ultra.ui.util.getRootShell
 import com.sukisu.ultra.ui.util.install
 import com.sukisu.ultra.ui.util.rootAvailable
@@ -203,8 +204,23 @@ class HorizonKernelWorker(
             // Keep tools outside the ZIP tree so package files cannot be overwritten.
             val patched = File(workDir, "kernel.patched")
             var undoSkipped = false
+            // Non-GKI packages ship Image.gz / Image.gz-dtb; kptools needs the raw Image.
+            val rawImage = File(workDir, "kernel.raw")
+            val gzipTail = GzipKernelImage.unwrap(File(imageFile), rawImage)
+            if (gzipTail != null) {
+                state.addLog("Decompressed gzip kernel (appended DTB: ${gzipTail.bytes.size} bytes)")
+            }
             try {
-                tools.patch(File(imageFile), patched, kpmUndoPatch) { requireCommand(true, it) }
+                tools.patch(
+                    if (gzipTail != null) rawImage else File(imageFile),
+                    patched, kpmUndoPatch,
+                ) { requireCommand(true, it) }
+                if (gzipTail != null) {
+                    val repacked = File(workDir, "kernel.repacked")
+                    GzipKernelImage.wrap(patched, gzipTail, repacked)
+                    requireCommand(true, "mv ${shellQuote(repacked.absolutePath)} ${shellQuote(patched.absolutePath)}")
+                    state.addLog("Recompressed patched kernel and re-appended DTB")
+                }
             } catch (e: Exception) {
                 // An unpatched AnyKernel3 package has nothing to undo. Keep its
                 // original kernel and continue flashing instead of treating the
