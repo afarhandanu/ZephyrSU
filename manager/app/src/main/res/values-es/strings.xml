@@ -105,6 +105,9 @@
     <string name="select_file_tip">Se recomienda la imagen de partición %1$s</string>
     <string name="select_kmi">Selecciona KMI</string>
     <string name="install_next">Siguiente</string>
+    <string name="install_mode_lkm">Instalación LKM</string>
+    <string name="install_mode_anykernel">AnyKernel3</string>
+    <string name="install_anykernel_page_hint">Este ZIP externo se ejecuta como root. Su instalador decide qué particiones se escriben; usa solo un paquete de confianza para este dispositivo.</string>
     <string name="direct_install">Instalación directa (Recomendada)</string>
     <string name="install_inactive_slot_warning">¡Su dispositivo será **FORZADO** a arrancar en la ranura inactiva actual después de un reinicio!\nUtilice esta opción sólo después de que la OTA se haya realizado.\n¿Continuar?</string>
     <string name="settings_uninstall">Desinstalar</string>

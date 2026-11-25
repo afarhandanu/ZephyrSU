@@ -120,6 +120,9 @@
     <string name="settings_uninstall_temporary_message">Tạm thời gỡ cài đặt ZephyrSU, khôi phục về trạng thái ban đầu sau lần khởi động lại tiếp theo.</string>
     <string name="select_kmi">Chọn KMI</string>
     <string name="install_next">Kế tiếp</string>
+    <string name="install_mode_lkm">Cài đặt LKM</string>
+    <string name="install_mode_anykernel">AnyKernel3</string>
+    <string name="install_anykernel_page_hint">File ZIP bên ngoài này chạy với quyền root. Trình cài đặt quyết định các phân vùng được ghi; chỉ dùng gói tin cậy dành cho thiết bị này.</string>
     <string name="direct_install">Cài đặt trực tiếp (Khuyến nghị)</string>
     <string name="select_file">Chọn một tệp và vá</string>
     <string name="download_file">Tải xuống và vá file</string>
