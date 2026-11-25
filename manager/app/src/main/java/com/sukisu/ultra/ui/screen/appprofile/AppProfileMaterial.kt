@@ -78,6 +78,7 @@ import com.sukisu.ultra.ui.component.material.SegmentedListItem
 import com.sukisu.ultra.ui.component.material.ExpressiveSwitch
 import com.sukisu.ultra.ui.component.material.SnackBarHost
 import com.sukisu.ultra.ui.component.material.TopBarBackButton
+import com.sukisu.ultra.ui.component.material.expressiveToggleButtonColors
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.component.profile.AppProfileConfig
 import com.sukisu.ultra.ui.component.profile.RootProfileConfig
@@ -85,6 +86,7 @@ import com.sukisu.ultra.ui.component.profile.TemplateConfig
 import com.sukisu.ultra.ui.component.statustag.StatusTag
 import com.sukisu.ultra.ui.util.ownerNameForUid
 import com.sukisu.ultra.ui.viewmodel.SuperUserViewModel
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 
 /**
  * @author weishu
@@ -374,12 +376,23 @@ private fun RootSwitchCard(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
+    // Wallpaper mode: use the translucent wallpaper materials so the card lets the wallpaper
+    // show through like the rows around it. Without a wallpaper the solid colors are unchanged.
+    val wallpaper = LocalFolkWallpaperTokens.current
     val containerColor by animateColorAsState(
-        if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceBright,
+        when {
+            wallpaper != null -> if (checked) wallpaper.selection.fill else wallpaper.group.fill
+            checked -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.surfaceBright
+        },
         label = "root_card_container"
     )
     val contentColor by animateColorAsState(
-        if (checked) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+        when {
+            wallpaper != null -> if (checked) wallpaper.selection.contentColor else wallpaper.group.contentColor
+            checked -> MaterialTheme.colorScheme.onPrimary
+            else -> MaterialTheme.colorScheme.onSurface
+        },
         label = "root_card_content"
     )
     Surface(
@@ -490,6 +503,18 @@ private fun ProfileBox(
     onModeChange: (Mode) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
+    // Wallpaper mode: translucent fills so the wallpaper shows through; otherwise the defaults.
+    val wallpaper = LocalFolkWallpaperTokens.current
+    val toggleColors = if (wallpaper != null) {
+        expressiveToggleButtonColors(
+            checkedContainerColor = wallpaper.selection.fill,
+            checkedContentColor = wallpaper.selection.contentColor,
+            containerColor = wallpaper.group.fill,
+            contentColor = wallpaper.group.contentColor,
+        )
+    } else {
+        expressiveToggleButtonColors()
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -515,6 +540,7 @@ private fun ProfileBox(
                 modifier = Modifier
                     .weight(1f)
                     .semantics { role = Role.RadioButton },
+                colors = toggleColors,
                 shapes = when (index) {
                     0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
                     options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
