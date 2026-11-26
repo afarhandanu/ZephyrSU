@@ -107,8 +107,8 @@ private fun defaultSegmentedColors(): ListItemColors {
     // FinaSU parity: in wallpaper mode the list rows use the wallpaper's group material,
     // so the wallpaper shows through the content instead of an opaque surface.
     val tokens = LocalFolkWallpaperTokens.current
-    val material = tokens?.group
-    if (material != null) {
+    if (tokens != null) {
+        val material = tokens.group
         // A selected row (checked checkbox, chosen radio) would otherwise fall back to the
         // opaque selected color and hide the wallpaper; use the translucent selection material.
         val selection = tokens.selection
