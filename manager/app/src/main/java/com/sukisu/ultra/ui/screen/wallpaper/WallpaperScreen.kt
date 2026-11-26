@@ -130,6 +130,7 @@ data class WallpaperUiState(
     val nightDim: Float,
     val workingCardOpacity: Float,
     val searchOpacity: Float,
+    val barShade: Float,
     val useWallpaperColor: Boolean,
     val multiBackgroundEnabled: Boolean,
     val homeBackgroundSelected: Boolean,
@@ -171,6 +172,7 @@ data class WallpaperScreenActions(
     val onSetNightDim: (Float) -> Unit,
     val onSetWorkingCardOpacity: (Float) -> Unit,
     val onSetSearchOpacity: (Float) -> Unit,
+    val onSetBarShade: (Float) -> Unit,
     val onToggleUseWallpaperColor: (Boolean) -> Unit,
     val onToggleMultiBackground: (Boolean) -> Unit,
     val onPickHomeBackground: () -> Unit,
@@ -399,6 +401,7 @@ fun WallpaperScreen() {
         nightDim = WallpaperConfig.nightDim,
         workingCardOpacity = WallpaperConfig.workingCardOpacity,
         searchOpacity = WallpaperConfig.searchOpacity,
+        barShade = WallpaperConfig.barShade,
         useWallpaperColor = WallpaperConfig.useWallpaperColor,
         multiBackgroundEnabled = WallpaperConfig.multiBackgroundEnabled,
         homeBackgroundSelected = !WallpaperConfig.homeBackgroundUri.isNullOrEmpty(),
@@ -457,6 +460,9 @@ fun WallpaperScreen() {
         },
         onSetSearchOpacity = {
             WallpaperConfig.updateSearchOpacity(snapToPercent(it))
+        },
+        onSetBarShade = {
+            WallpaperConfig.updateBarShade(snapToPercent(it))
         },
         onToggleUseWallpaperColor = { enabled ->
             WallpaperConfig.updateUseWallpaperColor(enabled)
@@ -876,6 +882,19 @@ fun WallpaperScreenMaterial(
                             valueRange = 0f..1f,
                             valueText = { "${(it * 100).roundToInt()}%" },
                             onValueChange = actions.onSetSearchOpacity,
+                            onValueChangeFinished = { actions.onCommitWallpaper() },
+                        )
+                    }
+                    // Shade behind the top and bottom bars (and the fade past their edges).
+                    add {
+                        SegmentedSliderItem(
+                            icon = Icons.Filled.Opacity,
+                            title = stringResource(R.string.wallpaper_bar_shade),
+                            summary = stringResource(R.string.wallpaper_bar_shade_summary),
+                            value = state.barShade,
+                            valueRange = 0f..1f,
+                            valueText = { "${(it * 100).roundToInt()}%" },
+                            onValueChange = actions.onSetBarShade,
                             onValueChangeFinished = { actions.onCommitWallpaper() },
                         )
                     }

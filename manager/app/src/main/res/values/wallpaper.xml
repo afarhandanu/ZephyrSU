@@ -74,6 +74,8 @@
     <string name="wallpaper_search_section">Search</string>
     <string name="wallpaper_search_opacity">Search opacity</string>
     <string name="wallpaper_search_opacity_summary">How opaque the full-screen search is when a wallpaper is set — 0% shows the wallpaper through</string>
+    <string name="wallpaper_bar_shade">Top and bottom bar shade</string>
+    <string name="wallpaper_bar_shade_summary">How strong the light or dark shade behind the top and bottom bars is — 0% removes it</string>
     <string name="wallpaper_gallery_device_phone">Phone</string>
     <string name="wallpaper_gallery_device_tablet">Tablet</string>
     <string name="wallpaper_gallery_device_mixed">Mixed</string>

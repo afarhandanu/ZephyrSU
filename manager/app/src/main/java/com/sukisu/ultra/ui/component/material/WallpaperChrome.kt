@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
+import com.sukisu.ultra.wallpaper.WallpaperConfig
 import com.sukisu.ultra.wallpaper.WallpaperMaterial
 
 /** Which screen edge a chrome zone hugs. */
@@ -23,6 +24,9 @@ enum class ChromeEdge { Top, Bottom, Start }
  * the user picked for the content surfaces.
  */
 private const val CollapsedChromeFloor = 0.85f
+
+/** Alpha of the hairline drawn along the top edge of a bottom bar in wallpaper mode. */
+private const val BottomDividerAlpha = 0.22f
 
 /**
  * Draws the wallpaper reading platform behind a bar and fades it into the wallpaper *past* the
@@ -49,6 +53,10 @@ fun WallpaperChromeZone(
     val chrome = material ?: tokens.chrome
     val tailPx = with(LocalDensity.current) { tailHeight.toPx() }
     val layoutDirection = LocalLayoutDirection.current
+    // User knob for how strong the bar shade is (1 = as designed, 0 = none).
+    val shade = WallpaperConfig.barShade
+    val dividerPx = with(LocalDensity.current) { 1.dp.toPx() }
+    val divider = chrome.contentColor.copy(alpha = BottomDividerAlpha)
     Box(
         modifier = modifier.drawBehind {
             val collapsed = progress().coerceIn(0f, 1f)
@@ -58,7 +66,7 @@ fun WallpaperChromeZone(
             // therefore keeps the user's alpha as-is.
             val floor = if (edge == ChromeEdge.Top) CollapsedChromeFloor else chrome.alpha
             val alpha = chrome.alpha + (floor - chrome.alpha).coerceAtLeast(0f) * collapsed
-            val solid = chrome.tint.copy(alpha = alpha.coerceAtMost(1f))
+            val solid = chrome.tint.copy(alpha = alpha.coerceAtMost(1f) * shade)
             val clear = solid.copy(alpha = 0f)
             val width = size.width
             when (edge) {
@@ -88,6 +96,8 @@ fun WallpaperChromeZone(
                         size = Size(width, tailPx),
                     )
                     drawRect(solid, topLeft = Offset.Zero, size = Size(width, size.height))
+                    // Hairline marking where the bottom bar starts.
+                    drawRect(divider, topLeft = Offset.Zero, size = Size(width, dividerPx))
                 }
 
                 ChromeEdge.Start -> {
