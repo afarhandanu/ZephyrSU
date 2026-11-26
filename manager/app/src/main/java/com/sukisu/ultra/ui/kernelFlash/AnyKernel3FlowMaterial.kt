@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.R
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 
 @Composable
 fun KpmPatchSelectionDialogMaterial(
@@ -66,6 +67,8 @@ fun KpmPatchSelectionDialogMaterial(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         options.forEach { (option, title) ->
                             val selected = selectedOption == option
+                            // Wallpaper mode: translucent fills; otherwise unchanged.
+                            val wallpaper = LocalFolkWallpaperTokens.current
                             Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -75,8 +78,11 @@ fun KpmPatchSelectionDialogMaterial(
                                         role = Role.RadioButton
                                     ),
                                 shape = MaterialTheme.shapes.medium,
-                                color = if (selected) MaterialTheme.colorScheme.secondaryContainer
-                                else MaterialTheme.colorScheme.surfaceContainerHighest,
+                                color = when {
+                                    wallpaper != null -> if (selected) wallpaper.selection.fill else wallpaper.group.fill
+                                    selected -> MaterialTheme.colorScheme.secondaryContainer
+                                    else -> MaterialTheme.colorScheme.surfaceContainerHighest
+                                },
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
