@@ -506,6 +506,17 @@ fun ModulePagerMaterial(
                     },
                     icon = { Icon(Icons.Filled.Add, moduleInstall) },
                     text = { Text(text = moduleInstall) },
+                    // Wallpaper mode: translucent like a selected surface.
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                        alpha = LocalFolkWallpaperTokens.current?.selection?.alpha ?: 1f,
+                    ),
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    elevation = if (LocalFolkWallpaperTokens.current != null) {
+                        // A shadow shows through a translucent button as a dark smudge.
+                        androidx.compose.material3.FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
+                    } else {
+                        androidx.compose.material3.FloatingActionButtonDefaults.elevation()
+                    },
                 )
             }
         },
