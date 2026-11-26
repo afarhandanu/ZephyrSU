@@ -19,6 +19,8 @@ import com.sukisu.ultra.ui.screen.susfs.component.material.DescriptionCardMateri
 import com.sukisu.ultra.ui.screen.susfs.component.material.ResetButtonMaterial
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
 import com.sukisu.ultra.ui.util.isAbDevice
+import com.sukisu.ultra.ui.theme.wallpaperCardColor
+import com.sukisu.ultra.ui.theme.wallpaperSelectionColor
 
 @Composable
 fun BasicSettingsContentMaterial(
@@ -55,7 +57,7 @@ fun BasicSettingsContentMaterial(
     // 执行位置选择
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright)
+        colors = CardDefaults.cardColors(containerColor = wallpaperCardColor(MaterialTheme.colorScheme.surfaceBright))
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -76,7 +78,7 @@ fun BasicSettingsContentMaterial(
                     enabled = !isLoading,
                     modifier = Modifier.weight(1f),
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = backgroundAwareColor(MaterialTheme.colorScheme.secondaryContainer),
+                        selectedContainerColor = wallpaperSelectionColor(backgroundAwareColor(MaterialTheme.colorScheme.secondaryContainer)),
                     ),
                 )
                 FilterChip(
@@ -86,7 +88,7 @@ fun BasicSettingsContentMaterial(
                     enabled = !isLoading,
                     modifier = Modifier.weight(1f),
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = backgroundAwareColor(MaterialTheme.colorScheme.secondaryContainer),
+                        selectedContainerColor = wallpaperSelectionColor(backgroundAwareColor(MaterialTheme.colorScheme.secondaryContainer)),
                     ),
                 )
             }
@@ -134,7 +136,10 @@ fun BasicSettingsContentMaterial(
 
 
     if (isAbDevice) {
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = wallpaperCardColor(CardDefaults.cardColors().containerColor)),
+        ) {
             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(text = stringResource(R.string.susfs_slot_info_title), style = MaterialTheme.typography.titleMedium)
@@ -148,7 +153,10 @@ fun BasicSettingsContentMaterial(
     }
 
     // Cmdline / Bootconfig 卡片
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = wallpaperCardColor(CardDefaults.cardColors().containerColor)),
+    ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -164,7 +172,7 @@ fun BasicSettingsContentMaterial(
             )
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceBright
+                    containerColor = wallpaperCardColor(MaterialTheme.colorScheme.surfaceBright)
                 )
             ) {
                 Row(

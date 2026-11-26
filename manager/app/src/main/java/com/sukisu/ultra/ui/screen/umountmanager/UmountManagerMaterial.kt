@@ -56,6 +56,8 @@ import com.sukisu.ultra.ui.util.customText
 import com.sukisu.ultra.ui.util.CustomTextKey
 import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.R
+import com.sukisu.ultra.ui.theme.wallpaperCardColor
+import androidx.compose.material3.CardDefaults
 
 @Composable
 fun UmountManagerMaterial(
@@ -103,7 +105,8 @@ fun UmountManagerMaterial(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(SPACING_LARGE)
+                    .padding(SPACING_LARGE),
+                colors = CardDefaults.cardColors(containerColor = wallpaperCardColor(CardDefaults.cardColors().containerColor)),
             ) {
                 Row(
                     modifier = Modifier.padding(SPACING_LARGE),

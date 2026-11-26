@@ -53,6 +53,9 @@ import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.screen.settings.tools.SpoofCpuParams
 import com.sukisu.ultra.ui.screen.settings.tools.spoofCpuPresetList
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
+import com.sukisu.ultra.ui.theme.wallpaperCardColor
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
+import androidx.compose.material3.FilterChipDefaults
 
 @Composable
 internal fun CpuSpoofMaterial(s: CpuSpoofState, a: CpuSpoofActions) {
@@ -227,6 +230,8 @@ private fun CpuSpoofParamsSection(s: CpuSpoofState, a: CpuSpoofActions) {
             }
         }
 
+        // Wallpaper mode: selected chips use the translucent selection material.
+        val wallpaper = LocalFolkWallpaperTokens.current
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -245,6 +250,11 @@ private fun CpuSpoofParamsSection(s: CpuSpoofState, a: CpuSpoofActions) {
                     },
                     label = { Text(stringResource(R.string.spoof_cpu_cores_format, index)) },
                     enabled = enabled,
+                    colors = if (wallpaper != null) {
+                        FilterChipDefaults.filterChipColors(selectedContainerColor = wallpaper.selection.fill)
+                    } else {
+                        FilterChipDefaults.filterChipColors()
+                    },
                 )
             }
         }
@@ -313,7 +323,7 @@ private fun CpuSpoofParamsSection(s: CpuSpoofState, a: CpuSpoofActions) {
 private fun CpuSpoofSection(title: Int, content: @Composable ColumnScope.() -> Unit) {
     Surface(
         shape = MaterialTheme.shapes.extraLarge,
-        color = backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerLow),
+        color = wallpaperCardColor(backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerLow)),
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Column(
