@@ -6,6 +6,7 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +26,7 @@ import com.sukisu.ultra.ui.component.material.SegmentedSwitchItem
 import com.sukisu.ultra.ui.navigation3.LocalNavigator
 import com.sukisu.ultra.ui.navigation3.Route
 import com.sukisu.ultra.ui.viewmodel.BackupViewModel
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 
 private val BackupGroupModifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
 
@@ -115,12 +117,33 @@ fun BackupSettingsContent() {
             state.availablePartitions.forEach { partition ->
                 item(key = partition) {
                     val (title, summary) = backupPartitionLabels(partition)
-                    SegmentedCheckboxItem(
-                        title = title,
-                        summary = summary,
-                        checked = partition in state.selectedPartitions,
-                        onCheckedChange = { viewModel.setPartitionEnabled(partition, it) },
-                    )
+                    // Wallpaper mode: a checked row would otherwise use the opaque selected
+                    // color and hide the wallpaper; use the translucent wallpaper materials.
+                    val wallpaper = LocalFolkWallpaperTokens.current
+                    if (wallpaper != null) {
+                        SegmentedCheckboxItem(
+                            title = title,
+                            summary = summary,
+                            colors = ListItemDefaults.segmentedColors(
+                                containerColor = wallpaper.group.fill,
+                                contentColor = wallpaper.group.contentColor,
+                                supportingContentColor = wallpaper.group.supportingColor,
+                                disabledContainerColor = wallpaper.group.fill,
+                                selectedContainerColor = wallpaper.selection.fill,
+                                selectedContentColor = wallpaper.selection.contentColor,
+                                selectedSupportingContentColor = wallpaper.selection.supportingColor,
+                            ),
+                            checked = partition in state.selectedPartitions,
+                            onCheckedChange = { viewModel.setPartitionEnabled(partition, it) },
+                        )
+                    } else {
+                        SegmentedCheckboxItem(
+                            title = title,
+                            summary = summary,
+                            checked = partition in state.selectedPartitions,
+                            onCheckedChange = { viewModel.setPartitionEnabled(partition, it) },
+                        )
+                    }
                 }
             }
         }
