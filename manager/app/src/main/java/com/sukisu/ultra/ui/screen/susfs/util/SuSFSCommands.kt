@@ -101,12 +101,25 @@ object SuSFSCommands {
                 for candidate in /dev/block/by-name/$$slot /dev/block/bootdevice/by-name/$$slot; do
                     if [ -r "$candidate" ]; then block="$candidate"; break; fi
                 done
-                if [ -n "$block" ]; then
+                scan() {
                     if /system/bin/toybox strings /dev/null >/dev/null 2>&1; then
-                        /system/bin/toybox strings "$block" | /system/bin/toybox grep 'Linux version '
+                        /system/bin/toybox strings "$1" | /system/bin/toybox grep 'Linux version '
                     else
-                        strings "$block" | grep 'Linux version '
+                        strings "$1" | grep 'Linux version '
                     fi
+                }
+                if [ -n "$block" ]; then
+                    banner="$(scan "$block")"
+                    if [ -z "$banner" ]; then
+                        # Compressed kernel (lz4/gzip boot images): the banner is not readable
+                        # in the raw partition, so let ksud unpack the kernel first.
+                        tmp="/data/local/tmp/.zephyrsu_slot_kernel_$$slot"
+                        rm -f "$tmp"
+                        $${getKsuDaemonPath()} boot-kernel extract --boot "$block" --output "$tmp" >/dev/null 2>&1 &&
+                            banner="$(scan "$tmp")"
+                        rm -f "$tmp"
+                    fi
+                    [ -n "$banner" ] && echo "$banner"
                 else
                     echo "Partition not readable: $$slot" >&2
                     false
