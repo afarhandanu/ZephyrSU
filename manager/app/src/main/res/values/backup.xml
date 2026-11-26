@@ -35,4 +35,12 @@
     <string name="backup_partitions">Partitions</string>
     <string name="backup_restored">Restored %1$s</string>
     <string name="backup_deleted">Deleted %1$s</string>
+    <string name="personalization_section">Personalization</string>
+    <string name="personalization_backup">Back up personalization</string>
+    <string name="personalization_backup_summary">Save wallpaper, opacity, theme, font, music, sounds, profile and the other look settings to one file</string>
+    <string name="personalization_restore">Restore personalization</string>
+    <string name="personalization_restore_summary">Replace the current look with a backup file, then restart the app</string>
+    <string name="personalization_backup_saved">Personalization backup saved</string>
+    <string name="personalization_restore_done">Personalization restored, restarting</string>
+    <string name="personalization_backup_failed">Failed: %1$s</string>
 </resources>

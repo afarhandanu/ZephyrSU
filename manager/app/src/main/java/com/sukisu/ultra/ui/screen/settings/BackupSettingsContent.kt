@@ -147,6 +147,24 @@ fun BackupSettingsContent() {
             )
         }
     }
+
+    val personalization = rememberPersonalizationBackupActions()
+    SegmentedColumn(modifier = BackupGroupModifier, title = stringResource(R.string.personalization_section)) {
+        item {
+            SegmentedListItem(
+                onClick = personalization.export,
+                headlineContent = { Text(stringResource(R.string.personalization_backup)) },
+                supportingContent = { Text(stringResource(R.string.personalization_backup_summary)) },
+            )
+        }
+        item {
+            SegmentedListItem(
+                onClick = personalization.restore,
+                headlineContent = { Text(stringResource(R.string.personalization_restore)) },
+                supportingContent = { Text(stringResource(R.string.personalization_restore_summary)) },
+            )
+        }
+    }
 }
 
 @Composable

@@ -172,5 +172,32 @@ fun BackupSettingsContentMiuix(modifier: Modifier = Modifier) {
             },
             onClick = { navigator.push(Route.BackupList) },
         )
+        val personalization = rememberPersonalizationBackupActions()
+        ArrowPreference(
+            title = stringResource(R.string.personalization_backup),
+            summary = stringResource(R.string.personalization_backup_summary),
+            startAction = {
+                MiuixIcon(
+                    Icons.Rounded.Save,
+                    modifier = Modifier.padding(end = 6.dp),
+                    contentDescription = stringResource(R.string.personalization_backup),
+                    tint = colorScheme.onBackground
+                )
+            },
+            onClick = personalization.export,
+        )
+        ArrowPreference(
+            title = stringResource(R.string.personalization_restore),
+            summary = stringResource(R.string.personalization_restore_summary),
+            startAction = {
+                MiuixIcon(
+                    Icons.Rounded.FolderOpen,
+                    modifier = Modifier.padding(end = 6.dp),
+                    contentDescription = stringResource(R.string.personalization_restore),
+                    tint = colorScheme.onBackground
+                )
+            },
+            onClick = personalization.restore,
+        )
     }
 }
