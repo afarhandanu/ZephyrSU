@@ -631,11 +631,27 @@ fun SegmentedRadioItem(
     )
 }
 
+/**
+ * Colors for checkbox rows. A checked row is "selected", and the default selected color is
+ * opaque, so in wallpaper mode it would hide the wallpaper. Use the translucent selection
+ * material there instead. Without a wallpaper this is exactly [defaultSegmentedColors].
+ */
+@Composable
+private fun defaultSegmentedCheckboxColors(): ListItemColors {
+    val base = defaultSegmentedColors()
+    val selection = LocalFolkWallpaperTokens.current?.selection ?: return base
+    return base.copy(
+        selectedContainerColor = selection.fill,
+        selectedContentColor = selection.contentColor,
+        selectedSupportingContentColor = selection.supportingColor,
+    )
+}
+
 @Composable
 fun SegmentedCheckboxItem(
     title: String,
     summary: String? = null,
-    colors: ListItemColors = defaultSegmentedColors(),
+    colors: ListItemColors = defaultSegmentedCheckboxColors(),
     checked: Boolean,
     enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit,
