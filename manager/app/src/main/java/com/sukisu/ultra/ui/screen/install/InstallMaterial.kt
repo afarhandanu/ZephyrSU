@@ -72,6 +72,7 @@ import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.util.LkmSelection
 import com.sukisu.ultra.ui.util.isAbDevice
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 
 /**
  * @author weishu
@@ -452,12 +453,18 @@ private fun InstallMethodCard(
         if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
         label = "install_method_border"
     )
+    // Wallpaper mode: translucent fills so the wallpaper shows through; otherwise unchanged.
+    val wallpaper = LocalFolkWallpaperTokens.current
     Surface(
         selected = selected,
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceBright,
+        color = when {
+            wallpaper != null -> if (selected) wallpaper.selection.fill else wallpaper.group.fill
+            selected -> MaterialTheme.colorScheme.secondaryContainer
+            else -> MaterialTheme.colorScheme.surfaceBright
+        },
         border = BorderStroke(2.dp, borderColor),
     ) {
         Row(

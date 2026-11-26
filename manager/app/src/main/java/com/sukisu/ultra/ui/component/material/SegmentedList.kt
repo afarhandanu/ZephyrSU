@@ -106,13 +106,20 @@ annotation class SegmentedColumnDsl
 private fun defaultSegmentedColors(): ListItemColors {
     // FinaSU parity: in wallpaper mode the list rows use the wallpaper's group material,
     // so the wallpaper shows through the content instead of an opaque surface.
-    val material = LocalFolkWallpaperTokens.current?.group
+    val tokens = LocalFolkWallpaperTokens.current
+    val material = tokens?.group
     if (material != null) {
+        // A selected row (checked checkbox, chosen radio) would otherwise fall back to the
+        // opaque selected color and hide the wallpaper; use the translucent selection material.
+        val selection = tokens.selection
         return ListItemDefaults.segmentedColors(
             containerColor = material.fill,
             contentColor = material.contentColor,
             disabledContainerColor = material.fill,
             supportingContentColor = material.supportingColor,
+            selectedContainerColor = selection.fill,
+            selectedContentColor = selection.contentColor,
+            selectedSupportingContentColor = selection.supportingColor,
         )
     }
     val base = ListItemDefaults.segmentedColors(
@@ -604,7 +611,7 @@ fun SegmentedDropdownItem(
 fun SegmentedRadioItem(
     title: String,
     summary: String? = null,
-    colors: ListItemColors = defaultSegmentedSelectableColors(),
+    colors: ListItemColors = defaultSegmentedColors(),
     selected: Boolean,
     enabled: Boolean = true,
     onClick: () -> Unit,
@@ -631,27 +638,11 @@ fun SegmentedRadioItem(
     )
 }
 
-/**
- * Colors for checkbox and radio rows. A checked row is "selected", and the default selected color is
- * opaque, so in wallpaper mode it would hide the wallpaper. Use the translucent selection
- * material there instead. Without a wallpaper this is exactly [defaultSegmentedColors].
- */
-@Composable
-private fun defaultSegmentedSelectableColors(): ListItemColors {
-    val base = defaultSegmentedColors()
-    val selection = LocalFolkWallpaperTokens.current?.selection ?: return base
-    return base.copy(
-        selectedContainerColor = selection.fill,
-        selectedContentColor = selection.contentColor,
-        selectedSupportingContentColor = selection.supportingColor,
-    )
-}
-
 @Composable
 fun SegmentedCheckboxItem(
     title: String,
     summary: String? = null,
-    colors: ListItemColors = defaultSegmentedSelectableColors(),
+    colors: ListItemColors = defaultSegmentedColors(),
     checked: Boolean,
     enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit,
