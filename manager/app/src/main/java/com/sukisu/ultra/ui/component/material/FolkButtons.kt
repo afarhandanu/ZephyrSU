@@ -26,6 +26,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.unit.dp
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 
 /**
  * Button-family wrappers that replace the ripple with the shared scale-on-press feedback.
@@ -232,6 +236,17 @@ fun FolkSmallExtendedFloatingActionButton(
             interactionSource = interactionSource,
             icon = icon,
             text = text,
+            // Wallpaper mode: translucent like a selected surface, and no shadow (it would show
+            // through the button as a dark smudge).
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                alpha = LocalFolkWallpaperTokens.current?.selection?.alpha ?: 1f,
+            ),
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            elevation = if (LocalFolkWallpaperTokens.current != null) {
+                FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
+            } else {
+                FloatingActionButtonDefaults.elevation()
+            },
         )
     }
 }

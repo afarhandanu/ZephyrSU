@@ -29,6 +29,8 @@ object WallpaperConfig {
     private const val KEY_OPACITY = "wallpaper_opacity"
     private const val KEY_WORKING_CARD_OPACITY = "working_card_opacity"
     private const val KEY_SEARCH_OPACITY = "search_opacity"
+    private const val KEY_BAR_SHADE = "bar_shade"
+    private const val KEY_BAR_BORDER_STYLE = "bar_border_style"
     private const val KEY_BLUR = "wallpaper_blur"
     private const val KEY_DIM = "wallpaper_dim"
     private const val KEY_DUAL_DIM = "wallpaper_dual_dim_enabled"
@@ -62,6 +64,17 @@ object WallpaperConfig {
     const val DEFAULT_WORKING_CARD_OPACITY = 1f
     /** The full-screen search starts transparent so the wallpaper shows through (PR #57). */
     const val DEFAULT_SEARCH_OPACITY = 0f
+    const val DEFAULT_BAR_SHADE = 1f
+
+    /** Bottom bar border shapes, in the order the picker cycles through them. */
+    const val BAR_BORDER_NONE = 0
+    const val BAR_BORDER_LINE = 1
+    const val BAR_BORDER_DASHED = 2
+    const val BAR_BORDER_DOTTED = 3
+    const val BAR_BORDER_WAVE = 4
+    const val BAR_BORDER_ZIGZAG = 5
+    const val BAR_BORDER_STYLE_COUNT = 6
+    const val DEFAULT_BAR_BORDER_STYLE = BAR_BORDER_LINE
     const val DEFAULT_DIM = 0.2f
     const val DEFAULT_NIGHT_DIM = 0.4f
 
@@ -98,6 +111,17 @@ object WallpaperConfig {
      * default surface and this value is ignored.
      */
     var searchOpacity by mutableFloatStateOf(DEFAULT_SEARCH_OPACITY)
+        private set
+
+    /**
+     * Strength of the shade the top and bottom bars draw over the wallpaper (and of the fade
+     * past their edges). 1.0 keeps the shade as it always was; 0.0 removes it entirely.
+     */
+    var barShade by mutableFloatStateOf(DEFAULT_BAR_SHADE)
+        private set
+
+    /** Shape of the border drawn along the top edge of the bottom bar (one of BAR_BORDER_*). */
+    var barBorderStyle by mutableIntStateOf(DEFAULT_BAR_BORDER_STYLE)
         private set
 
     /** Background blur radius in dp. */
@@ -296,6 +320,14 @@ object WallpaperConfig {
         searchOpacity = value.coerceIn(0f, 1f)
     }
 
+    fun updateBarShade(value: Float) {
+        barShade = value.coerceIn(0f, 1f)
+    }
+
+    fun cycleBarBorderStyle() {
+        barBorderStyle = (barBorderStyle + 1) % BAR_BORDER_STYLE_COUNT
+    }
+
     fun updateBlur(value: Float) {
         blur = value.coerceIn(0f, 64f)
     }
@@ -442,6 +474,9 @@ object WallpaperConfig {
         opacity = prefs.getFloat(KEY_OPACITY, DEFAULT_OPACITY)
         workingCardOpacity = prefs.getFloat(KEY_WORKING_CARD_OPACITY, DEFAULT_WORKING_CARD_OPACITY)
         searchOpacity = prefs.getFloat(KEY_SEARCH_OPACITY, DEFAULT_SEARCH_OPACITY)
+        barShade = prefs.getFloat(KEY_BAR_SHADE, DEFAULT_BAR_SHADE)
+        barBorderStyle = prefs.getInt(KEY_BAR_BORDER_STYLE, DEFAULT_BAR_BORDER_STYLE)
+            .coerceIn(0, BAR_BORDER_STYLE_COUNT - 1)
         blur = prefs.getFloat(KEY_BLUR, 0f)
         dim = prefs.getFloat(KEY_DIM, DEFAULT_DIM)
         dualDimEnabled = prefs.getBoolean(KEY_DUAL_DIM, false)
@@ -486,6 +521,8 @@ object WallpaperConfig {
             putFloat(KEY_OPACITY, opacity)
             putFloat(KEY_WORKING_CARD_OPACITY, workingCardOpacity)
             putFloat(KEY_SEARCH_OPACITY, searchOpacity)
+            putFloat(KEY_BAR_SHADE, barShade)
+            putInt(KEY_BAR_BORDER_STYLE, barBorderStyle)
             putFloat(KEY_BLUR, blur)
             putFloat(KEY_DIM, dim)
             putBoolean(KEY_DUAL_DIM, dualDimEnabled)
@@ -524,6 +561,8 @@ object WallpaperConfig {
         opacity = DEFAULT_OPACITY
         workingCardOpacity = DEFAULT_WORKING_CARD_OPACITY
         searchOpacity = DEFAULT_SEARCH_OPACITY
+        barShade = DEFAULT_BAR_SHADE
+        barBorderStyle = DEFAULT_BAR_BORDER_STYLE
         blur = 0f
         dim = DEFAULT_DIM
         dualDimEnabled = false
