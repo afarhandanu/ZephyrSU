@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** The two personalization backup actions, shared by the Material and Miuix backup settings. */
-class PersonalizationBackupActions(val export: () -> Unit, val restore: () -> Unit)
+class PersonalizationBackupActions(val export: () -> Unit, val restore: () -> Unit, val reset: () -> Unit)
 
 @Composable
 fun rememberPersonalizationBackupActions(): PersonalizationBackupActions {
@@ -69,10 +69,47 @@ fun rememberPersonalizationBackupActions(): PersonalizationBackupActions {
         }
     }
 
+    // Reset has no undo, so it only runs on a second tap shortly after the first one.
+    val resetArmedAt = remember { longArrayOf(0L) }
+    val reset: () -> Unit = {
+        val now = System.currentTimeMillis()
+        if (now - resetArmedAt[0] > 5000L) {
+            resetArmedAt[0] = now
+            Toast.makeText(
+                context,
+                resources.getString(R.string.personalization_reset_confirm),
+                Toast.LENGTH_LONG,
+            ).show()
+        } else {
+            resetArmedAt[0] = 0L
+            scope.launch {
+                val result = withContext(Dispatchers.IO) { PersonalizationBackup.reset(context) }
+                if (result.isSuccess) {
+                    Toast.makeText(
+                        context,
+                        resources.getString(R.string.personalization_reset_done),
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    PersonalizationBackup.restart(context)
+                } else {
+                    Toast.makeText(
+                        context,
+                        resources.getString(
+                            R.string.personalization_backup_failed,
+                            result.exceptionOrNull()?.message.orEmpty(),
+                        ),
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+            }
+        }
+    }
+
     return remember(exportLauncher, restoreLauncher) {
         PersonalizationBackupActions(
             export = { exportLauncher.launch(PersonalizationBackup.fileName()) },
             restore = { restoreLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
+            reset = reset,
         )
     }
 }

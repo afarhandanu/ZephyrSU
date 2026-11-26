@@ -149,6 +149,25 @@ object PersonalizationBackup {
         writePrefs(context, stores, info.optString("package"))
     }
 
+    /** Puts the personalization back to the app defaults. The app must restart afterwards. */
+    fun reset(context: Context): Result<Unit> = runCatching {
+        context.filesDir.listFiles().orEmpty()
+            .filter { it.name !in EXCLUDED_FILES }
+            .forEach { it.deleteRecursively() }
+        File(context.applicationInfo.dataDir, "shared_prefs").listFiles().orEmpty()
+            .filter { it.isFile && it.name.endsWith(".xml") }
+            .map { it.name.removeSuffix(".xml") }
+            .filter { it !in EXCLUDED_PREFS && PREF_NAME.matches(it) }
+            .forEach { name ->
+                val skipped = EXCLUDED_KEYS[name].orEmpty()
+                val prefs = context.getSharedPreferences(name, Context.MODE_PRIVATE)
+                val kept = prefs.all.filterKeys { it in skipped }
+                val editor = prefs.edit().clear()
+                kept.forEach { (key, value) -> putValue(editor, key, value) }
+                check(editor.commit()) { "Cannot reset the $name settings" }
+            }
+    }
+
     /** Relaunches the manager so every screen reads the restored settings from scratch. */
     fun restart(context: Context) {
         context.packageManager.getLaunchIntentForPackage(context.packageName)?.let { intent ->
