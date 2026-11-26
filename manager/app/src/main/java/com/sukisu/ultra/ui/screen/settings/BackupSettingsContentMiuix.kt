@@ -199,5 +199,18 @@ fun BackupSettingsContentMiuix(modifier: Modifier = Modifier) {
             },
             onClick = personalization.restore,
         )
+        ArrowPreference(
+            title = stringResource(R.string.personalization_reset),
+            summary = stringResource(R.string.personalization_reset_summary),
+            startAction = {
+                MiuixIcon(
+                    Icons.Rounded.Shield,
+                    modifier = Modifier.padding(end = 6.dp),
+                    contentDescription = stringResource(R.string.personalization_reset),
+                    tint = colorScheme.onBackground
+                )
+            },
+            onClick = personalization.reset,
+        )
     }
 }

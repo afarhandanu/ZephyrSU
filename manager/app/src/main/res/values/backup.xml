@@ -43,4 +43,8 @@
     <string name="personalization_backup_saved">Personalization backup saved</string>
     <string name="personalization_restore_done">Personalization restored, restarting</string>
     <string name="personalization_backup_failed">Failed: %1$s</string>
+    <string name="personalization_reset">Reset all personalization</string>
+    <string name="personalization_reset_summary">Put the look and settings back to default and restart the app — back up first, this cannot be undone</string>
+    <string name="personalization_reset_confirm">Tap again to reset all personalization</string>
+    <string name="personalization_reset_done">Personalization reset, restarting</string>
 </resources>

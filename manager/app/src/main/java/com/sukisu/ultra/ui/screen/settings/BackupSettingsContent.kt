@@ -164,6 +164,13 @@ fun BackupSettingsContent() {
                 supportingContent = { Text(stringResource(R.string.personalization_restore_summary)) },
             )
         }
+        item {
+            SegmentedListItem(
+                onClick = personalization.reset,
+                headlineContent = { Text(stringResource(R.string.personalization_reset)) },
+                supportingContent = { Text(stringResource(R.string.personalization_reset_summary)) },
+            )
+        }
     }
 }
 
