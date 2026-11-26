@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sukisu.ultra.ui.theme.wallpaperCardColor
 
 @Composable
 fun BottomActionButtonsMaterial(
@@ -70,7 +71,7 @@ fun SectionHeaderMaterial(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerLow),
+            containerColor = wallpaperCardColor(backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerLow)),
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
@@ -122,7 +123,7 @@ fun EmptyStateCardMaterial(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerLow),
+            containerColor = wallpaperCardColor(backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerLow)),
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
@@ -163,7 +164,7 @@ fun DescriptionCardMaterial(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerLow),
+            containerColor = wallpaperCardColor(backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerLow)),
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {

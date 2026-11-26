@@ -21,6 +21,7 @@ import com.sukisu.ultra.ui.component.material.ExpressiveScaffold
 import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
+import com.sukisu.ultra.ui.theme.wallpaperCardColor
 
 @Composable
 internal fun VersionSpoofMaterial(
@@ -89,7 +90,7 @@ internal fun VersionSpoofMaterial(
 private fun MaterialVersionSection(title: Int, content: @Composable ColumnScope.() -> Unit) {
     Surface(
         shape = MaterialTheme.shapes.extraLarge,
-        color = backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerLow),
+        color = wallpaperCardColor(backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerLow)),
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {

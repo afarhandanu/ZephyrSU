@@ -16,6 +16,7 @@ import com.sukisu.ultra.ui.screen.susfs.SuSFSRuntimeInfo
 import com.sukisu.ultra.ui.theme.backgroundAwareColor
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import com.sukisu.ultra.ui.theme.wallpaperCardColor
 
 @Composable
 internal fun RuntimeInfoContent(info: SuSFSRuntimeInfo?) {
@@ -51,7 +52,7 @@ internal fun RuntimeInfoContent(info: SuSFSRuntimeInfo?) {
     if (miuix) AppCard(Modifier.fillMaxWidth()) { body() }
     else Surface(
         shape = MaterialTheme.shapes.extraLarge,
-        color = backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerLow),
+        color = wallpaperCardColor(backgroundAwareColor(MaterialTheme.colorScheme.surfaceContainerLow)),
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) { body() }
 }

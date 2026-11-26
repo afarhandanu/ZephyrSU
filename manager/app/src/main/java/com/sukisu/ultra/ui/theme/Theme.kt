@@ -220,6 +220,20 @@ fun backgroundAwareCardColors(
     )
 }
 
+/**
+ * Fill for a neutral card or panel. In wallpaper mode it is the wallpaper's translucent group
+ * material (the same fill the list rows and tonal cards use, following the surface opacity
+ * setting); otherwise [fallback] is returned untouched.
+ */
+@Composable
+fun wallpaperCardColor(fallback: androidx.compose.ui.graphics.Color): androidx.compose.ui.graphics.Color =
+    LocalFolkWallpaperTokens.current?.group?.fill ?: fallback
+
+/** Same as [wallpaperCardColor] for a selected control: the wallpaper's selection material. */
+@Composable
+fun wallpaperSelectionColor(fallback: androidx.compose.ui.graphics.Color): androidx.compose.ui.graphics.Color =
+    LocalFolkWallpaperTokens.current?.selection?.fill ?: fallback
+
 @Composable
 fun backgroundAwareColor(
     color: androidx.compose.ui.graphics.Color,
