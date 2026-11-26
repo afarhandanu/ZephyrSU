@@ -131,6 +131,7 @@ data class WallpaperUiState(
     val workingCardOpacity: Float,
     val searchOpacity: Float,
     val barShade: Float,
+    val barBorderStyle: Int,
     val useWallpaperColor: Boolean,
     val multiBackgroundEnabled: Boolean,
     val homeBackgroundSelected: Boolean,
@@ -173,6 +174,7 @@ data class WallpaperScreenActions(
     val onSetWorkingCardOpacity: (Float) -> Unit,
     val onSetSearchOpacity: (Float) -> Unit,
     val onSetBarShade: (Float) -> Unit,
+    val onCycleBarBorderStyle: () -> Unit,
     val onToggleUseWallpaperColor: (Boolean) -> Unit,
     val onToggleMultiBackground: (Boolean) -> Unit,
     val onPickHomeBackground: () -> Unit,
@@ -402,6 +404,7 @@ fun WallpaperScreen() {
         workingCardOpacity = WallpaperConfig.workingCardOpacity,
         searchOpacity = WallpaperConfig.searchOpacity,
         barShade = WallpaperConfig.barShade,
+        barBorderStyle = WallpaperConfig.barBorderStyle,
         useWallpaperColor = WallpaperConfig.useWallpaperColor,
         multiBackgroundEnabled = WallpaperConfig.multiBackgroundEnabled,
         homeBackgroundSelected = !WallpaperConfig.homeBackgroundUri.isNullOrEmpty(),
@@ -464,6 +467,7 @@ fun WallpaperScreen() {
         onSetBarShade = {
             WallpaperConfig.updateBarShade(snapToPercent(it))
         },
+        onCycleBarBorderStyle = { WallpaperConfig.cycleBarBorderStyle() },
         onToggleUseWallpaperColor = { enabled ->
             WallpaperConfig.updateUseWallpaperColor(enabled)
             WallpaperConfig.save(context)
@@ -896,6 +900,32 @@ fun WallpaperScreenMaterial(
                             valueText = { "${(it * 100).roundToInt()}%" },
                             onValueChange = actions.onSetBarShade,
                             onValueChangeFinished = { actions.onCommitWallpaper() },
+                        )
+                    }
+                    // Border shape on top of the bottom bar; each tap moves to the next shape.
+                    add {
+                        SegmentedListItem(
+                            onClick = {
+                                actions.onCycleBarBorderStyle()
+                                actions.onCommitWallpaper()
+                            },
+                            headlineContent = { Text(stringResource(R.string.wallpaper_bar_border)) },
+                            supportingContent = { Text(stringResource(R.string.wallpaper_bar_border_summary)) },
+                            leadingContent = { Icon(Icons.Filled.GridView, null) },
+                            trailingContent = {
+                                Text(
+                                    stringResource(
+                                        when (state.barBorderStyle) {
+                                            WallpaperConfig.BAR_BORDER_NONE -> R.string.wallpaper_bar_border_none
+                                            WallpaperConfig.BAR_BORDER_DASHED -> R.string.wallpaper_bar_border_dashed
+                                            WallpaperConfig.BAR_BORDER_DOTTED -> R.string.wallpaper_bar_border_dotted
+                                            WallpaperConfig.BAR_BORDER_WAVE -> R.string.wallpaper_bar_border_wave
+                                            WallpaperConfig.BAR_BORDER_ZIGZAG -> R.string.wallpaper_bar_border_zigzag
+                                            else -> R.string.wallpaper_bar_border_line
+                                        }
+                                    )
+                                )
+                            },
                         )
                     }
                 },

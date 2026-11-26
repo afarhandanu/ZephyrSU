@@ -76,6 +76,14 @@
     <string name="wallpaper_search_opacity_summary">How opaque the full-screen search is when a wallpaper is set — 0% shows the wallpaper through</string>
     <string name="wallpaper_bar_shade">Top and bottom bar shade</string>
     <string name="wallpaper_bar_shade_summary">How strong the light or dark shade behind the top and bottom bars is — 0% removes it</string>
+    <string name="wallpaper_bar_border">Bottom bar border</string>
+    <string name="wallpaper_bar_border_summary">Shape of the line above the bottom bar — tap to change</string>
+    <string name="wallpaper_bar_border_none">None</string>
+    <string name="wallpaper_bar_border_line">Line</string>
+    <string name="wallpaper_bar_border_dashed">Dashed</string>
+    <string name="wallpaper_bar_border_dotted">Dotted</string>
+    <string name="wallpaper_bar_border_wave">Wave</string>
+    <string name="wallpaper_bar_border_zigzag">Zigzag</string>
     <string name="wallpaper_gallery_device_phone">Phone</string>
     <string name="wallpaper_gallery_device_tablet">Tablet</string>
     <string name="wallpaper_gallery_device_mixed">Mixed</string>
