@@ -182,6 +182,8 @@ import com.sukisu.ultra.ui.util.ImageStorage
 import com.sukisu.ultra.ui.util.ThemePackageStorage
 import com.sukisu.ultra.ui.viewmodel.SettingsViewModel
 import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
+import androidx.compose.material3.ToggleButtonColors
+import com.sukisu.ultra.ui.component.material.expressiveToggleButtonColors
 
 @SuppressLint("AutoboxingStateCreation", "ConfigurationScreenWidthHeight")
 @Composable
@@ -517,6 +519,7 @@ fun ColorPaletteScreenMaterial(
                                     ) {
                                         rowOptions.forEachIndexed { index, (modes, label) ->
                                             ExpressiveToggleButton(
+                                                colors = themeToggleColors(),
                                                 checked = currentColorMode in modes,
                                                 onCheckedChange = {
                                                     if (it) {
@@ -1044,6 +1047,7 @@ fun ColorPaletteScreenMaterial(
                                 )
                                 layouts.forEachIndexed { index, (layout, labelRes) ->
                                     ExpressiveToggleButton(
+                                        colors = themeToggleColors(),
                                         checked = state.homeLayout == layout,
                                         onCheckedChange = {
                                             if (it) actions.onSetHomeLayout(layout)
@@ -2326,6 +2330,18 @@ private fun MaterialCompactPreviewCard(
     }
 }
 
+/** Wallpaper mode: translucent toggle fills so the wallpaper shows through; otherwise the defaults. */
+@Composable
+private fun themeToggleColors(): ToggleButtonColors {
+    val wallpaper = LocalFolkWallpaperTokens.current ?: return expressiveToggleButtonColors()
+    return expressiveToggleButtonColors(
+        checkedContainerColor = wallpaper.selection.fill,
+        checkedContentColor = wallpaper.selection.contentColor,
+        containerColor = wallpaper.group.fill,
+        contentColor = wallpaper.group.contentColor,
+    )
+}
+
 @Composable
 private fun MaterialCategoryGrid(
     selected: ThemeSettingsCategory,
@@ -2350,6 +2366,7 @@ private fun MaterialCategoryGrid(
                 ) {
                     row.forEachIndexed { index, category ->
                         ExpressiveToggleButton(
+                            colors = themeToggleColors(),
                             checked = category == selected,
                             onCheckedChange = { checked ->
                                 if (checked) {
