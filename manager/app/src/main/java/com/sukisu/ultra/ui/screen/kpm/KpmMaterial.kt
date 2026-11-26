@@ -129,7 +129,13 @@ fun KpmMaterial(viewModel: KpmViewModel, actions: KpmActions, bottomInnerPadding
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item(key = "overview") {
-                    TonalCard(containerColor = MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.extraLarge) {
+                    // Wallpaper mode: the accent card becomes translucent like a selected surface.
+                    val heroAlpha = LocalFolkWallpaperTokens.current?.selection?.alpha ?: 1f
+                    TonalCard(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = heroAlpha),
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        shape = MaterialTheme.shapes.extraLarge,
+                    ) {
                         Row(Modifier.fillMaxWidth().padding(24.dp), verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                             Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.primary) {

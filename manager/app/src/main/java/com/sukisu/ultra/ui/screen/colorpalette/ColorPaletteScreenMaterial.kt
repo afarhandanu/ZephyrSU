@@ -181,6 +181,7 @@ import com.sukisu.ultra.ui.util.HomeStatusStyle
 import com.sukisu.ultra.ui.util.ImageStorage
 import com.sukisu.ultra.ui.util.ThemePackageStorage
 import com.sukisu.ultra.ui.viewmodel.SettingsViewModel
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 
 @SuppressLint("AutoboxingStateCreation", "ConfigurationScreenWidthHeight")
 @Composable
@@ -554,7 +555,8 @@ fun ColorPaletteScreenMaterial(
                             ?: RoundedCornerShape(24.dp)
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            color = backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright),
+                            color = LocalFolkWallpaperTokens.current?.group?.fill
+                                ?: backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright),
                             shape = swatchShape,
                         ) {
                             LazyRow(
@@ -2334,7 +2336,8 @@ private fun MaterialCategoryGrid(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
-        color = backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright),
+        color = LocalFolkWallpaperTokens.current?.group?.fill
+                                ?: backgroundAwareColor(MaterialTheme.colorScheme.surfaceBright),
     ) {
         Column(
             modifier = Modifier.padding(8.dp),

@@ -152,6 +152,7 @@ import com.sukisu.ultra.ui.util.reboot
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 
 @SuppressLint("StringFormatInvalid")
 @Composable
@@ -583,8 +584,13 @@ fun ModulePagerMaterial(
                         ) {
                             ModuleStatsDonut(
                                 modules = uiState.moduleList,
-                                enabledColor = MaterialTheme.colorScheme.primary,
-                                disabledColor = MaterialTheme.colorScheme.surfaceVariant,
+                                // Wallpaper mode: translucent like a selected surface.
+                                enabledColor = MaterialTheme.colorScheme.primary.copy(
+                                    alpha = LocalFolkWallpaperTokens.current?.selection?.alpha ?: 1f,
+                                ),
+                                disabledColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                    alpha = LocalFolkWallpaperTokens.current?.selection?.alpha ?: 1f,
+                                ),
                                 labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                 centerStyle = MaterialTheme.typography.titleLarge,
                                 labelStyle = MaterialTheme.typography.bodyMedium,
