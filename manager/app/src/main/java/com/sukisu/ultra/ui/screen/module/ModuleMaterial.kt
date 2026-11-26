@@ -152,6 +152,7 @@ import com.sukisu.ultra.ui.util.reboot
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 
 @SuppressLint("StringFormatInvalid")
 @Composable
@@ -505,6 +506,17 @@ fun ModulePagerMaterial(
                     },
                     icon = { Icon(Icons.Filled.Add, moduleInstall) },
                     text = { Text(text = moduleInstall) },
+                    // Wallpaper mode: translucent like a selected surface.
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                        alpha = LocalFolkWallpaperTokens.current?.selection?.alpha ?: 1f,
+                    ),
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    elevation = if (LocalFolkWallpaperTokens.current != null) {
+                        // A shadow shows through a translucent button as a dark smudge.
+                        androidx.compose.material3.FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
+                    } else {
+                        androidx.compose.material3.FloatingActionButtonDefaults.elevation()
+                    },
                 )
             }
         },
@@ -583,8 +595,13 @@ fun ModulePagerMaterial(
                         ) {
                             ModuleStatsDonut(
                                 modules = uiState.moduleList,
-                                enabledColor = MaterialTheme.colorScheme.primary,
-                                disabledColor = MaterialTheme.colorScheme.surfaceVariant,
+                                // Wallpaper mode: translucent like a selected surface.
+                                enabledColor = MaterialTheme.colorScheme.primary.copy(
+                                    alpha = LocalFolkWallpaperTokens.current?.selection?.alpha ?: 1f,
+                                ),
+                                disabledColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                    alpha = LocalFolkWallpaperTokens.current?.selection?.alpha ?: 1f,
+                                ),
                                 labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                 centerStyle = MaterialTheme.typography.titleLarge,
                                 labelStyle = MaterialTheme.typography.bodyMedium,

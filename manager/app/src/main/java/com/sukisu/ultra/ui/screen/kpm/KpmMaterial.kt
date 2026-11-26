@@ -110,7 +110,15 @@ fun KpmMaterial(viewModel: KpmViewModel, actions: KpmActions, bottomInnerPadding
                 icon = { Icon(Icons.Rounded.Add, stringResource(R.string.kpm_install_mode)) },
                 text = { Text(stringResource(R.string.kpm_install_mode)) },
                 containerColor = if (state.isBusy) MaterialTheme.colorScheme.surfaceContainerHighest
-                    else MaterialTheme.colorScheme.primaryContainer,
+                    else MaterialTheme.colorScheme.primaryContainer.copy(
+                        alpha = LocalFolkWallpaperTokens.current?.selection?.alpha ?: 1f,
+                    ),
+                elevation = if (LocalFolkWallpaperTokens.current != null) {
+                    // A shadow shows through a translucent button as a dark smudge.
+                    androidx.compose.material3.FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
+                } else {
+                    androidx.compose.material3.FloatingActionButtonDefaults.elevation()
+                },
                 contentColor = if (state.isBusy) MaterialTheme.colorScheme.onSurfaceVariant
                     else MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -129,7 +137,13 @@ fun KpmMaterial(viewModel: KpmViewModel, actions: KpmActions, bottomInnerPadding
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item(key = "overview") {
-                    TonalCard(containerColor = MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.extraLarge) {
+                    // Wallpaper mode: the accent card becomes translucent like a selected surface.
+                    val heroAlpha = LocalFolkWallpaperTokens.current?.selection?.alpha ?: 1f
+                    TonalCard(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = heroAlpha),
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        shape = MaterialTheme.shapes.extraLarge,
+                    ) {
                         Row(Modifier.fillMaxWidth().padding(24.dp), verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                             Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.primary) {

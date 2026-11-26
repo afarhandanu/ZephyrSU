@@ -50,6 +50,7 @@ import com.sukisu.ultra.ui.component.material.TonalCard
 import com.sukisu.ultra.ui.component.material.TopBarBackButton
 import com.sukisu.ultra.ui.component.material.expressiveTopAppBarColors
 import com.sukisu.ultra.ui.screen.appicon.BuiltinAppIconPreview
+import com.sukisu.ultra.wallpaper.LocalFolkWallpaperTokens
 
 @Composable
 fun AboutScreenMaterial(
@@ -84,7 +85,10 @@ fun AboutScreenMaterial(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     shape = MaterialTheme.shapes.extraLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                    // Wallpaper mode: translucent like a selected surface.
+                    color = MaterialTheme.colorScheme.primary.copy(
+                        alpha = LocalFolkWallpaperTokens.current?.selection?.alpha ?: 1f,
+                    ),
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                 ) {
                     Column(
