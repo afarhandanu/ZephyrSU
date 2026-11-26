@@ -604,7 +604,7 @@ fun SegmentedDropdownItem(
 fun SegmentedRadioItem(
     title: String,
     summary: String? = null,
-    colors: ListItemColors = defaultSegmentedColors(),
+    colors: ListItemColors = defaultSegmentedSelectableColors(),
     selected: Boolean,
     enabled: Boolean = true,
     onClick: () -> Unit,
@@ -632,12 +632,12 @@ fun SegmentedRadioItem(
 }
 
 /**
- * Colors for checkbox rows. A checked row is "selected", and the default selected color is
+ * Colors for checkbox and radio rows. A checked row is "selected", and the default selected color is
  * opaque, so in wallpaper mode it would hide the wallpaper. Use the translucent selection
  * material there instead. Without a wallpaper this is exactly [defaultSegmentedColors].
  */
 @Composable
-private fun defaultSegmentedCheckboxColors(): ListItemColors {
+private fun defaultSegmentedSelectableColors(): ListItemColors {
     val base = defaultSegmentedColors()
     val selection = LocalFolkWallpaperTokens.current?.selection ?: return base
     return base.copy(
@@ -651,7 +651,7 @@ private fun defaultSegmentedCheckboxColors(): ListItemColors {
 fun SegmentedCheckboxItem(
     title: String,
     summary: String? = null,
-    colors: ListItemColors = defaultSegmentedCheckboxColors(),
+    colors: ListItemColors = defaultSegmentedSelectableColors(),
     checked: Boolean,
     enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit,
